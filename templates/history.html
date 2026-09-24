@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Auction History & Bids Audit - Khelo SPL{% endblock %}
+
+{% block extra_css %}
+<style>
+.history-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+}
+.history-nav-tabs {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+}
+.hist-tab-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+.hist-tab-btn.active {
+    background: rgba(255, 215, 0, 0.15);
+    color: #fbbf24;
+}
+.history-filter-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 15px;
+}
+.bid-pill {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+.bid-pill.amt {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="history-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fa-solid fa-clock-rotate-left"></i> Auction History & Bids Audit Log</h2>
+            <p class="text-muted">Chronological record of every placard raised, bid placed, and player sold</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-secondary btn-sm" onclick="fetchHistory()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+            <button class="btn btn-gold btn-sm" onclick="exportHistoryCSV()"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
+        </div>
+    </div>
+
+    <div class="history-nav-tabs">
+        <button class="hist-tab-btn active" id="btnTabAllBids" onclick="switchHistTab('allBids')">
+            <i class="fa-solid fa-list-ol"></i> Real-Time Bids Stream (<span id="totalBidsCount">0</span>)
+        </button>
+        <button class="hist-tab-btn" id="btnTabSold" onclick="switchHistTab('soldLedger')">
+            <i class="fa-solid fa-gavel"></i> Sold Players Ledger (<span id="soldLedgerCount">0</span>)
+        </button>
+    </div>
+
+    <!-- Search filter -->
+    <div class="history-filter-row">
+        <div class="search-input-wrap" style="max-width: 400px; flex: 1;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="histSearch" placeholder="Search player or team..." oninput="renderHistoryTables()">
+        </div>
+    </div>
+
+    <!-- TAB 1: ALL BIDS TABLE -->
+    <div id="sectionAllBids" class="admin-panel">
+        <div class="table-responsive">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Player</th>
+                        <th>Bidding Franchise</th>
+                        <th>Bid Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="allBidsTbody">
+                    <tr><td colspan="4" class="text-center p-4 text-muted">Loading bids...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 2: SOLD PLAYERS LEDGER -->
+    <div id="sectionSoldLedger" class="admin-panel hidden">
+        <div class="table-responsive">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Player Name</th>
+                        <th>Role</th>
+                        <th>Roll / Year</th>
+                        <th>Purchased By</th>
+                        <th>Final Price</th>
+                        <th>Time Sold</th>
+                    </tr>
+                </thead>
+                <tbody id="soldLedgerTbody">
+                    <tr><td colspan="6" class="text-center p-4 text-muted">Loading sold players...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+let historyData = { bids: [], sold_players: [] };
+let activeTab = 'allBids';
+
+document.addEventListener('DOMContentLoaded', fetchHistory);
+
+async function fetchHistory() {
+    try {
+        const res = await fetch('/api/auction/history');
+        const data = await res.json();
+        if (data.success) {
+            historyData = data;
+            document.getElementById('totalBidsCount').textContent = data.bids.length;
+            document.getElementById('soldLedgerCount').textContent = data.sold_players.length;
+            renderHistoryTables();
+        }
+    } catch (e) {
+        console.error("Error fetching history:", e);
+    }
+}
+
+function switchHistTab(tab) {
+    activeTab = tab;
+    document.getElementById('btnTabAllBids').classList.toggle('active', tab === 'allBids');
+    document.getElementById('btnTabSold').classList.toggle('active', tab === 'soldLedger');
+    document.getElementById('sectionAllBids').classList.toggle('hidden', tab !== 'allBids');
+    document.getElementById('sectionSoldLedger').classList.toggle('hidden', tab !== 'soldLedger');
+    renderHistoryTables();
+}
+
+function renderHistoryTables() {
+    const query = document.getElementById('histSearch').value.toLowerCase();
+
+    if (activeTab === 'allBids') {
+        const tbody = document.getElementById('allBidsTbody');
+        const filtered = historyData.bids.filter(b => 
+            (b.player_name || '').toLowerCase().includes(query) ||
+            (b.team_name || '').toLowerCase().includes(query)
+        );
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-muted">No bids recorded yet.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = filtered.map(b => `
+            <tr>
+                <td style="color: #94a3b8; font-family: monospace;">${b.formatted_time || (new Date(b.timestamp).toLocaleTimeString())}</td>
+                <td style="font-weight: 700; color: #f8fafc;">${b.player_name}</td>
+                <td><span style="font-weight: 700; color: #e2e8f0;">${b.team_name}</span></td>
+                <td><span class="bid-pill amt">₹ ${(b.amount || 0).toLocaleString('en-IN')}</span></td>
+            </tr>
+        `).join('');
+    } else {
+        const tbody = document.getElementById('soldLedgerTbody');
+        const filtered = historyData.sold_players.filter(p => 
+            (p.name || '').toLowerCase().includes(query) ||
+            (p.sold_team_name || '').toLowerCase().includes(query)
+        );
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4 text-muted">No players sold yet.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = filtered.map(p => `
+            <tr>
+                <td style="font-weight: 700; color: #f8fafc;">${p.name}</td>
+                <td><span class="role-badge role-${(p.role || 'All-Rounder').toLowerCase().replace(' ', '-')}">${p.role}</span></td>
+                <td style="color: #94a3b8;">${p.roll_no} (${p.year})</td>
+                <td style="font-weight: 700; color: #fbbf24;">${p.sold_team_name || '-'}</td>
+                <td><strong style="color: #4ade80; font-size: 1.05rem;">₹ ${(p.sold_price || 0).toLocaleString('en-IN')}</strong></td>
+                <td style="color: #94a3b8; font-size: 0.85rem;">${p.sold_at ? new Date(p.sold_at).toLocaleTimeString() : '-'}</td>
+            </tr>
+        `).join('');
+    }
+}
+
+function exportHistoryCSV() {
+    if (activeTab === 'allBids') {
+        let csv = 'Timestamp,Player,Team,Amount\n';
+        historyData.bids.forEach(b => {
+            csv += `"${b.timestamp}","${b.player_name}","${b.team_name}",${b.amount}\n`;
+        });
+        downloadBlob(csv, 'kspl_bids_audit.csv', 'text/csv');
+    } else {
+        let csv = 'Player,Role,RollNo,Year,Team,SoldPrice,SoldAt\n';
+        historyData.sold_players.forEach(p => {
+            csv += `"${p.name}","${p.role}","${p.roll_no}","${p.year}","${p.sold_team_name}",${p.sold_price},"${p.sold_at}"\n`;
+        });
+        downloadBlob(csv, 'kspl_sold_players.csv', 'text/csv');
+    }
+}
+
+function downloadBlob(content, filename, contentType) {
+    const blob = new Blob([content], { type: contentType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+</script>
+{% endblock %}

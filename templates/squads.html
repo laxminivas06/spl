@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Team Squads - Khelo SPL{% endblock %}
+
+{% block extra_css %}
+<style>
+.squads-container {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 24px;
+}
+.squads-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+.squad-filters-bar {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    margin-bottom: 25px;
+}
+.squad-filter-pill {
+    padding: 8px 18px;
+    border-radius: 9999px;
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+.squad-filter-pill.active, .squad-filter-pill:hover {
+    background: #fbbf24;
+    color: #0f172a;
+    border-color: #fbbf24;
+}
+.teams-squad-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+    gap: 25px;
+}
+.team-squad-card {
+    background: #0f172a;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+}
+.team-squad-header {
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.team-brand-col {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.team-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #fff;
+}
+.team-squad-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #f8fafc;
+    margin: 0;
+}
+.team-squad-sub {
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+.squad-count-chip {
+    background: rgba(255, 215, 0, 0.15);
+    color: #fbbf24;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+}
+.team-finance-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    background: rgba(15, 23, 42, 0.5);
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    text-align: center;
+}
+.fin-item span {
+    display: block;
+}
+.fin-label {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+.fin-val {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #f1f5f9;
+}
+.fin-val.green { color: #4ade80; }
+.fin-val.amber { color: #fbbf24; }
+
+.squad-player-list {
+    padding: 15px 20px;
+    flex: 1;
+    max-height: 400px;
+    overflow-y: auto;
+}
+.squad-player-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    margin-bottom: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.sq-player-name {
+    font-weight: 700;
+    color: #f8fafc;
+    font-size: 0.95rem;
+}
+.sq-player-meta {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+.sq-player-price {
+    font-weight: 800;
+    color: #38bdf8;
+    font-size: 0.95rem;
+}
+.squad-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #64748b;
+    font-size: 0.95rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="squads-container">
+    <div class="squads-header">
+        <div>
+            <h2><i class="fa-solid fa-users-viewfinder"></i> Franchise Squads & Purses</h2>
+            <p class="text-muted">Live overview of squad compositions and purse balances</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="loadSquadsData()">
+            <i class="fa-solid fa-rotate"></i> Refresh
+        </button>
+    </div>
+
+    <!-- Team Filter Pills -->
+    <div class="squad-filters-bar" id="squadFilterPills">
+        <button class="squad-filter-pill active" onclick="filterSquadView('all')">All Franchises</button>
+    </div>
+
+    <!-- Squads Grid -->
+    <div class="teams-squad-grid" id="squadsGrid">
+        <div class="text-center p-5 text-muted">Loading franchise squads...</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/squad.js') }}"></script>
+{% endblock %}

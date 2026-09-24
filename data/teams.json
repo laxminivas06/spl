@@ -1,0 +1,289 @@
+[
+  {
+    "id": "team_rcb",
+    "name": "Bangalore Blasters",
+    "short_name": "BLR",
+    "color": "#e11d48",
+    "logo": "",
+    "owner": "Rajesh Sharma",
+    "captain": "Virat The King Kohli",
+    "finance": "Sunil Mehta",
+    "contact": "+91 98765 43210",
+    "initial_budget": 500000,
+    "balance": 500000,
+    "spent": 0,
+    "squad": [],
+    "created_at": "2026-09-23T01:02:36.467056",
+    "username": "blr",
+    "password": "blr123",
+    "members": [
+      {
+        "id": "mem_83fae1",
+        "name": "Rajesh Sharma",
+        "role": "Franchise Owner",
+        "phone": "+91 98765 43210",
+        "email": "blr@khelospl.com"
+      },
+      {
+        "id": "mem_3315b7",
+        "name": "Virat K.",
+        "role": "Team Captain",
+        "phone": "",
+        "email": ""
+      },
+      {
+        "id": "mem_316d7f",
+        "name": "Sunil Mehta",
+        "role": "Auction Strategist",
+        "phone": "",
+        "email": ""
+      }
+    ],
+    "email": "blr@spl.edu"
+  },
+  {
+    "id": "team_csk",
+    "name": "Chennai Super Strikers",
+    "short_name": "CSS",
+    "color": "#eab308",
+    "logo": "",
+    "owner": "K. Srinivasan",
+    "captain": "Dhoni M.",
+    "finance": "N. Ramanathan",
+    "contact": "+91 98765 43211",
+    "initial_budget": 500000,
+    "balance": 500000,
+    "spent": 0,
+    "squad": [],
+    "created_at": "2026-09-23T01:02:36.467064",
+    "username": "css",
+    "password": "css123",
+    "members": [
+      {
+        "id": "mem_7c85cc",
+        "name": "K. Srinivasan",
+        "role": "Franchise Owner",
+        "phone": "+91 98765 43211",
+        "email": "css@khelospl.com"
+      },
+      {
+        "id": "mem_2e4ed8",
+        "name": "Dhoni M.",
+        "role": "Team Captain",
+        "phone": "",
+        "email": ""
+      },
+      {
+        "id": "mem_68403f",
+        "name": "N. Ramanathan",
+        "role": "Auction Strategist",
+        "phone": "",
+        "email": ""
+      }
+    ],
+    "email": "css@spl.edu"
+  },
+  {
+    "id": "team_mi",
+    "name": "Mumbai Titans",
+    "short_name": "MT",
+    "color": "#2563eb",
+    "logo": "",
+    "owner": "Mukesh Ambani Group",
+    "captain": "Rohit S.",
+    "finance": "Aakash M.",
+    "contact": "+91 98765 43212",
+    "initial_budget": 500000,
+    "balance": 500000,
+    "spent": 0,
+    "squad": [],
+    "created_at": "2026-09-23T01:02:36.467065",
+    "username": "mt",
+    "password": "mt123",
+    "members": [
+      {
+        "id": "mem_9cbfcf",
+        "name": "Mukesh Ambani Group",
+        "role": "Franchise Owner",
+        "phone": "+91 98765 43212",
+        "email": "mt@khelospl.com"
+      },
+      {
+        "id": "mem_32b5f5",
+        "name": "Rohit S.",
+        "role": "Team Captain",
+        "phone": "",
+        "email": ""
+      },
+      {
+        "id": "mem_c75de0",
+        "name": "Aakash M.",
+        "role": "Auction Strategist",
+        "phone": "",
+        "email": ""
+      }
+    ],
+    "email": "mt@spl.edu"
+  },
+  {
+    "id": "team_kkr",
+    "name": "Kolkata Knight Warriors",
+    "short_name": "KKW",
+    "color": "#7c3aed",
+    "logo": "",
+    "owner": "SRK Entertainment",
+    "captain": "Shreyas I.",
+    "finance": "Jay Mehta",
+    "contact": "+91 98765 43213",
+    "initial_budget": 500000,
+    "balance": 500000,
+    "spent": 0,
+    "squad": [],
+    "created_at": "2026-09-23T01:02:36.467067",
+    "username": "kkw",
+    "password": "kkw123",
+    "members": [
+      {
+        "id": "mem_e1f92e",
+        "name": "SRK Entertainment",
+        "role": "Franchise Owner",
+        "phone": "+91 98765 43213",
+        "email": "kkw@khelospl.com"
+      },
+      {
+        "id": "mem_4b5b8c",
+        "name": "Shreyas I.",
+        "role": "Team Captain",
+        "phone": "",
+        "email": ""
+      },
+      {
+        "id": "mem_59492b",
+        "name": "Jay Mehta",
+        "role": "Auction Strategist",
+        "phone": "",
+        "email": ""
+      }
+    ],
+    "email": "kkw@spl.edu"
+  },
+  {
+    "id": "team_dc",
+    "name": "Delhi Daredevils",
+    "short_name": "DD",
+    "color": "#0284c7",
+    "logo": "",
+    "owner": "GMR Sports",
+    "captain": "Rishabh P.",
+    "finance": "Parth Jindal",
+    "contact": "+91 98765 43214",
+    "initial_budget": 500000,
+    "balance": 500000,
+    "spent": 0,
+    "squad": [],
+    "created_at": "2026-09-23T01:02:36.467068",
+    "username": "dd",
+    "password": "dd123",
+    "members": [
+      {
+        "id": "mem_4d693c",
+        "name": "GMR Sports",
+        "role": "Franchise Owner",
+        "phone": "+91 98765 43214",
+        "email": "dd@khelospl.com"
+      },
+      {
+        "id": "mem_4504f1",
+        "name": "Rishabh P.",
+        "role": "Team Captain",
+        "phone": "",
+        "email": ""
+      },
+      {
+        "id": "mem_8b982b",
+        "name": "Parth Jindal",
+        "role": "Auction Strategist",
+        "phone": "",
+        "email": ""
+      }
+    ],
+    "email": "dd@spl.edu"
+  },
+  {
+    "id": "team_gt",
+    "name": "Gujarat Giants",
+    "short_name": "GG",
+    "color": "#0d9488",
+    "logo": "",
+    "owner": "CVC Capital",
+    "captain": "Shubman G.",
+    "finance": "Siddharth P.",
+    "contact": "+91 98765 43215",
+    "initial_budget": 500000,
+    "balance": 500000,
+    "spent": 0,
+    "squad": [],
+    "created_at": "2026-09-23T01:02:36.467069",
+    "username": "gg",
+    "password": "gg123",
+    "members": [
+      {
+        "id": "mem_f80dfb",
+        "name": "CVC Capital",
+        "role": "Franchise Owner",
+        "phone": "+91 98765 43215",
+        "email": "gg@khelospl.com"
+      },
+      {
+        "id": "mem_a93577",
+        "name": "Shubman G.",
+        "role": "Team Captain",
+        "phone": "",
+        "email": ""
+      },
+      {
+        "id": "mem_e7c14f",
+        "name": "Siddharth P.",
+        "role": "Auction Strategist",
+        "phone": "",
+        "email": ""
+      }
+    ],
+    "email": "gg@spl.edu"
+  },
+  {
+    "id": "team_b131b97d",
+    "username": "wqwq",
+    "email": "23-62b0@sphoorthyengg.ac.in",
+    "password": "wqwq123",
+    "name": "adscx",
+    "short_name": "wqwq",
+    "color": "#3b82f6",
+    "logo": "/static/uploads/team_5e334aa0_212.png",
+    "owner": "aesqwd",
+    "captain": "qasdc",
+    "finance": "",
+    "contact": "",
+    "initial_budget": 500000,
+    "balance": 500000,
+    "spent": 0,
+    "squad": [],
+    "members": [
+      {
+        "id": "mem_248b3d",
+        "name": "aesqwd",
+        "role": "Franchise Owner",
+        "phone": "",
+        "email": "23-62b0@sphoorthyengg.ac.in"
+      },
+      {
+        "id": "mem_04b51b",
+        "name": "qasdc",
+        "role": "Team Captain",
+        "phone": "",
+        "email": ""
+      }
+    ],
+    "created_at": "2026-09-23T23:47:44.333191"
+  }
+]

@@ -1,0 +1,452 @@
+{% extends "base.html" %}
+
+{% block title %}SPL Player Registration - Sphoorthy Premier League{% endblock %}
+
+{% block extra_css %}
+<style>
+.register-container {
+    max-width: 960px;
+    margin: 30px auto;
+    padding: 0 16px;
+}
+
+.register-card {
+    background: #0f172a;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+}
+
+.register-header {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 24px 30px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.register-header-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #fbbf24;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.register-form-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 28px;
+    padding: 30px;
+}
+
+@media (max-width: 768px) {
+    .register-form-grid {
+        grid-template-columns: 1fr;
+        padding: 20px 16px;
+        gap: 20px;
+    }
+}
+
+.photo-upload-zone {
+    background: rgba(30, 41, 59, 0.5);
+    border: 2px dashed rgba(251, 191, 36, 0.4);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.photo-upload-zone:hover {
+    border-color: #fbbf24;
+    background: rgba(251, 191, 36, 0.05);
+}
+
+.photo-preview-box {
+    width: 140px;
+    height: 175px; /* Passport-size 3.5:4.5 aspect ratio */
+    border-radius: 12px;
+    background: #1e293b;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    margin-bottom: 14px;
+    position: relative;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+.photo-preview-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.size-pill {
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-top: 6px;
+    display: inline-block;
+}
+.size-ok { background: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid #4ade80; }
+.size-err { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+
+/* Playing Role Selection Cards */
+.role-cards-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 8px;
+}
+
+@media (max-width: 480px) {
+    .role-cards-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.role-radio-card {
+    position: relative;
+}
+
+.role-radio-card input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.role-card-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 10px;
+    border-radius: 12px;
+    background: rgba(30, 41, 59, 0.7);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    font-weight: 800;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.role-radio-card input:checked + .role-card-label {
+    border-color: #fbbf24;
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+    box-shadow: 0 4px 15px rgba(251, 191, 36, 0.25);
+}
+
+.role-card-icon {
+    font-size: 1.5rem;
+}
+
+.btn-submit-reg {
+    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+    color: #0f172a;
+    font-size: 1.15rem;
+    font-weight: 900;
+    padding: 16px 24px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    box-shadow: 0 10px 25px rgba(251, 191, 36, 0.35);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-submit-reg:hover {
+    box-shadow: 0 12px 35px rgba(251, 191, 36, 0.6);
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="register-container">
+    <div class="register-card">
+        <!-- Header -->
+        <div class="register-header">
+            <div class="register-header-icon">
+                <i class="fa-solid fa-cricket-bat-ball"></i>
+            </div>
+            <div>
+                <h2 style="font-size: 1.5rem; color: #fff; margin: 0 0 4px 0;">SPL PLAYER REGISTRATION</h2>
+                <span style="font-size: 0.85rem; color: #94a3b8;">Complete your student registration for the Sphoorthy Premier League 2026</span>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages p-4 pb-0">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Form -->
+        <form action="{{ url_for('student_register_view') }}" method="POST" enctype="multipart/form-data" id="studentRegForm" onsubmit="return validateRegistrationForm()">
+            <div class="register-form-grid">
+                <!-- LEFT COLUMN: STUDENT INFORMATION -->
+                <div>
+                    <!-- Name -->
+                    <div class="form-group mb-3">
+                        <label for="studentName"><i class="fa-solid fa-user"></i> Full Name *</label>
+                        <input type="text" id="studentName" name="name" class="form-control" placeholder="Enter your full name" value="{{ student.name or '' }}" required autofocus>
+                    </div>
+
+                    <!-- Roll Number (Readonly pre-populated from login) -->
+                    <div class="form-group mb-3">
+                        <label><i class="fa-solid fa-id-card"></i> Roll Number (Authenticated)</label>
+                        <input type="text" class="form-control" value="{{ user.roll_no or user.username }}" readonly style="background: rgba(0,0,0,0.3); color: #38bdf8; font-weight: 800; cursor: not-allowed; border-color: rgba(56, 189, 248, 0.3);">
+                        <small style="color: #64748b; font-size: 0.75rem;">Official Roll Number is locked to your authenticated student session.</small>
+                    </div>
+
+                    <!-- Date of Birth (Readonly pre-populated) -->
+                    <div class="form-group mb-3">
+                        <label><i class="fa-solid fa-calendar-days"></i> Date of Birth</label>
+                        <input type="text" class="form-control" value="{{ student.dob or 'Authenticated' }}" readonly style="background: rgba(0,0,0,0.3); color: #94a3b8; cursor: not-allowed;">
+                    </div>
+
+                    <!-- Year Dropdown -->
+                    <div class="form-group mb-3">
+                        <label for="studentYear"><i class="fa-solid fa-graduation-cap"></i> Year of Study *</label>
+                        <select id="studentYear" name="year" class="form-control" required>
+                            <option value="">-- Select Year --</option>
+                            {% for y in years %}
+                                <option value="{{ y }}" {% if student.year == y %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Department Dropdown -->
+                    <div class="form-group mb-3">
+                        <label for="studentDepartment"><i class="fa-solid fa-building-columns"></i> Department *</label>
+                        <select id="studentDepartment" name="department" class="form-control" required>
+                            <option value="">-- Select Department --</option>
+                            {% for d in departments %}
+                                <option value="{{ d }}" {% if student.department == d %}selected{% endif %}>{{ d }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Playing Role Selection -->
+                    <div class="form-group mb-3">
+                        <label><i class="fa-solid fa-trophy"></i> Primary Playing Role *</label>
+                        <div class="role-cards-row">
+                            <div class="role-radio-card">
+                                <input type="radio" id="roleBatsman" name="role" value="Batsman" required {% if student.role == 'Batsman' %}checked{% endif %}>
+                                <label for="roleBatsman" class="role-card-label">
+                                    <span class="role-card-icon">🏏</span>
+                                    <span>BATSMAN</span>
+                                </label>
+                            </div>
+                            <div class="role-radio-card">
+                                <input type="radio" id="roleBowler" name="role" value="Bowler" required {% if student.role == 'Bowler' %}checked{% endif %}>
+                                <label for="roleBowler" class="role-card-label">
+                                    <span class="role-card-icon">⚡</span>
+                                    <span>BOWLER</span>
+                                </label>
+                            </div>
+                            <div class="role-radio-card">
+                                <input type="radio" id="roleAllRounder" name="role" value="All-Rounder" required {% if student.role == 'All-Rounder' or not student.role %}checked{% endif %}>
+                                <label for="roleAllRounder" class="role-card-label">
+                                    <span class="role-card-icon">👑</span>
+                                    <span>ALL-ROUNDER</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: PHOTO UPLOAD & PREVIEW -->
+                <div>
+                    <label><i class="fa-solid fa-camera"></i> Student Passport Photograph *</label>
+                    <div class="photo-upload-zone">
+                        <div class="photo-preview-box" id="previewBox">
+                            <img id="photoPreviewImg" src="{{ student.photo if student.photo else '' }}" class="{% if not student.photo %}hidden{% endif %}">
+                            <div id="photoPlaceholder" class="{% if student.photo %}hidden{% endif %}" style="text-align:center; color:#64748b;">
+                                <i class="fa-solid fa-user-ninja" style="font-size:3.5rem; display:block; margin-bottom:6px;"></i>
+                                <span style="font-size:0.75rem;">Passport Photo</span>
+                            </div>
+                        </div>
+
+                        <div id="photoSizeStatus" class="size-pill size-ok hidden">
+                            Size: <span id="photoSizeVal">0 KB</span> (≤ 100 KB)
+                        </div>
+
+                        <div style="margin: 12px 0 6px 0; font-size: 0.85rem; color: #cbd5e1; font-weight: 700;">
+                            Upload Profile / Passport-Size Photo
+                        </div>
+                        <small style="color: #94a3b8; font-size: 0.75rem; display: block; margin-bottom: 14px;">
+                            Clear face photo • JPG/PNG • Max size: <strong>100 KB</strong>
+                        </small>
+
+                        <input type="file" id="photoInput" name="photo" accept="image/jpeg,image/png,image/webp,image/jpg" capture="user" style="display:none;" onchange="handlePhotoSelection(this.files[0])">
+
+                        <div style="display:flex; gap:8px; width:100%;">
+                            <button type="button" class="btn btn-secondary btn-sm flex-1" onclick="document.getElementById('photoInput').click()">
+                                <i class="fa-solid fa-image"></i> Choose Photo / Camera
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:14px; margin-top:16px;">
+                        <small style="color:#94a3b8; font-size:0.75rem; line-height:1.4; display:block;">
+                            <i class="fa-solid fa-circle-info" style="color:#fbbf24;"></i> Auto-Optimization: Large photos will be automatically optimized to crisp passport-size under 100 KB before submission.
+                        </small>
+                    </div>
+
+                    <button type="submit" class="btn-submit-reg" id="submitRegBtn">
+                        <i class="fa-solid fa-circle-check"></i> SUBMIT REGISTRATION
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let selectedPhotoFile = null;
+
+function handlePhotoSelection(file) {
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        showToast('Please select a valid image file (JPG/PNG).', 'error');
+        return;
+    }
+
+    // Client-side image compression & optimization to ensure <= 100 KB
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+            // Compress with canvas
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            // Target passport aspect ratio max 400x500
+            const maxDim = 500;
+            if (width > height) {
+                if (width > maxDim) {
+                    height = Math.round((height * maxDim) / width);
+                    width = maxDim;
+                }
+            } else {
+                if (height > maxDim) {
+                    width = Math.round((width * maxDim) / height);
+                    height = maxDim;
+                }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Compress as JPEG
+            let quality = 0.85;
+            canvas.toBlob((blob) => {
+                const sizeKb = Math.round(blob.size / 1024);
+                const sizeStatus = document.getElementById('photoSizeStatus');
+                const sizeVal = document.getElementById('photoSizeVal');
+                const previewImg = document.getElementById('photoPreviewImg');
+                const placeholder = document.getElementById('photoPlaceholder');
+
+                previewImg.src = URL.createObjectURL(blob);
+                previewImg.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+
+                if (sizeStatus && sizeVal) {
+                    sizeStatus.classList.remove('hidden');
+                    sizeVal.textContent = `${sizeKb} KB`;
+
+                    if (sizeKb <= 100) {
+                        sizeStatus.className = 'size-pill size-ok';
+                    } else {
+                        sizeStatus.className = 'size-pill size-err';
+                        sizeStatus.textContent = `Photo size (${sizeKb} KB) exceeds 100 KB!`;
+                    }
+                }
+
+                // Replace file in input with compressed blob
+                const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' });
+                selectedPhotoFile = optimizedFile;
+
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(optimizedFile);
+                document.getElementById('photoInput').files = dataTransfer.files;
+
+            }, 'image/jpeg', quality);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function validateRegistrationForm() {
+    const name = (document.getElementById('studentName').value || '').trim();
+    const year = document.getElementById('studentYear').value;
+    const dept = document.getElementById('studentDepartment').value;
+    const roleChecked = document.querySelector('input[name="role"]:checked');
+    const photoInput = document.getElementById('photoInput');
+
+    if (!name) {
+        showToast('Please enter your full name.', 'warning');
+        return false;
+    }
+    if (!year) {
+        showToast('Please select your year of study.', 'warning');
+        return false;
+    }
+    if (!dept) {
+        showToast('Please select your department.', 'warning');
+        return false;
+    }
+    if (!roleChecked) {
+        showToast('Please select your playing role.', 'warning');
+        return false;
+    }
+    if (!photoInput.files || photoInput.files.length === 0) {
+        showToast('Please upload your passport-size photo.', 'warning');
+        return false;
+    }
+
+    const fileSizeKb = Math.round(photoInput.files[0].size / 1024);
+    if (fileSizeKb > 100) {
+        showToast(`Photo size (${fileSizeKb} KB) exceeds 100 KB limit. Please upload a smaller photo.`, 'error');
+        return false;
+    }
+
+    document.getElementById('submitRegBtn').disabled = true;
+    document.getElementById('submitRegBtn').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting Registration...';
+    return true;
+}
+</script>
+{% endblock %}

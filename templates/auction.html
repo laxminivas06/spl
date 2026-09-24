@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Anchor Announcement Console - Sphoorthy Premier League (SPL){% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auction.css') }}">
+<style>
+.anchor-workflow-banner {
+    background: linear-gradient(135deg, rgba(14, 116, 144, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 16px;
+    padding: 18px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.anchor-step-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #94a3b8;
+}
+.anchor-step-pill.active {
+    border-color: #38bdf8;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.15);
+}
+.chit-draw-box {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.btn-announce-glow {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 800;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+    transition: all 0.2s;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+.btn-announce-glow:hover {
+    box-shadow: 0 0 30px rgba(56, 189, 248, 0.7);
+    transform: translateY(-2px);
+}
+.anchor-read-card {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+}
+.anchor-status-box {
+    text-align: center;
+    padding: 14px;
+    border-radius: 10px;
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    color: #fbbf24;
+    font-weight: 800;
+    margin-top: 15px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auction-screen">
+    <!-- Anchor Workflow Bar -->
+    <div class="anchor-workflow-banner">
+        <div style="display:flex; align-items:center; gap: 12px;">
+            <div style="width:40px; height:40px; border-radius:10px; background:#0284c7; display:flex; align-items:center; justify-content:center; font-size:1.2rem; color:#fff;">
+                <i class="fa-solid fa-microphone-lines"></i>
+            </div>
+            <div>
+                <h3 style="margin:0; font-size:1.2rem; color:#fff;">ANCHOR ANNOUNCEMENT CONSOLE</h3>
+                <span style="font-size:0.8rem; color:#94a3b8;">Physical Bowl / Chit Player Announcement Workflow</span>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <div class="anchor-step-pill active"><i class="fa-solid fa-1"></i> Draw / Search Chit</div>
+            <div class="anchor-step-pill active"><i class="fa-solid fa-2"></i> Announce Player</div>
+            <div class="anchor-step-pill"><i class="fa-solid fa-3"></i> Admin Activates Live</div>
+        </div>
+    </div>
+
+    <!-- Quick Chit Picker Box -->
+    <div class="chit-draw-box">
+        <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:250px;">
+            <i class="fa-solid fa-ticket" style="color:#fbbf24; font-size:1.2rem;"></i>
+            <input type="text" id="chitRollInput" class="form-control" placeholder="Enter Drawn Chit Roll No (e.g. SPL-2024-01)..." autofocus>
+            <button class="btn btn-primary" onclick="lookupAndSelectChit()"><i class="fa-solid fa-magnifying-glass"></i> Find Chit</button>
+        </div>
+        <div style="color:#64748b; font-weight:700;">OR</div>
+        <button class="btn btn-gold" onclick="triggerRandomChit()"><i class="fa-solid fa-shuffle"></i> Spin / Pick Random Chit [Space]</button>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="auction-grid">
+        <!-- Center: Hero Player Announcement Card -->
+        <div class="center-player-card" id="playerHeroCard">
+            <!-- Empty state when no player is selected -->
+            <div class="player-empty-state" id="playerEmptyState">
+                <div class="empty-icon"><i class="fa-solid fa-cricket-bat-ball"></i></div>
+                <h3>NO CHIT DRAWN YET</h3>
+                <p>Pick a physical chit from the bowl, enter the Roll Number above, or click <strong>Pick Random Chit</strong>.</p>
+            </div>
+
+            <!-- Active Player Card to Announce -->
+            <div class="player-active-content hidden" id="playerActiveContent">
+                <div class="player-header-banner">
+                    <span class="player-roll-tag" id="playerRollTag">SPL-2024-01</span>
+                    <span class="player-year-tag" id="playerYearTag">4th Year / CSE</span>
+                    <span class="player-role-badge" id="playerRoleBadge">All-Rounder</span>
+                    <span class="badge badge-gold" id="anchorPlayerStatusBadge">CHIT DRAWN</span>
+                </div>
+
+                <div class="player-profile-row">
+                    <div class="player-photo-wrapper">
+                        <img id="playerPhoto" src="" alt="Player Photo" class="player-img hidden">
+                        <div id="playerAvatarFallback" class="player-avatar-fallback">
+                            <i class="fa-solid fa-user-ninja"></i>
+                        </div>
+                    </div>
+                    <div class="player-primary-info">
+                        <h1 class="player-name" id="playerName">Aarav Patel</h1>
+                        <div class="base-price-badge">
+                            <span class="base-label">BASE PRICE</span>
+                            <span class="base-value" id="playerBasePrice">₹ 10,000</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cricket Stats Breakdown -->
+                <div class="player-stats-section">
+                    <div class="stats-group">
+                        <div class="stats-group-title"><i class="fa-solid fa-baseball-bat-ball"></i> Batting Statistics</div>
+                        <div class="stats-grid">
+                            <div class="stat-cell"><span class="stat-label">Matches</span><span class="stat-val" id="statMatches">-</span></div>
+                            <div class="stat-cell"><span class="stat-label">Runs</span><span class="stat-val" id="statRuns">-</span></div>
+                            <div class="stat-cell"><span class="stat-label">Strike Rate</span><span class="stat-val" id="statSR">-</span></div>
+                            <div class="stat-cell"><span class="stat-label">50s / 100s</span><span class="stat-val" id="statCenturies">-</span></div>
+                        </div>
+                    </div>
+
+                    <div class="stats-group">
+                        <div class="stats-group-title"><i class="fa-solid fa-bowling-ball"></i> Bowling & Fielding</div>
+                        <div class="stats-grid">
+                            <div class="stat-cell"><span class="stat-label">Wickets</span><span class="stat-val" id="statWickets">-</span></div>
+                            <div class="stat-cell"><span class="stat-label">Economy</span><span class="stat-val" id="statEconomy">-</span></div>
+                            <div class="stat-cell"><span class="stat-label">Catches</span><span class="stat-val" id="statCatches">-</span></div>
+                            <div class="stat-cell"><span class="stat-label">Run Outs</span><span class="stat-val" id="statRunouts">-</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Anchor Action Bar -->
+                <div class="mt-4">
+                    <button class="btn-announce-glow" id="btnAnnouncePlayer" onclick="markPlayerAnnounced()">
+                        <i class="fa-solid fa-bullhorn"></i> ANNOUNCE PLAYER & SEND TO ADMIN
+                    </button>
+                    <div class="anchor-status-box hidden" id="anchorStatusMsg">
+                        <i class="fa-solid fa-circle-check"></i> Player Announced to Arena! Waiting for Admin to officially activate bidding...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Live Auction Status Monitor (Read-Only) -->
+        <div class="auction-sidebar">
+            <div class="anchor-read-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h3 style="font-size:1.1rem; color:#fff; margin:0;"><i class="fa-solid fa-tower-broadcast"></i> Live Arena Monitor</h3>
+                    <span class="badge badge-blue" id="sidebarAuctionState">READY</span>
+                </div>
+
+                <div style="background:rgba(0,0,0,0.3); padding:14px; border-radius:10px; margin-bottom:14px;">
+                    <div style="font-size:0.75rem; color:#94a3b8; font-weight:700;">CURRENT HIGHEST BID</div>
+                    <div style="font-size:1.8rem; font-weight:900; color:#4ade80;" id="sidebarCurrentBid">₹ 0</div>
+                    <div style="font-size:0.9rem; color:#f1f5f9; margin-top:4px;">
+                        Leader: <strong style="color:#fbbf24;" id="sidebarLeadingTeam">None</strong>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); padding:10px 14px; border-radius:8px; margin-bottom:16px;">
+                    <span style="font-size:0.85rem; color:#94a3b8;">Server Timer:</span>
+                    <strong style="font-size:1.2rem; font-family:monospace; color:#fbbf24;" id="sidebarTimer">00:30</strong>
+                </div>
+
+                <h4 style="font-size:0.9rem; color:#94a3b8; margin-bottom:10px;">Recent Bid Activity</h4>
+                <div class="bids-scroll-area" id="anchorRecentBids" style="max-height: 220px; overflow-y:auto;">
+                    <div style="color:#64748b; font-size:0.85rem; text-align:center; padding:15px;">No bids placed yet.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/auction.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,820 @@
+{% extends "base.html" %}
+
+{% block title %}SPL Admin Control Center - Sphoorthy Premier League{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<style>
+.credentials-tag {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    color: #38bdf8;
+    font-family: monospace;
+}
+.live-control-hero {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+.control-flex-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.timer-admin-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: 10px;
+}
+.timer-val {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #fbbf24;
+    font-family: monospace;
+}
+.action-btn-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.audit-badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.audit-PLAYER_ACTIVATED { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #38bdf8; }
+.audit-BID_PLACED { background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid #fbbf24; }
+.audit-PLAYER_SOLD { background: rgba(74, 222, 128, 0.2); color: #4ade80; border: 1px solid #4ade80; }
+.audit-PLAYER_UNSOLD { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #f87171; }
+.audit-AUCTION_PAUSED { background: rgba(249, 115, 22, 0.2); color: #fb923c; border: 1px solid #fb923c; }
+.audit-AUCTION_RESUMED { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #c084fc; }
+.audit-STUDENT_REGISTERED { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #38bdf8; }
+.audit-STUDENT_APPROVED { background: rgba(74, 222, 128, 0.2); color: #4ade80; border: 1px solid #4ade80; }
+.audit-STUDENT_REJECTED { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #f87171; }
+
+.students-responsive-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
+@media (max-width: 640px) {
+    .students-responsive-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.student-admin-card {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 16px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+}
+.student-admin-card:hover {
+    border-color: rgba(251, 191, 36, 0.4);
+    background: rgba(30, 41, 59, 0.85);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+.student-card-header {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+}
+.student-thumb {
+    width: 68px;
+    height: 82px;
+    border-radius: 10px;
+    border: 2px solid rgba(251, 191, 36, 0.5);
+    object-fit: cover;
+    background: #0f172a;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+.student-thumb:hover {
+    transform: scale(1.05);
+}
+.student-card-meta {
+    flex: 1;
+    min-width: 0;
+}
+.student-card-name {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #f8fafc;
+    margin: 0 0 2px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.student-card-roll {
+    font-family: monospace;
+    color: #fbbf24;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+.student-card-dept {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    margin-top: 3px;
+}
+.student-card-role-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    margin-top: 6px;
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.4);
+}
+.student-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.student-status-badge-pending {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+    border: 1px solid #fbbf24;
+}
+.student-status-badge-approved {
+    background: rgba(74, 222, 128, 0.15);
+    color: #4ade80;
+    border: 1px solid #4ade80;
+}
+.student-status-badge-rejected {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid #f87171;
+}
+.student-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <!-- Live Auction Master Control Banner -->
+    <div class="live-control-hero">
+        <div class="control-flex-row">
+            <div>
+                <div style="display:flex; align-items:center; gap: 10px; margin-bottom: 4px;">
+                    <span class="live-badge-glow" id="adminAuctionStatusBadge">IDLE</span>
+                    <h2 style="font-size: 1.4rem; color: #fff; margin:0;" id="adminActivePlayerTitle">No Active Player</h2>
+                </div>
+                <p style="color: #94a3b8; font-size: 0.85rem; margin:0;">
+                    Leading Bid: <strong style="color:#4ade80;" id="adminCurrentBid">₹ 0</strong> |
+                    Leader: <strong style="color:#fbbf24;" id="adminLeadingTeam">None</strong> |
+                    Next Bid: <strong style="color:#38bdf8;" id="adminNextBid">₹ 10,000</strong>
+                </p>
+            </div>
+
+            <!-- Server Timer Widget -->
+            <div class="timer-admin-box">
+                <i class="fa-solid fa-stopwatch" style="color: #fbbf24; font-size: 1.4rem;"></i>
+                <div>
+                    <div style="font-size: 0.7rem; color: #94a3b8; font-weight:700;">SERVER TIMER</div>
+                    <div class="timer-val" id="adminTimerDisplay">00:30</div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                    <button class="btn btn-secondary btn-xs" onclick="extendTimer(15)" title="Extend +15s">+15s</button>
+                    <button class="btn btn-secondary btn-xs" onclick="extendTimer(30)" title="Extend +30s">+30s</button>
+                </div>
+            </div>
+
+            <!-- Master Action Controls -->
+            <div class="action-btn-group">
+                <button class="btn btn-secondary btn-sm" id="btnPauseResume" onclick="togglePauseResume()">
+                    <i class="fa-solid fa-pause"></i> Pause
+                </button>
+                <button class="btn btn-primary btn-sm" id="btnActivateOnStage" onclick="activateCurrentPlayer()">
+                    <i class="fa-solid fa-play"></i> Activate Player
+                </button>
+                <button class="btn btn-success btn-sm" onclick="openSoldModal()">
+                    <i class="fa-solid fa-gavel"></i> Mark SOLD
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="confirmUnsold()">
+                    <i class="fa-solid fa-ban"></i> Mark UNSOLD
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="undoLastBid()">
+                    <i class="fa-solid fa-rotate-left"></i> Undo Bid
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Tabs Bar -->
+    <div class="admin-tabs-bar">
+        <div class="tab-links">
+            <button class="tab-btn active" data-tab="tab-overview"><i class="fa-solid fa-chart-pie"></i> Overview</button>
+            <button class="tab-btn" data-tab="tab-student-approvals"><i class="fa-solid fa-user-check"></i> Student Approvals <span class="badge" id="pendingApprovalBadge" style="background:#ef4444; color:#fff; font-size:0.75rem; padding:2px 7px; border-radius:10px; margin-left:6px; display:none;">0</span></button>
+            <button class="tab-btn" data-tab="tab-players"><i class="fa-solid fa-users"></i> Players Pool</button>
+            <button class="tab-btn" data-tab="tab-teams"><i class="fa-solid fa-shield-halved"></i> 6 Franchises</button>
+            <button class="tab-btn" data-tab="tab-second-chance"><i class="fa-solid fa-repeat"></i> 2nd Chance Pool</button>
+            <button class="tab-btn" data-tab="tab-audit"><i class="fa-solid fa-clock-rotate-left"></i> Audit Trail</button>
+            <button class="tab-btn" data-tab="tab-excel"><i class="fa-solid fa-file-excel"></i> Bulk Import</button>
+            <button class="tab-btn" data-tab="tab-settings"><i class="fa-solid fa-gears"></i> Slabs & Rules</button>
+        </div>
+        <div class="tab-actions">
+            <button class="btn btn-secondary btn-sm" onclick="fetchAdminData()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </div>
+    </div>
+
+    <!-- TAB 1: OVERVIEW DASHBOARD -->
+    <div class="tab-content active" id="tab-overview">
+        <!-- KPI Metric Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon icon-blue"><i class="fa-solid fa-users"></i></div>
+                <div class="kpi-data">
+                    <span class="kpi-title">TOTAL PLAYERS</span>
+                    <h3 class="kpi-value" id="kpiTotalPlayers">0</h3>
+                    <span class="kpi-sub" id="kpiAvailableCount">0 in pool</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon icon-green"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="kpi-data">
+                    <span class="kpi-title">SOLD PLAYERS</span>
+                    <h3 class="kpi-value" id="kpiSoldPlayers">0</h3>
+                    <span class="kpi-sub" id="kpiUnsoldCount">0 unsold</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon icon-gold"><i class="fa-solid fa-sack-dollar"></i></div>
+                <div class="kpi-data">
+                    <span class="kpi-title">TOTAL SPENT</span>
+                    <h3 class="kpi-value" id="kpiTotalSpent">₹ 0</h3>
+                    <span class="kpi-sub" id="kpiRemainingPurse">₹ 30,00,000 total purse</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon icon-purple"><i class="fa-solid fa-crown"></i></div>
+                <div class="kpi-data">
+                    <span class="kpi-title">HIGHEST BID</span>
+                    <h3 class="kpi-value" id="kpiHighestBid">₹ 0</h3>
+                    <span class="kpi-sub" id="kpiHighestPlayer">None</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Franchises Table -->
+        <div class="admin-section-card mt-4">
+            <div class="section-card-header">
+                <h3><i class="fa-solid fa-shield-halved"></i> 6 Franchises Live Standing</h3>
+                <span class="badge badge-gold">₹ 5,00,000 Starting Virtual Purse</span>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Franchise</th>
+                            <th>Authorized Gmail</th>
+                            <th>Squad Size</th>
+                            <th>Remaining Slots</th>
+                            <th>Spent</th>
+                            <th>Remaining Purse</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTeamsOverviewTable">
+                        <tr><td colspan="7" class="text-center py-4">Loading teams...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB: STUDENT REGISTRATIONS & APPROVALS -->
+    <div class="tab-content" id="tab-student-approvals">
+        <div class="admin-section-card">
+            <div class="section-card-header" style="flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-user-check" style="color: #fbbf24;"></i>
+                        Student Player Registrations & Verification
+                    </h3>
+                    <p style="margin: 4px 0 0; color: #94a3b8; font-size: 0.85rem;">
+                        Review registered college students, verify photos & department eligibility, and accept or reject candidates before auction enrollment.
+                    </p>
+                </div>
+                <div class="section-card-actions">
+                    <button class="btn btn-success btn-sm" onclick="approveAllStudents()">
+                        <i class="fa-solid fa-check-double"></i> Accept All Pending
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="fetchStudentApprovals()">
+                        <i class="fa-solid fa-rotate"></i> Reload
+                    </button>
+                </div>
+            </div>
+
+            <!-- Verification Status Summary Cards -->
+            <div class="kpi-grid" style="margin-top: 16px; margin-bottom: 20px;">
+                <div class="kpi-card" style="cursor: pointer;" onclick="setStudentStatusFilter('')">
+                    <div class="kpi-icon icon-blue"><i class="fa-solid fa-users"></i></div>
+                    <div class="kpi-data">
+                        <span class="kpi-title">TOTAL REGISTERED</span>
+                        <h3 class="kpi-value" id="statStudentTotal">0</h3>
+                        <span class="kpi-sub">Students registered</span>
+                    </div>
+                </div>
+                <div class="kpi-card" style="cursor: pointer; border-color: rgba(251, 191, 36, 0.4);" onclick="setStudentStatusFilter('PENDING')">
+                    <div class="kpi-icon icon-gold"><i class="fa-solid fa-clock"></i></div>
+                    <div class="kpi-data">
+                        <span class="kpi-title">PENDING REVIEW</span>
+                        <h3 class="kpi-value" id="statStudentPending" style="color: #fbbf24;">0</h3>
+                        <span class="kpi-sub">Awaiting verification</span>
+                    </div>
+                </div>
+                <div class="kpi-card" style="cursor: pointer; border-color: rgba(74, 222, 128, 0.4);" onclick="setStudentStatusFilter('APPROVED')">
+                    <div class="kpi-icon icon-green"><i class="fa-solid fa-circle-check"></i></div>
+                    <div class="kpi-data">
+                        <span class="kpi-title">APPROVED (IN POOL)</span>
+                        <h3 class="kpi-value" id="statStudentApproved" style="color: #4ade80;">0</h3>
+                        <span class="kpi-sub">Eligible for auction</span>
+                    </div>
+                </div>
+                <div class="kpi-card" style="cursor: pointer; border-color: rgba(239, 68, 68, 0.4);" onclick="setStudentStatusFilter('REJECTED')">
+                    <div class="kpi-icon icon-purple"><i class="fa-solid fa-circle-xmark"></i></div>
+                    <div class="kpi-data">
+                        <span class="kpi-title">REJECTED</span>
+                        <h3 class="kpi-value" id="statStudentRejected" style="color: #f87171;">0</h3>
+                        <span class="kpi-sub">Excluded from auction</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters Bar -->
+            <div style="background: rgba(15, 23, 42, 0.6); padding: 14px 18px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;">
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; flex: 1; min-width: 280px;">
+                    <div style="position: relative; flex: 1; min-width: 200px;">
+                        <input type="text" id="studentSearchInput" class="form-control form-control-sm" placeholder="Search by name, roll number, dept..." onkeyup="filterStudentsList()" style="padding-left: 32px;">
+                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 9px; color: #64748b;"></i>
+                    </div>
+                    <select id="studentFilterStatus" class="form-control form-control-sm" onchange="filterStudentsList()" style="width: auto;">
+                        <option value="">All Statuses</option>
+                        <option value="PENDING" selected>Pending Review</option>
+                        <option value="APPROVED">Approved Only</option>
+                        <option value="REJECTED">Rejected Only</option>
+                    </select>
+                    <select id="studentFilterRole" class="form-control form-control-sm" onchange="filterStudentsList()" style="width: auto;">
+                        <option value="">All Roles</option>
+                        <option value="Batsman">Batsman</option>
+                        <option value="Bowler">Bowler</option>
+                        <option value="All-Rounder">All-Rounder</option>
+                    </select>
+                </div>
+                <div style="color: #94a3b8; font-size: 0.85rem;" id="studentResultCountText">
+                    Showing 0 students
+                </div>
+            </div>
+
+            <!-- Students Cards Container (Responsive Grid) -->
+            <div id="studentsCardsContainer" class="students-responsive-grid">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: PLAYER MANAGEMENT -->
+    <div class="tab-content" id="tab-players">
+        <div class="admin-section-card">
+            <div class="section-card-header">
+                <h3><i class="fa-solid fa-users"></i> SPL Players Management</h3>
+                <div class="section-card-actions">
+                    <input type="text" id="playerSearchInput" class="form-control form-control-sm" placeholder="Search by name, roll no..." onkeyup="filterPlayersList()">
+                    <select id="playerFilterStatus" class="form-control form-control-sm" onchange="filterPlayersList()">
+                        <option value="">All Statuses</option>
+                        <option value="AVAILABLE">Available</option>
+                        <option value="SOLD">Sold</option>
+                        <option value="UNSOLD">Unsold</option>
+                    </select>
+                    <select id="playerFilterRole" class="form-control form-control-sm" onchange="filterPlayersList()">
+                        <option value="">All Roles</option>
+                        <option value="Batsman">Batsman</option>
+                        <option value="Bowler">Bowler</option>
+                        <option value="All-Rounder">All-Rounder</option>
+                        <option value="Wicket Keeper">Wicket Keeper</option>
+                    </select>
+                    <button class="btn btn-gold btn-sm" onclick="openAddPlayerModal()"><i class="fa-solid fa-user-plus"></i> Add Player</button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Roll No</th>
+                            <th>Year / Branch</th>
+                            <th>Role</th>
+                            <th>Base Price</th>
+                            <th>Status</th>
+                            <th>Sold Price / Team</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminPlayersTable">
+                        <tr><td colspan="8" class="text-center py-4">Loading players...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: FRANCHISE MANAGEMENT -->
+    <div class="tab-content" id="tab-teams">
+        <div class="admin-section-card">
+            <div class="section-card-header">
+                <h3><i class="fa-solid fa-shield-halved"></i> 6 SPL Franchises</h3>
+                <button class="btn btn-primary btn-sm" onclick="openAddTeamModal()"><i class="fa-solid fa-plus"></i> Add Franchise</button>
+            </div>
+            <div class="teams-cards-grid" id="adminTeamsGrid">
+                <!-- Team Cards rendered via admin.js -->
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: SECOND CHANCE POOL -->
+    <div class="tab-content" id="tab-second-chance">
+        <div class="admin-section-card">
+            <div class="section-card-header">
+                <div>
+                    <h3><i class="fa-solid fa-repeat"></i> Second-Chance Auction Pool</h3>
+                    <p style="color:#94a3b8; font-size:0.85rem; margin:0;">Select unsold players to re-introduce into the live auction pool for Round 2.</p>
+                </div>
+                <button class="btn btn-gold btn-sm" onclick="reactivateSelectedUnsold()"><i class="fa-solid fa-rotate"></i> Reactivate Selected Players</button>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAllUnsold" onchange="toggleSelectAllUnsold(this)"></th>
+                            <th>Player Name</th>
+                            <th>Roll No</th>
+                            <th>Role</th>
+                            <th>Base Price</th>
+                            <th>Unsold Timestamp</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminUnsoldTable">
+                        <tr><td colspan="7" class="text-center py-4">No unsold players currently.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 5: AUDIT TRAIL -->
+    <div class="tab-content" id="tab-audit">
+        <div class="admin-section-card">
+            <div class="section-card-header">
+                <h3><i class="fa-solid fa-clock-rotate-left"></i> Real-Time Audit Trail</h3>
+                <button class="btn btn-secondary btn-sm" onclick="loadAuditLogs()"><i class="fa-solid fa-rotate"></i> Refresh Log</button>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Action</th>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>Player</th>
+                            <th>Franchise</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminAuditTable">
+                        <tr><td colspan="7" class="text-center py-4">Loading audit logs...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 6: EXCEL IMPORT -->
+    <div class="tab-content" id="tab-excel">
+        <div class="admin-section-card">
+            <div class="section-card-header">
+                <h3><i class="fa-solid fa-file-excel"></i> Bulk Player Excel / CSV Import</h3>
+                <a href="/api/players/sample-template" class="btn btn-secondary btn-sm"><i class="fa-solid fa-download"></i> Download Template</a>
+            </div>
+            <div class="p-4">
+                <div class="excel-drop-zone" id="excelDropZone">
+                    <i class="fa-solid fa-file-arrow-up excel-icon"></i>
+                    <h4>Drag & Drop Excel or CSV File Here</h4>
+                    <p>Supports .xlsx, .xls, .csv with columns: Name, Roll No, Year, Role, Base Price, Runs, Wickets, Strike Rate</p>
+                    <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handleExcelFile(this.files[0])">
+                    <button class="btn btn-gold mt-3" onclick="document.getElementById('excelFileInput').click()"><i class="fa-solid fa-folder-open"></i> Browse File</button>
+                </div>
+                <div id="excelImportResult" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 7: SETTINGS & SLABS -->
+    <div class="tab-content" id="tab-settings">
+        <div class="admin-section-card">
+            <div class="section-card-header">
+                <h3><i class="fa-solid fa-gears"></i> SPL Auction Rules & Increment Slabs</h3>
+                <button class="btn btn-primary btn-sm" onclick="saveAdminSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Rules</button>
+            </div>
+            <div class="p-4">
+                <form id="settingsForm">
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label>League Name</label>
+                            <input type="text" id="settingLeagueName" class="form-control" value="Sphoorthy Premier League (SPL)">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>Default Franchise Purse (₹)</label>
+                            <input type="number" id="settingDefaultBudget" class="form-control" value="500000">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>Max Squad Size (Players)</label>
+                            <input type="number" id="settingMaxSquad" class="form-control" value="15">
+                        </div>
+                    </div>
+                    <div class="form-row mt-3">
+                        <div class="form-group col-md-4">
+                            <label>Base Price (₹)</label>
+                            <input type="number" id="settingBasePrice" class="form-control" value="10000">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>Default Timer Countdown (Seconds)</label>
+                            <input type="number" id="settingTimerSeconds" class="form-control" value="30">
+                        </div>
+                    </div>
+
+                    <h4 class="mt-4 mb-3" style="color:#fbbf24;"><i class="fa-solid fa-arrow-up-right-dots"></i> Bid Increment Slabs</h4>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Bid Amount Range (From ₹)</th>
+                                    <th>Bid Amount Range (To ₹)</th>
+                                    <th>Minimum Increment (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>₹ 10,000</td>
+                                    <td>₹ 20,000</td>
+                                    <td><strong>+ ₹ 2,000</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>₹ 20,000</td>
+                                    <td>₹ 50,000</td>
+                                    <td><strong>+ ₹ 5,000</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>₹ 50,000</td>
+                                    <td>₹ 1,00,000</td>
+                                    <td><strong>+ ₹ 10,000</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>₹ 1,00,000</td>
+                                    <td>Above</td>
+                                    <td><strong>+ ₹ 10,000</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <hr class="my-4" style="border-color: rgba(255,255,255,0.1);">
+                    <h4 class="text-danger mb-2"><i class="fa-solid fa-triangle-exclamation"></i> Emergency Danger Zone</h4>
+                    <p style="color:#94a3b8; font-size:0.85rem;">Resetting auction will restore all teams to ₹5,00,000 balance and clear squad assignments.</p>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="fullAuctionReset()"><i class="fa-solid fa-trash-can"></i> Full Auction Reset</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: SOLD Confirmation -->
+<div class="modal-overlay hidden" id="soldConfirmModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-gavel" style="color:#4ade80;"></i> Confirm Player SOLD</h3>
+            <button class="modal-close-btn" onclick="closeSoldModal()">&times;</button>
+        </div>
+        <div class="modal-body p-4 text-center">
+            <p style="font-size: 1.1rem; color: #f1f5f9;">Are you sure you want to finalize this sale?</p>
+            <div style="background: rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:16px; margin:16px 0;">
+                <h2 id="modalSoldPlayerName" style="color:#fbbf24; margin:0 0 6px 0;">Player Name</h2>
+                <div style="font-size: 1.2rem; color: #fff; margin-bottom:4px;">
+                    Winning Franchise: <strong id="modalSoldTeamName" style="color:#38bdf8;">Team</strong>
+                </div>
+                <div style="font-size: 1.6rem; font-weight:900; color:#4ade80;" id="modalSoldPrice">
+                    ₹ 0
+                </div>
+            </div>
+            <div style="display:flex; justify-content:center; gap:12px; margin-top:20px;">
+                <button class="btn btn-secondary" onclick="closeSoldModal()">Cancel</button>
+                <button class="btn btn-success btn-lg" onclick="executeSold()"><i class="fa-solid fa-check"></i> Confirm SOLD</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add/Edit Player -->
+<div class="modal-overlay hidden" id="playerModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 id="playerModalTitle"><i class="fa-solid fa-user-plus"></i> Add Player</h3>
+            <button class="modal-close-btn" onclick="closePlayerModal()">&times;</button>
+        </div>
+        <div class="modal-body p-4">
+            <form id="playerForm" onsubmit="savePlayerForm(event)">
+                <input type="hidden" id="editPlayerId" name="player_id">
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>Full Name *</label>
+                        <input type="text" id="formPlayerName" name="name" class="form-control" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Roll Number *</label>
+                        <input type="text" id="formPlayerRoll" name="roll_no" class="form-control" placeholder="e.g. SPL-2024-01" required>
+                    </div>
+                </div>
+                <div class="form-row mt-2">
+                    <div class="form-group col-md-4">
+                        <label>Year / Branch</label>
+                        <input type="text" id="formPlayerYear" name="year" class="form-control" placeholder="e.g. 4th Year / CSE">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Playing Role</label>
+                        <select id="formPlayerRole" name="role" class="form-control">
+                            <option value="Batsman">Batsman</option>
+                            <option value="Bowler">Bowler</option>
+                            <option value="All-Rounder">All-Rounder</option>
+                            <option value="Wicket Keeper">Wicket Keeper</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Base Price (₹)</label>
+                        <input type="number" id="formPlayerBasePrice" name="base_price" class="form-control" value="10000">
+                    </div>
+                </div>
+                <div class="form-row mt-2">
+                    <div class="form-group col-md-3">
+                        <label>Runs</label>
+                        <input type="number" id="formPlayerRuns" name="runs" class="form-control" value="0">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>Wickets</label>
+                        <input type="number" id="formPlayerWickets" name="wickets" class="form-control" value="0">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>Strike Rate</label>
+                        <input type="number" step="0.1" id="formPlayerSR" name="strike_rate" class="form-control" value="0.0">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>50s / 100s</label>
+                        <input type="number" id="formPlayerFifties" name="fifties" class="form-control" value="0">
+                    </div>
+                </div>
+                <div class="form-group mt-3">
+                    <label>Player Photo</label>
+                    <input type="file" id="formPlayerPhoto" name="photo" class="form-control" accept="image/*">
+                </div>
+                <div class="modal-actions mt-4">
+                    <button type="button" class="btn btn-secondary" onclick="closePlayerModal()">Cancel</button>
+                    <button type="submit" class="btn btn-gold"><i class="fa-solid fa-floppy-disk"></i> Save Player</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add/Edit Franchise -->
+<div class="modal-overlay hidden" id="teamModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 id="teamModalTitle"><i class="fa-solid fa-shield-halved"></i> Franchise Profile</h3>
+            <button class="modal-close-btn" onclick="closeTeamModal()">&times;</button>
+        </div>
+        <div class="modal-body p-4">
+            <form id="teamForm" onsubmit="saveTeamForm(event)">
+                <input type="hidden" id="editTeamId" name="team_id">
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>Franchise Name *</label>
+                        <input type="text" id="formTeamName" name="name" class="form-control" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Short Code (e.g. BLR, CSS) *</label>
+                        <input type="text" id="formTeamShort" name="short_name" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-row mt-2">
+                    <div class="form-group col-md-6">
+                        <label>Authorized Gmail *</label>
+                        <input type="email" id="formTeamEmail" name="email" class="form-control" placeholder="team@spl.edu" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Initial Virtual Purse (₹)</label>
+                        <input type="number" id="formTeamBudget" name="initial_budget" class="form-control" value="500000">
+                    </div>
+                </div>
+                <div class="form-row mt-2">
+                    <div class="form-group col-md-6">
+                        <label>Owner Name</label>
+                        <input type="text" id="formTeamOwner" name="owner" class="form-control">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Captain Name</label>
+                        <input type="text" id="formTeamCaptain" name="captain" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row mt-2">
+                    <div class="form-group col-md-6">
+                        <label>Theme Color</label>
+                        <input type="color" id="formTeamColor" name="color" class="form-control" value="#3b82f6" style="height:42px;">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Franchise Logo</label>
+                        <input type="file" id="formTeamLogo" name="logo" class="form-control" accept="image/*">
+                    </div>
+                </div>
+                <div class="modal-actions mt-4">
+                    <button type="button" class="btn btn-secondary" onclick="closeTeamModal()">Cancel</button>
+                    <button type="submit" class="btn btn-gold"><i class="fa-solid fa-floppy-disk"></i> Save Franchise</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Reject Student -->
+<div class="modal-overlay hidden" id="rejectStudentModal">
+    <div class="modal-card" style="max-width: 480px;">
+        <div class="modal-header" style="background: rgba(239, 68, 68, 0.15); border-bottom: 1px solid rgba(239, 68, 68, 0.3);">
+            <h3 style="color: #f87171; margin:0; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-ban"></i> Reject Player Registration
+            </h3>
+            <button class="modal-close-btn" onclick="closeRejectStudentModal()">&times;</button>
+        </div>
+        <div class="modal-body p-4">
+            <p style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 14px;">
+                Reject registration for <strong id="rejectStudentNameDisplay" style="color:#fff;"></strong> (<span id="rejectStudentRollDisplay" style="font-family:monospace; color:#fbbf24; font-weight:700;"></span>)?
+            </p>
+            <input type="hidden" id="rejectStudentRollInput">
+            <div class="form-group">
+                <label style="color:#94a3b8; font-size:0.85rem; font-weight:700;">Reason for Rejection (Visible on Student Dashboard)</label>
+                <textarea id="rejectStudentReasonInput" class="form-control" rows="3" placeholder="e.g. Photograph is not clear / Passport-style face photo required. Please re-upload."></textarea>
+            </div>
+            <div class="modal-actions mt-4" style="display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" class="btn btn-secondary" onclick="closeRejectStudentModal()">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="submitRejectStudent()"><i class="fa-solid fa-xmark"></i> Reject Candidate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Student Passport Photo Preview -->
+<div class="modal-overlay hidden" id="studentPhotoModal" onclick="closeStudentPhotoModal()">
+    <div class="modal-card" style="max-width: 400px; text-align:center; background:#0f172a; border:2px solid #fbbf24; padding:20px; border-radius:20px;" onclick="event.stopPropagation()">
+        <img id="modalStudentPhotoImg" src="" alt="Student Photo" style="width:100%; max-height:420px; object-fit:cover; border-radius:14px; border:2px solid rgba(255,255,255,0.1); margin-bottom:14px;">
+        <h3 id="modalStudentPhotoName" style="color:#ffffff; margin:0 0 4px 0; font-weight:800;"></h3>
+        <div id="modalStudentPhotoRoll" style="color:#fbbf24; font-family:monospace; font-weight:700; font-size:1.1rem; margin-bottom:6px;"></div>
+        <div id="modalStudentPhotoMeta" style="color:#94a3b8; font-size:0.9rem; margin-bottom:16px;"></div>
+        <button class="btn btn-secondary btn-sm" onclick="closeStudentPhotoModal()">Close Preview</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

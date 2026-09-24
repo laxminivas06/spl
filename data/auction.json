@@ -1,0 +1,16 @@
+{
+  "status": "READY",
+  "active_player_id": null,
+  "announced_player_id": null,
+  "current_bid": 0,
+  "leading_team_id": null,
+  "leading_team_name": null,
+  "next_bid": 0,
+  "bid_count": 0,
+  "timer_duration": 30,
+  "timer_remaining": 30,
+  "timer_end_timestamp": null,
+  "is_timer_paused": false,
+  "pause_remaining_seconds": 30,
+  "last_updated": "2026-09-24T00:04:18.309397"
+}

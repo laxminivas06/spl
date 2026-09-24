@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sphoorthy Premier League (SPL) - Cricket Auction 2026{% endblock %}</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="dark-theme">
+    <!-- Top Header Bar -->
+    <header class="app-header">
+        <div class="header-left">
+            <button class="mobile-menu-toggle" id="mobileMenuBtn" aria-label="Toggle navigation">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <a href="{{ url_for('index_view') }}" class="brand-logo">
+                <span class="brand-icon"><i class="fa-solid fa-trophy"></i></span>
+                <div class="brand-text">
+                    <span class="league-title">SPHOORTHY <strong>SPL</strong></span>
+                    <span class="league-sub">CRICKET AUCTION 2026</span>
+                </div>
+            </a>
+            <div class="live-pill" id="sseConnectionPill">
+                <span class="live-dot"></span>
+                <span id="sseStatusText">LIVE SYNC</span>
+            </div>
+        </div>
+
+        <nav class="header-nav" id="mainHeaderNav">
+            {% set user = session.get('user', {}) %}
+            {% set role = user.get('role') %}
+
+            {% if role == 'team' %}
+                <a href="{{ url_for('team_dashboard_view') }}" class="nav-item {% if request.path == '/team' %}active{% endif %}">
+                    <i class="fa-solid fa-shield-halved"></i> My Franchise Portal
+                </a>
+            {% elif role == 'anchor' %}
+                <a href="{{ url_for('auction_view') }}" class="nav-item {% if request.path in ['/auction', '/anchor'] %}active{% endif %}">
+                    <i class="fa-solid fa-microphone-lines"></i> Anchor Console
+                </a>
+            {% elif role == 'admin' %}
+                <a href="{{ url_for('admin_view') }}" class="nav-item {% if request.path == '/admin' %}active{% endif %}">
+                    <i class="fa-solid fa-sliders"></i> Admin Console
+                </a>
+                <a href="{{ url_for('auction_view') }}" class="nav-item {% if request.path in ['/auction', '/anchor'] %}active{% endif %}">
+                    <i class="fa-solid fa-microphone"></i> Anchor View
+                </a>
+                <a href="{{ url_for('team_dashboard_view') }}" class="nav-item {% if request.path == '/team' %}active{% endif %}">
+                    <i class="fa-solid fa-shield-halved"></i> Team View
+                </a>
+            {% endif %}
+
+            <a href="{{ url_for('projector_view') }}" target="_blank" class="nav-item">
+                <i class="fa-solid fa-tv"></i> Public Display <i class="fa-solid fa-arrow-up-right-from-square external-icon"></i>
+            </a>
+
+            <a href="{{ url_for('squads_view') }}" class="nav-item {% if request.path == '/squads' %}active{% endif %}">
+                <i class="fa-solid fa-users-viewfinder"></i> Squads
+            </a>
+
+            <a href="{{ url_for('history_view') }}" class="nav-item {% if request.path == '/history' %}active{% endif %}">
+                <i class="fa-solid fa-clock-rotate-left"></i> Bid History
+            </a>
+        </nav>
+
+        <div class="header-right">
+            <!-- Audio FX Toggle -->
+            <button id="soundToggleBtn" class="action-icon-btn" title="Toggle Sound FX">
+                <i class="fa-solid fa-volume-high"></i>
+            </button>
+
+            <!-- Role Badge / Profile Pill -->
+            {% if session.get('user') %}
+            <div class="role-selector-pill" id="roleSwitcher">
+                <span class="role-label">
+                    {% if session.get('user', {}).get('role') == 'admin' %}
+                        <i class="fa-solid fa-user-shield" style="color: #fbbf24;"></i> SPL Admin
+                    {% elif session.get('user', {}).get('role') == 'anchor' %}
+                        <i class="fa-solid fa-microphone-lines" style="color: #38bdf8;"></i> Anchor
+                    {% else %}
+                        <i class="fa-solid fa-shield-halved" style="color: #4ade80;"></i> {{ session.get('user', {}).get('team_name', 'Franchise') }}
+                    {% endif %}
+                </span>
+                <div class="role-dropdown">
+                    <div class="user-role-meta">
+                        <small style="color: #94a3b8;">Signed in as:</small>
+                        <strong style="color: #f1f5f9; display:block; font-size: 0.85rem;">{{ session.get('user', {}).get('email', session.get('user', {}).get('username')) }}</strong>
+                    </div>
+                    <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;">
+                    <button class="role-opt" onclick="switchRole('anchor')">
+                        <i class="fa-solid fa-microphone"></i> Anchor Mode
+                    </button>
+                    <button class="role-opt" onclick="switchRole('admin')">
+                        <i class="fa-solid fa-user-shield"></i> Admin Mode
+                    </button>
+                    <button class="role-opt" onclick="switchRole('rcb')">
+                        <i class="fa-solid fa-shield-halved"></i> Team RCB
+                    </button>
+                    <a href="{{ url_for('logout_view') }}" class="role-opt logout-opt">
+                        <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <a href="{{ url_for('login_view') }}" class="btn btn-gold btn-sm">
+                <i class="fa-solid fa-right-to-bracket"></i> Sign In
+            </a>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Global Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Main Content Block -->
+    <main class="main-container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Shared Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const mobileBtn = document.getElementById('mobileMenuBtn');
+        const nav = document.getElementById('mainHeaderNav');
+        if (mobileBtn && nav) {
+            mobileBtn.addEventListener('click', () => {
+                nav.classList.toggle('nav-open');
+            });
+        }
+    });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,519 @@
+{% extends "base.html" %}
+
+{% block title %}Franchise Dashboard - {{ current_team.name if current_team else 'SPL Team Portal' }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.team-dash-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.team-hero-banner {
+    position: relative;
+    border-radius: 18px;
+    padding: 24px 30px;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+
+.team-hero-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 8px;
+    height: 100%;
+    background: var(--team-color, #3b82f6);
+}
+
+.team-identity {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.team-brand-logo {
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #fff;
+    background: var(--team-color, #3b82f6);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+}
+
+.team-brand-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.team-titles h1 {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #f8fafc;
+    margin: 0 0 4px 0;
+}
+
+.purse-counter-card {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(74, 222, 128, 0.3);
+    border-radius: 14px;
+    padding: 16px 24px;
+    text-align: right;
+}
+
+.purse-counter-val {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #4ade80;
+    font-family: var(--font-heading);
+    letter-spacing: -0.5px;
+}
+
+.team-layout-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 992px) {
+    .team-layout-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.live-bidding-card {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+}
+
+.bid-action-box {
+    margin-top: 20px;
+    padding: 20px;
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    text-align: center;
+}
+
+.btn-big-bid {
+    width: 100%;
+    padding: 18px 24px;
+    font-size: 1.5rem;
+    font-weight: 900;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: #0f172a;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(251, 191, 36, 0.4);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.btn-big-bid:hover:not(:disabled) {
+    box-shadow: 0 12px 35px rgba(251, 191, 36, 0.7);
+    transform: translateY(-2px);
+}
+
+.btn-big-bid:disabled {
+    background: #334155;
+    color: #64748b;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.squad-slot-badge {
+    background: rgba(251, 191, 36, 0.15);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    color: #fbbf24;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-weight: 800;
+    font-size: 0.85rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="team-dash-container" style="--team-color: {{ current_team.color if current_team else '#3b82f6' }};">
+    <!-- Team Hero Banner -->
+    <div class="team-hero-banner">
+        <div class="team-identity">
+            <div class="team-brand-logo">
+                {% if current_team and current_team.logo %}
+                    <img src="{{ current_team.logo }}" alt="{{ current_team.name }}">
+                {% else %}
+                    {{ current_team.short_name if current_team else 'SPL' }}
+                {% endif %}
+            </div>
+            <div class="team-titles">
+                <h1 id="teamNameDisplay">{{ current_team.name if current_team else 'Franchise Portal' }}</h1>
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <span class="badge badge-blue">{{ current_team.short_name if current_team else '' }}</span>
+                    <span style="font-size:0.85rem; color:#94a3b8;">Authorized: <strong style="color:#38bdf8;">{{ current_team.email if current_team else '' }}</strong></span>
+                    <span class="squad-slot-badge" id="squadSlotBadge">
+                        Squad: <strong id="teamSquadCount">{{ current_team.squad|length if current_team and current_team.squad else 0 }}</strong> / 15
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="purse-counter-card">
+            <div style="font-size:0.75rem; font-weight:800; color:#94a3b8; letter-spacing:1px;">REMAINING VIRTUAL PURSE</div>
+            <div class="purse-counter-val" id="teamBalanceDisplay">
+                ₹ {{ "{:,}".format(current_team.balance) if current_team else '500,000' }}
+            </div>
+            <div style="font-size:0.8rem; color:#94a3b8;">
+                Spent: <strong style="color:#f87171;" id="teamSpentDisplay">₹ {{ "{:,}".format(current_team.spent) if current_team else '0' }}</strong> of ₹ 5,00,000
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout Grid: Live Auction Bidding + Squad Roster -->
+    <div class="team-layout-grid">
+        <!-- LEFT: LIVE AUCTION ARENA BIDDING -->
+        <div class="live-bidding-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <h3 style="font-size:1.2rem; color:#fff; margin:0;"><i class="fa-solid fa-gavel"></i> Live Stage</h3>
+                <span class="live-badge-glow" id="teamAuctionStateBadge">READY</span>
+            </div>
+
+            <!-- Empty / Waiting State -->
+            <div id="teamNoActivePlayer" class="player-empty-state" style="padding: 40px 20px;">
+                <div class="empty-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                <h3>WAITING FOR NEXT PLAYER</h3>
+                <p>The Anchor is drawing and announcing the next player from the physical bowl.</p>
+            </div>
+
+            <!-- Active Player Section -->
+            <div id="teamActivePlayerSection" class="hidden">
+                <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+                    <div style="width:70px; height:70px; border-radius:12px; background:#1e293b; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                        <img id="teamPlayerPhoto" src="" style="width:100%; height:100%; object-fit:cover;" class="hidden">
+                        <i id="teamPlayerFallback" class="fa-solid fa-user-ninja" style="font-size:1.8rem; color:#94a3b8;"></i>
+                    </div>
+                    <div>
+                        <h2 style="font-size:1.6rem; color:#fbbf24; margin:0;" id="teamPlayerName">-</h2>
+                        <div style="display:flex; gap:8px; margin-top:4px; font-size:0.85rem;">
+                            <span class="badge badge-blue" id="teamPlayerRoll">-</span>
+                            <span class="badge badge-gold" id="teamPlayerRole">-</span>
+                            <span style="color:#94a3b8;" id="teamPlayerYear">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bid & Timer Meters -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:16px;">
+                    <div style="background:rgba(0,0,0,0.3); padding:12px 16px; border-radius:10px;">
+                        <small style="color:#94a3b8; font-weight:700;">CURRENT HIGHEST BID</small>
+                        <div style="font-size:1.6rem; font-weight:900; color:#4ade80;" id="teamCurrentBid">₹ 0</div>
+                        <small style="color:#f1f5f9;">Leader: <strong style="color:#fbbf24;" id="teamLeadingName">None</strong></small>
+                    </div>
+
+                    <div style="background:rgba(0,0,0,0.3); padding:12px 16px; border-radius:10px; text-align:right;">
+                        <small style="color:#94a3b8; font-weight:700;">SERVER TIMER</small>
+                        <div style="font-size:1.6rem; font-weight:900; font-family:monospace; color:#fbbf24;" id="teamTimerVal">00:30</div>
+                        <small style="color:#38bdf8;" id="teamTimerStatus">Bidding Open</small>
+                    </div>
+                </div>
+
+                <!-- Prominent Touch-Friendly Bid Button -->
+                <div class="bid-action-box">
+                    <button class="btn-big-bid" id="btnPlaceBid" onclick="submitTeamBid()">
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                        <span>BID <strong id="teamNextBidAmount">₹ 10,000</strong></span>
+                    </button>
+                    <div style="font-size:0.85rem; color:#94a3b8; margin-top:8px;" id="bidStatusReason">
+                        Tap button to place official bid at next calculated increment.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: SQUAD ROSTER & PRIVATE BID LOG -->
+        <div>
+            <!-- Squad List Card -->
+            <div class="admin-section-card mb-4">
+                <div class="section-card-header">
+                    <h3><i class="fa-solid fa-users"></i> My Squad (<span id="squadHeaderCount">0</span> / 15)</h3>
+                    <span class="badge badge-gold" id="squadRemainingBadge">15 Slots Left</span>
+                </div>
+                <div class="table-responsive" style="max-height:300px; overflow-y:auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Player</th>
+                                <th>Roll No</th>
+                                <th>Role</th>
+                                <th>Bought For</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teamSquadTable">
+                            <tr><td colspan="5" class="text-center py-4">No players purchased yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Private Bid Log Card -->
+            <div class="admin-section-card">
+                <div class="section-card-header">
+                    <h3><i class="fa-solid fa-clock-rotate-left"></i> My Bid History</h3>
+                </div>
+                <div class="table-responsive" style="max-height:220px; overflow-y:auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Player</th>
+                                <th>Bid Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teamBidsTable">
+                            <tr><td colspan="3" class="text-center py-4">No recent bids.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentTeamId = "{{ current_team.id if current_team else '' }}";
+let myTeamData = null;
+let currentAuctionState = null;
+let isBiddingInFlight = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadTeamData();
+
+    // SSE Event Listeners
+    window.addEventListener('spl:state_update', (e) => handleStateUpdate(e.detail));
+    window.addEventListener('spl:player_activated', (e) => handleStateUpdate(e.detail));
+    window.addEventListener('spl:bid', (e) => {
+        handleStateUpdate(e.detail);
+        loadTeamData();
+    });
+    window.addEventListener('spl:sold', (e) => {
+        handleStateUpdate(e.detail);
+        loadTeamData();
+    });
+    window.addEventListener('spl:unsold', (e) => {
+        handleStateUpdate(e.detail);
+        loadTeamData();
+    });
+
+    // Countdown tick
+    setInterval(() => {
+        if (currentAuctionState && !currentAuctionState.is_timer_paused && currentAuctionState.timer_remaining > 0) {
+            currentAuctionState.timer_remaining = Math.max(0, currentAuctionState.timer_remaining - 1);
+            const timerEl = document.getElementById('teamTimerVal');
+            if (timerEl) timerEl.textContent = formatTimer(currentAuctionState.timer_remaining);
+        }
+    }, 1000);
+});
+
+async function loadTeamData() {
+    try {
+        const res = await fetch(`/api/team/me${currentTeamId ? `?team_id=${currentTeamId}` : ''}`);
+        const data = await res.json();
+        if (data.success && data.team) {
+            myTeamData = data.team;
+            currentTeamId = data.team.id;
+            renderTeamInfo(data.team);
+            renderSquad(data.team.squad || []);
+            renderMyBids(data.my_bids || []);
+            if (data.auction_state) {
+                handleStateUpdate(data.auction_state);
+            }
+        }
+    } catch (e) {
+        console.error('Error loading team data:', e);
+    }
+}
+
+function renderTeamInfo(team) {
+    document.getElementById('teamNameDisplay').textContent = team.name;
+    document.getElementById('teamBalanceDisplay').textContent = formatCurrency(team.balance || 0);
+    document.getElementById('teamSpentDisplay').textContent = formatCurrency(team.spent || 0);
+    
+    const count = (team.squad || []).length;
+    document.getElementById('teamSquadCount').textContent = count;
+    document.getElementById('squadHeaderCount').textContent = count;
+    document.getElementById('squadRemainingBadge').textContent = `${Math.max(0, 15 - count)} Slots Left`;
+}
+
+function renderSquad(squad) {
+    const tbody = document.getElementById('teamSquadTable');
+    if (!tbody) return;
+    if (!squad || squad.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4" style="color:#94a3b8;">No players purchased yet.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = squad.map((p, idx) => `
+        <tr>
+            <td>${idx + 1}</td>
+            <td><strong>${p.name}</strong></td>
+            <td><span class="badge badge-blue">${p.roll_no || ''}</span></td>
+            <td>${p.role || ''}</td>
+            <td><strong style="color:#4ade80;">${formatCurrency(p.bought_for || 0)}</strong></td>
+        </tr>
+    `).join('');
+}
+
+function renderMyBids(bids) {
+    const tbody = document.getElementById('teamBidsTable');
+    if (!tbody) return;
+    if (!bids || bids.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4" style="color:#94a3b8;">No bids recorded yet.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = bids.map(b => `
+        <tr>
+            <td style="font-size:0.8rem; color:#94a3b8;">${b.formatted_time || ''}</td>
+            <td><strong>${b.player_name || 'Player'}</strong></td>
+            <td><strong style="color:#fbbf24;">${formatCurrency(b.amount)}</strong></td>
+        </tr>
+    `).join('');
+}
+
+function handleStateUpdate(data) {
+    if (!data) return;
+    const state = data.state || data;
+    currentAuctionState = state;
+
+    const stateBadge = document.getElementById('teamAuctionStateBadge');
+    if (stateBadge) stateBadge.textContent = state.status || 'READY';
+
+    const noActiveBox = document.getElementById('teamNoActivePlayer');
+    const activeSection = document.getElementById('teamActivePlayerSection');
+    const player = data.player || data.announced_player;
+
+    if (player && (state.status === 'BIDDING' || state.status === 'PLAYER_ACTIVATED')) {
+        if (noActiveBox) noActiveBox.classList.add('hidden');
+        if (activeSection) activeSection.classList.remove('hidden');
+
+        document.getElementById('teamPlayerName').textContent = player.name;
+        document.getElementById('teamPlayerRoll').textContent = player.roll_no || 'SPL';
+        document.getElementById('teamPlayerRole').textContent = player.role || 'All-Rounder';
+        document.getElementById('teamPlayerYear').textContent = player.year || '';
+
+        const photoEl = document.getElementById('teamPlayerPhoto');
+        const fallbackEl = document.getElementById('teamPlayerFallback');
+        if (player.photo) {
+            photoEl.src = player.photo;
+            photoEl.classList.remove('hidden');
+            fallbackEl.classList.add('hidden');
+        } else {
+            photoEl.classList.add('hidden');
+            fallbackEl.classList.remove('hidden');
+        }
+
+        document.getElementById('teamCurrentBid').textContent = formatCurrency(state.current_bid || 0);
+        document.getElementById('teamLeadingName').textContent = data.leading_team ? data.leading_team.name : (state.leading_team_name || 'None');
+        document.getElementById('teamTimerVal').textContent = formatTimer(state.timer_remaining || 30);
+        document.getElementById('teamNextBidAmount').textContent = formatCurrency(state.next_bid || 10000);
+
+        updateBidButtonState(state);
+    } else {
+        if (noActiveBox) noActiveBox.classList.remove('hidden');
+        if (activeSection) activeSection.classList.add('hidden');
+    }
+}
+
+function updateBidButtonState(state) {
+    const btn = document.getElementById('btnPlaceBid');
+    const reason = document.getElementById('bidStatusReason');
+    if (!btn || !myTeamData) return;
+
+    const nextAmount = state.next_bid || 10000;
+    const isLeading = (state.leading_team_id === myTeamData.id);
+    const hasPurse = (myTeamData.balance >= nextAmount);
+    const hasSlots = ((myTeamData.squad || []).length < 15);
+    const isPaused = state.is_timer_paused;
+    const isTimerExpired = (state.timer_remaining <= 0);
+
+    if (isLeading) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> YOU HOLD HIGHEST BID';
+        reason.textContent = 'You are currently the leading bidder for this player!';
+    } else if (!hasSlots) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-ban"></i> SQUAD LIMIT REACHED (15/15)';
+        reason.textContent = 'Your team has filled all 15 player slots.';
+    } else if (!hasPurse) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> INSUFFICIENT PURSE';
+        reason.textContent = `Requires ${formatCurrency(nextAmount)}, but you only have ${formatCurrency(myTeamData.balance)}.`;
+    } else if (isPaused) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-pause"></i> AUCTION PAUSED';
+        reason.textContent = 'Auction is temporarily paused by Admin.';
+    } else if (isTimerExpired) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-clock"></i> TIMER EXPIRED';
+        reason.textContent = 'Bidding time expired for this player.';
+    } else {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-hand-holding-dollar"></i> BID <strong>${formatCurrency(nextAmount)}</strong>`;
+        reason.textContent = 'Tap to place official bid at next calculated increment.';
+    }
+}
+
+async function submitTeamBid() {
+    if (isBiddingInFlight) return;
+    const btn = document.getElementById('btnPlaceBid');
+    isBiddingInFlight = true;
+    if (btn) btn.disabled = true;
+
+    try {
+        const res = await fetch('/api/auction/bid', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ team_id: currentTeamId })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast(`Bid placed for ${formatCurrency(data.bid.amount)}!`, 'success');
+            loadTeamData();
+        } else {
+            showToast(data.message || 'Bid rejected.', 'error');
+        }
+    } catch (e) {
+        showToast('Bidding network error.', 'error');
+    } finally {
+        setTimeout(() => {
+            isBiddingInFlight = false;
+            if (currentAuctionState) updateBidButtonState(currentAuctionState);
+        }, 500);
+    }
+}
+</script>
+{% endblock %}

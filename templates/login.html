@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - Sphoorthy Premier League (SPL 2026){% endblock %}
+
+{% block extra_css %}
+<style>
+.login-role-tabs {
+    display: flex;
+    background: rgba(15, 23, 42, 0.8);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    gap: 4px;
+}
+
+.role-tab-btn {
+    flex: 1;
+    padding: 10px 8px;
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.role-tab-btn.active {
+    background: #fbbf24;
+    color: #0f172a;
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+}
+
+.google-auth-box {
+    margin-bottom: 20px;
+    padding: 16px;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.btn-google-sign-in {
+    background: #ffffff;
+    color: #1f2937;
+    font-weight: 700;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+}
+
+.btn-google-sign-in:hover {
+    background: #f9fafb;
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+.password-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-group input {
+    padding-right: 48px;
+}
+
+.btn-toggle-password {
+    position: absolute;
+    right: 12px;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.btn-toggle-password:hover {
+    color: #fbbf24;
+}
+
+.quick-teams-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.quick-team-btn {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f1f5f9;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.quick-team-btn:hover {
+    background: rgba(251, 191, 36, 0.2);
+    border-color: #fbbf24;
+    color: #fbbf24;
+}
+
+.or-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 18px 0;
+    color: #64748b;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.or-divider::before, .or-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.or-divider:not(:empty)::before {
+    margin-right: .5em;
+}
+
+.or-divider:not(:empty)::after {
+    margin-left: .5em;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="login-badge-icon"><i class="fa-solid fa-trophy"></i></div>
+            <h2>SPHOORTHY SPL 2026</h2>
+            <p>CRICKET PLAYER AUCTION PORTAL</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Role Tabs with Student Login Option -->
+        <div class="login-role-tabs">
+            <button type="button" class="role-tab-btn active" onclick="selectLoginRole('student')">
+                <i class="fa-solid fa-graduation-cap"></i> Student
+            </button>
+            <button type="button" class="role-tab-btn" onclick="selectLoginRole('anchor')">
+                <i class="fa-solid fa-microphone-lines"></i> Anchor
+            </button>
+            <button type="button" class="role-tab-btn" onclick="selectLoginRole('team')">
+                <i class="fa-solid fa-shield-halved"></i> Franchise
+            </button>
+            <button type="button" class="role-tab-btn" onclick="selectLoginRole('admin')">
+                <i class="fa-solid fa-user-shield"></i> Admin
+            </button>
+        </div>
+
+        <!-- Google / Authorized Gmail Sign-In Section (for Admins / Franchises) -->
+        <div class="google-auth-box" id="googleAuthSection" style="display:none;">
+            <button type="button" class="btn-google-sign-in" onclick="authenticateGooglePrompt()">
+                <svg width="20" height="20" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                Sign in with Authorized Google / Gmail
+            </button>
+            <div class="or-divider">OR SIGN IN WITH USERNAME & PASSWORD</div>
+        </div>
+
+        <form action="{{ url_for('login_view') }}" method="POST" class="login-form">
+            <div class="form-group">
+                <label for="username" id="usernameLabel"><i class="fa-solid fa-id-card"></i> Student Roll Number (10 characters)</label>
+                <input type="text" id="username" name="username" class="form-control" value="24CSE1234A" placeholder="e.g. 24CSE1234A" maxlength="10" required autofocus>
+                <small id="usernameHelp" style="color: #94a3b8; font-size: 0.75rem; margin-top: 4px; display:block;">Enter your official 10-digit alphanumeric college Roll Number.</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="password" id="passwordLabel"><i class="fa-solid fa-calendar-days"></i> Date of Birth (DDMMYYYY)</label>
+                <div class="password-input-group">
+                    <input type="password" id="password" name="password" class="form-control" value="15082004" placeholder="DDMMYYYY (e.g. 15082004)" required>
+                    <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility()" aria-label="Toggle password visibility">
+                        <i class="fa-solid fa-eye" id="passwordEyeIcon"></i>
+                    </button>
+                </div>
+                <small id="passwordHelp" style="color: #94a3b8; font-size: 0.75rem; margin-top: 4px; display:block;">Enter your 8-digit Date of Birth in DDMMYYYY format.</small>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg" id="loginSubmitBtn">
+                <i class="fa-solid fa-right-to-bracket"></i> Sign In
+            </button>
+        </form>
+
+        <div class="quick-credentials">
+            <p class="quick-title">1-Click Fast Credentials (Test Accounts):</p>
+            
+            <!-- Student quick credentials -->
+            <div id="quickStudentSection">
+                <button type="button" class="btn btn-gold btn-sm btn-block" onclick="fillStudentCreds('24CSE1234A', '15082004')">
+                    <i class="fa-solid fa-graduation-cap"></i> Student Test (Roll: 24CSE1234A / DOB: 15082004)
+                </button>
+            </div>
+
+            <div id="quickAdminAnchor" class="quick-btns mt-2">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="fillAdminAnchorCreds('anchor@spl.edu', 'anchor123')">
+                    <i class="fa-solid fa-microphone"></i> Anchor (anchor@spl.edu)
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="fillAdminAnchorCreds('admin@spl.edu', 'admin123')">
+                    <i class="fa-solid fa-user-shield"></i> Admin (admin@spl.edu)
+                </button>
+            </div>
+
+            <div class="mt-3">
+                <small style="color: #94a3b8; font-weight: 600;">6 Franchise Teams (₹5L Virtual Purse):</small>
+                <div class="quick-teams-grid">
+                    <button type="button" class="quick-team-btn" onclick="fillTeamCreds('rcb@spl.edu', 'rcb123')">RCB</button>
+                    <button type="button" class="quick-team-btn" onclick="fillTeamCreds('csk@spl.edu', 'csk123')">CSK</button>
+                    <button type="button" class="quick-team-btn" onclick="fillTeamCreds('mi@spl.edu', 'mi123')">MI</button>
+                    <button type="button" class="quick-team-btn" onclick="fillTeamCreds('kkr@spl.edu', 'kkr123')">KKR</button>
+                    <button type="button" class="quick-team-btn" onclick="fillTeamCreds('dc@spl.edu', 'dc123')">DC</button>
+                    <button type="button" class="quick-team-btn" onclick="fillTeamCreds('gt@spl.edu', 'gt123')">GT</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePasswordVisibility() {
+    const pwd = document.getElementById('password');
+    const icon = document.getElementById('passwordEyeIcon');
+    if (pwd.type === 'password') {
+        pwd.type = 'text';
+        icon.className = 'fa-solid fa-eye-slash';
+    } else {
+        pwd.type = 'password';
+        icon.className = 'fa-solid fa-eye';
+    }
+}
+
+function selectLoginRole(role) {
+    const tabs = document.querySelectorAll('.role-tab-btn');
+    tabs.forEach(t => t.classList.remove('active'));
+
+    const uLabel = document.getElementById('usernameLabel');
+    const pLabel = document.getElementById('passwordLabel');
+    const uHelp = document.getElementById('usernameHelp');
+    const pHelp = document.getElementById('passwordHelp');
+    const uInput = document.getElementById('username');
+    const pInput = document.getElementById('password');
+    const googleSec = document.getElementById('googleAuthSection');
+
+    if (role === 'student') {
+        tabs[0].classList.add('active');
+        uLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> Student Roll Number (10 characters)';
+        pLabel.innerHTML = '<i class="fa-solid fa-calendar-days"></i> Date of Birth (DDMMYYYY)';
+        uHelp.textContent = 'Enter your official 10-digit alphanumeric college Roll Number.';
+        pHelp.textContent = 'Enter your 8-digit Date of Birth in DDMMYYYY format.';
+        uInput.placeholder = 'e.g. 24CSE1234A';
+        uInput.maxLength = 10;
+        pInput.placeholder = 'DDMMYYYY (e.g. 15082004)';
+        googleSec.style.display = 'none';
+        fillStudentCreds('24CSE1234A', '15082004');
+    } else if (role === 'anchor') {
+        tabs[1].classList.add('active');
+        uLabel.innerHTML = '<i class="fa-solid fa-user-tag"></i> Authorized Username / Gmail';
+        pLabel.innerHTML = '<i class="fa-solid fa-lock"></i> Password';
+        uHelp.textContent = 'Sign in with your Anchor account.';
+        pHelp.textContent = 'Enter your account password.';
+        uInput.placeholder = 'anchor@spl.edu';
+        uInput.removeAttribute('maxLength');
+        pInput.placeholder = '••••••••';
+        googleSec.style.display = 'block';
+        fillAdminAnchorCreds('anchor@spl.edu', 'anchor123');
+    } else if (role === 'team') {
+        tabs[2].classList.add('active');
+        uLabel.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Franchise Username / Gmail';
+        pLabel.innerHTML = '<i class="fa-solid fa-lock"></i> Password';
+        uHelp.textContent = 'Sign in with your authorized Franchise account.';
+        pHelp.textContent = 'Enter franchise password.';
+        uInput.placeholder = 'rcb@spl.edu';
+        uInput.removeAttribute('maxLength');
+        pInput.placeholder = '••••••••';
+        googleSec.style.display = 'block';
+        fillTeamCreds('rcb@spl.edu', 'rcb123');
+    } else if (role === 'admin') {
+        tabs[3].classList.add('active');
+        uLabel.innerHTML = '<i class="fa-solid fa-user-shield"></i> Admin Username / Gmail';
+        pLabel.innerHTML = '<i class="fa-solid fa-lock"></i> Password';
+        uHelp.textContent = 'SPL Auction Committee administrator access.';
+        pHelp.textContent = 'Enter admin password.';
+        uInput.placeholder = 'admin@spl.edu';
+        uInput.removeAttribute('maxLength');
+        pInput.placeholder = '••••••••';
+        googleSec.style.display = 'block';
+        fillAdminAnchorCreds('admin@spl.edu', 'admin123');
+    }
+}
+
+function fillStudentCreds(roll, dob) {
+    document.getElementById('username').value = roll;
+    document.getElementById('password').value = dob;
+    const tabs = document.querySelectorAll('.role-tab-btn');
+    tabs.forEach(t => t.classList.remove('active'));
+    tabs[0].classList.add('active');
+}
+
+function fillAdminAnchorCreds(u, p) {
+    document.getElementById('username').value = u;
+    document.getElementById('password').value = p;
+    const tabs = document.querySelectorAll('.role-tab-btn');
+    tabs.forEach(t => t.classList.remove('active'));
+    if (u.includes('admin')) tabs[3].classList.add('active');
+    else tabs[1].classList.add('active');
+}
+
+function fillTeamCreds(u, p) {
+    document.getElementById('username').value = u;
+    document.getElementById('password').value = p;
+    const tabs = document.querySelectorAll('.role-tab-btn');
+    tabs.forEach(t => t.classList.remove('active'));
+    tabs[2].classList.add('active');
+}
+
+async function authenticateGooglePrompt() {
+    const currentVal = document.getElementById('username').value.trim();
+    const email = prompt("Enter your authorized SPL Google / Gmail address:", currentVal || "admin@spl.edu");
+    if (!email) return;
+
+    try {
+        const res = await fetch('/api/auth/google', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast(data.message, 'success');
+            setTimeout(() => {
+                window.location.href = data.redirect_url || '/';
+            }, 400);
+        } else {
+            showToast(data.message || 'Google authentication rejected.', 'error');
+        }
+    } catch (e) {
+        showToast('Authentication network error.', 'error');
+    }
+}
+</script>
+{% endblock %}
