@@ -1,15 +1,19 @@
 [
   {
-    "id": "std_31ed7c28",
-    "roll_no": "24CSE1234A",
-    "dob": "15082004",
-    "registered": false,
-    "name": "",
-    "photo": "",
-    "year": "",
-    "department": "",
-    "role": "",
-    "created_at": "2026-09-24T00:06:15.976453",
-    "registered_at": null
+    "id": "std_48a2a598",
+    "roll_no": "24ECE77777",
+    "dob": "10102003",
+    "registered": true,
+    "name": "Pending Player",
+    "photo": "/static/uploads/pending.jpg",
+    "year": "2nd Year",
+    "department": "ECE",
+    "role": "Bowler",
+    "created_at": "2026-09-28T11:09:08.199729",
+    "registered_at": "2026-09-28T11:09:08.199930",
+    "approval_status": "APPROVED",
+    "rejection_reason": "",
+    "approved_at": "2026-09-28T11:09:08.206143",
+    "approved_by": "Admin"
   }
 ]
