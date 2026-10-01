@@ -1,0 +1,251 @@
+{% extends "admin/base_admin.html" %}
+{% set active_page = 'final_squads' %}
+
+{% block title %}Final Squads Roster — {{ event_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-1"><i class="fa-solid fa-people-group text-danger me-2"></i>Final Squads</h2>
+        <p class="text-muted small mb-0">Live automatically generated squads from auction transactions. Complete player breakdown and purse status.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" onclick="window.print()">
+            <i class="fa-solid fa-print me-1"></i>Print Rosters
+        </button>
+        {% if is_locked %}
+        <button type="button" class="btn btn-danger btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#unlockModal">
+            <i class="fa-solid fa-lock-open me-1"></i>Admin Override Unlock
+        </button>
+        {% else %}
+        <button type="button" class="btn btn-success btn-sm fw-bold px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#confirmLockModal" {% if not is_valid %}disabled{% endif %}>
+            <i class="fa-solid fa-lock me-1"></i>Confirm & Lock Squads
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Integrity Validation Status Banner -->
+<div class="spl-card mb-4 border-2 {% if is_valid %}border-success{% else %}border-danger{% endif %} bg-white shadow-sm">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-3">
+            {% if is_valid %}
+            <div class="bg-success text-white rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                <i class="fa-solid fa-check fs-4"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold text-success mb-0">✓ Database Integrity Verified</h5>
+                <p class="text-muted small mb-0">All franchise rosters, purse calculations, and squad limit rules are synchronized and consistent.</p>
+            </div>
+            {% else %}
+            <div class="bg-danger text-white rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                <i class="fa-solid fa-triangle-exclamation fs-4"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold text-danger mb-0">⚠ Integrity Validation Issues Detected</h5>
+                <p class="text-muted small mb-0">Review the errors below before attempting to lock final squads.</p>
+            </div>
+            {% endif %}
+        </div>
+        <div>
+            {% if is_locked %}
+                <span class="badge bg-danger text-white fs-6 px-3 py-2"><i class="fa-solid fa-lock me-1"></i>SQUADS LOCKED</span>
+            {% else %}
+                <span class="badge bg-primary text-white fs-6 px-3 py-2"><i class="fa-solid fa-lock-open me-1"></i>EDITABLE</span>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if not is_valid and validation_errors %}
+    <div class="mt-3 pt-3 border-top border-secondary-subtle">
+        <ul class="mb-0 text-danger small">
+            {% for err in validation_errors %}
+            <li>{{ err }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Franchise Squads Section -->
+<div class="row g-4">
+    {% for item in squads %}
+    {% set f = item.franchise %}
+    <div class="col-12">
+        <div class="spl-card p-0 overflow-hidden border-top border-danger border-3 bg-white shadow-sm">
+            <!-- Franchise Header & Financial Metrics -->
+            <div class="p-3 bg-light border-bottom border-secondary-subtle">
+                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <img src="{{ url_for('static', filename='uploads/' + f.logo) if f.logo and not f.logo.startswith('http') else (f.logo or url_for('static', filename='uploads/default_logo.png')) }}" 
+                             alt="{{ f.name }}" class="rounded-circle object-fit-cover border border-secondary-subtle shadow-sm" width="56" height="56">
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <h4 class="fw-bold text-dark mb-0">{{ f.name }}</h4>
+                                <span class="badge bg-secondary font-monospace">{{ f.short_name }}</span>
+                            </div>
+                            <small class="text-muted">
+                                Owner: <strong class="text-dark">{{ f.owner_name or 'N/A' }}</strong> &bull; Email: <span class="text-primary">{{ f.gmail or f.owner_email or 'N/A' }}</span>
+                                {% if f.captain_name %}
+                                &bull; Captain: <span class="text-danger fw-bold">{{ f.captain_name }} (#{{ f.captain_rule_number }})</span>
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Franchise Quick Metrics: Purse, Spent, Remaining, Squad Limit, Players Selected, Remaining Slots -->
+                    <div class="d-flex flex-wrap gap-2 text-center">
+                        <div class="bg-white px-3 py-1.5 rounded border border-secondary-subtle shadow-sm">
+                            <span class="text-muted extra-small text-uppercase d-block fw-bold font-display">Purse</span>
+                            <span class="fw-bold text-dark small font-monospace">₹ {{ (f.starting_purse or 300000) | currency }}</span>
+                        </div>
+                        <div class="bg-white px-3 py-1.5 rounded border border-secondary-subtle shadow-sm">
+                            <span class="text-muted extra-small text-uppercase d-block fw-bold font-display">Spent Amount</span>
+                            <span class="fw-bold text-danger small font-monospace">₹ {{ item.spent | currency }}</span>
+                        </div>
+                        <div class="bg-white px-3 py-1.5 rounded border border-secondary-subtle shadow-sm">
+                            <span class="text-muted extra-small text-uppercase d-block fw-bold font-display">Remaining Purse</span>
+                            <span class="fw-bold text-success small font-monospace">₹ {{ item.remaining | currency }}</span>
+                        </div>
+                        <div class="bg-white px-3 py-1.5 rounded border border-secondary-subtle shadow-sm">
+                            <span class="text-muted extra-small text-uppercase d-block fw-bold font-display">Squad Limit</span>
+                            <span class="fw-bold text-dark small font-monospace">{{ f.squad_limit }}</span>
+                        </div>
+                        <div class="bg-white px-3 py-1.5 rounded border border-secondary-subtle shadow-sm">
+                            <span class="text-muted extra-small text-uppercase d-block fw-bold font-display">Players Selected</span>
+                            <span class="fw-bold text-primary small font-monospace">{{ item.count }}</span>
+                        </div>
+                        <div class="bg-white px-3 py-1.5 rounded border border-secondary-subtle shadow-sm">
+                            <span class="text-muted extra-small text-uppercase d-block fw-bold font-display">Remaining Slots</span>
+                            <span class="fw-bold {% if (f.squad_limit - item.count) > 0 %}text-primary{% else %}text-muted{% endif %} small font-monospace">
+                                {{ f.remaining_slots if f.remaining_slots is defined else (f.squad_limit - item.count) }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Players Table (Excel-like responsive table with clean light styling & high contrast) -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 font-sans">
+                    <thead class="text-dark small text-uppercase bg-light border-bottom border-secondary-subtle font-display">
+                        <tr>
+                            <th class="ps-3 py-2.5" style="width: 60px;">Photo</th>
+                            <th class="py-2.5" style="width: 110px;">Rule #</th>
+                            <th class="py-2.5">Name</th>
+                            <th class="py-2.5">Role</th>
+                            <th class="py-2.5">Branch / Year</th>
+                            <th class="py-2.5">Category</th>
+                            <th class="py-2.5">Purchased Price</th>
+                            <th class="py-2.5 text-end pe-3">Auction Type</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white">
+                        {% for p in item.players %}
+                        <tr>
+                            <td class="ps-3 py-2">
+                                <img src="{{ url_for('static', filename='uploads/' + p.photo) if p.photo and not p.photo.startswith('http') else (p.photo or url_for('static', filename='uploads/default_player.png')) }}" 
+                                     alt="{{ p.name }}" class="rounded-circle object-fit-cover border border-secondary-subtle" width="38" height="38">
+                            </td>
+                            <td class="font-monospace fw-bold text-danger py-2">
+                                #{{ p.rule_number or p.roll_number }}
+                            </td>
+                            <td class="fw-bold text-dark py-2">
+                                {{ p.name }}
+                                {% if p.is_captain or (f.captain_id and f.captain_id == p.id) or (f.captain_name and f.captain_name.strip().lower() == p.name.strip().lower()) or (f.captain_rule_number and (f.captain_rule_number|string == (p.rule_number or p.roll_number)|string)) %}
+                                <span class="badge bg-danger text-white ms-1 extra-small fw-bold font-display"><i class="fa-solid fa-crown me-1"></i>CAPTAIN</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-2">
+                                <span class="badge bg-light border border-primary text-primary">{{ p.role }}</span>
+                            </td>
+                            <td class="small text-muted py-2">
+                                {{ p.branch or '-' }} / Yr {{ p.year or '-' }}
+                            </td>
+                            <td class="py-2">
+                                <span class="badge bg-secondary">{{ p.category }}</span>
+                            </td>
+                            <td class="py-2 font-monospace fw-bold">
+                                {% if p.is_captain or (f.captain_id and f.captain_id == p.id) or p.sold_price is none or p.sold_price == 0 %}
+                                <span class="text-muted fs-6">—</span>
+                                {% else %}
+                                <span class="text-success">₹ {{ p.sold_price | currency }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-3 py-2">
+                                {% if p.is_captain or (f.captain_id and f.captain_id == p.id) %}
+                                <span class="badge bg-danger text-white font-monospace"><i class="fa-solid fa-crown me-1"></i>CAPTAIN</span>
+                                {% elif p.auction_type == 'SECOND_CHANCE' %}
+                                <span class="badge bg-danger text-white font-monospace"><i class="fa-solid fa-rotate-right me-1"></i>SECOND CHANCE</span>
+                                {% else %}
+                                <span class="badge bg-primary text-white font-monospace"><i class="fa-solid fa-gavel me-1"></i>PRIMARY</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">
+                                <i class="fa-solid fa-user-slash me-1"></i> No players acquired yet by {{ f.name }}.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Confirm & Lock Modal -->
+<div class="modal fade" id="confirmLockModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-white text-dark border-secondary-subtle shadow">
+            <div class="modal-header border-secondary-subtle">
+                <h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-lock text-danger me-2"></i>CONFIRM & LOCK FINAL SQUADS</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Are you sure you want to finalize and lock all franchise squads?</p>
+                <div class="alert alert-danger bg-danger-subtle text-danger border border-danger small mb-0">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                    <strong>Important:</strong> Locking squads validates and fixes rosters permanently. Admin override is required to make any modifications thereafter.
+                </div>
+            </div>
+            <div class="modal-footer border-secondary-subtle">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('admin.confirm_squads') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-success fw-bold shadow-sm"><i class="fa-solid fa-lock me-1"></i>CONFIRM & LOCK</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Unlock Override Modal -->
+<div class="modal fade" id="unlockModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-white text-dark border-secondary-subtle shadow">
+            <form method="POST" action="{{ url_for('admin.unlock_squads') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header border-secondary-subtle">
+                    <h5 class="modal-title fw-bold text-danger"><i class="fa-solid fa-lock-open me-2"></i>ADMIN OVERRIDE UNLOCK</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-start">
+                    <p class="small text-muted mb-3">State the administrative reason. This action is permanently audited.</p>
+                    <div class="mb-3">
+                        <label for="unlock-reason" class="form-label text-dark small fw-bold">Override Reason</label>
+                        <textarea name="reason" id="unlock-reason" class="form-control bg-white text-dark border-secondary-subtle" rows="3" placeholder="Explain reason for unlocking squads..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary-subtle">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger fw-bold shadow-sm">Execute Unlock Override</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

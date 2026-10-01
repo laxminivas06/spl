@@ -1,0 +1,128 @@
+{% extends "admin/base_admin.html" %}
+{% set active_page = 'settings' %}
+
+{% block title %}System Settings — {{ event_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-1"><i class="fa-solid fa-gears text-danger me-2"></i>System Settings</h2>
+        <p class="text-muted small mb-0">Manage global auction parameters, event branding, and Global Audit configuration.</p>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('admin.settings') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="row g-4">
+        <!-- Global Auction Defaults -->
+        <div class="col-lg-7">
+            <div class="spl-card h-100 bg-white shadow-sm border p-4">
+                <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                    <i class="fa-solid fa-sliders text-danger fs-5"></i>
+                    <h5 class="fw-bold text-dark mb-0">Global Auction Defaults</h5>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted extra-small fw-bold">EVENT BRANDING NAME</label>
+                        <input type="text" class="form-control bg-white text-dark border" name="event_name" value="{{ event_name }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted extra-small fw-bold">EVENT FULL SUBTITLE</label>
+                        <input type="text" class="form-control bg-white text-dark border" name="event_subtitle" value="{{ event_subtitle }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted extra-small fw-bold">DEFAULT STARTING PURSE (₹)</label>
+                        <input type="number" class="form-control bg-white text-dark border font-monospace" name="starting_purse" value="{{ starting_purse }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted extra-small fw-bold">DEFAULT SQUAD LIMIT</label>
+                        <input type="number" class="form-control bg-white text-dark border font-monospace" name="squad_limit" value="{{ squad_limit }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted extra-small fw-bold">DEFAULT BASE PRICE (₹)</label>
+                        <input type="number" class="form-control bg-white text-dark border font-monospace" name="base_price" value="{{ base_price }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted extra-small fw-bold">AUCTION TIMER (SECONDS)</label>
+                        <input type="number" class="form-control bg-white text-dark border font-monospace" name="timer_seconds" value="{{ timer_seconds }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted extra-small fw-bold">APPLICATION THEME</label>
+                        <input type="hidden" name="theme_default" value="light">
+                        <input type="text" class="form-control bg-light text-dark border" value="Light Theme Only (Enforced)" readonly>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-center">
+                        <div class="form-check form-switch mt-3">
+                            <input class="form-check-input" type="checkbox" role="switch" id="show_price_switch" name="show_purchase_price_publicly" value="true" {% if show_purchase_price_publicly == 'true' %}checked{% endif %}>
+                            <label class="form-check-label text-dark small fw-bold" for="show_price_switch">
+                                Show Sold Prices Publicly on /teams
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Global Audit Settings (Requirement 9) -->
+        <div class="col-lg-5">
+            <div class="spl-card h-100 border-start border-danger border-4 bg-white shadow-sm border p-4">
+                <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                    <i class="fa-solid fa-shield-halved text-danger fs-5"></i>
+                    <h5 class="fw-bold text-dark mb-0">Global Audit Settings</h5>
+                </div>
+                <p class="text-muted small mb-3">Configure security auditing, log retention periods, and request tracking policies across the application.</p>
+
+                <div class="space-y-3">
+                    <!-- Enable Audit Logging -->
+                    <div class="form-check form-switch p-3 bg-light rounded border mb-3">
+                        <div class="ms-2">
+                            <input class="form-check-input" type="checkbox" role="switch" id="audit_logging_enabled" name="audit_logging_enabled" value="true" {% if audit_logging_enabled == 'true' %}checked{% endif %}>
+                            <label class="form-check-label text-dark fw-bold d-block" for="audit_logging_enabled">
+                                Enable Real-Time Audit Logging
+                            </label>
+                            <small class="text-muted">Captures all login events, bidder actions, purse modifications, and user changes.</small>
+                        </div>
+                    </div>
+
+                    <!-- Audit Log Retention Days -->
+                    <div class="mb-3">
+                        <label class="form-label text-muted extra-small fw-bold">AUDIT LOG RETENTION (DAYS)</label>
+                        <input type="number" class="form-control bg-white text-dark border font-monospace" name="audit_retention_days" value="{{ audit_retention_days }}" min="7" max="365" required>
+                        <div class="form-text text-muted extra-small">Records older than this limit are archived into storage history.</div>
+                    </div>
+
+                    <!-- Audit Log Level -->
+                    <div class="mb-3">
+                        <label class="form-label text-muted extra-small fw-bold">AUDIT LOGGING DETAIL LEVEL</label>
+                        <select class="form-select bg-white text-dark border" name="audit_log_level">
+                            <option value="ALL" {% if audit_log_level == 'ALL' %}selected{% endif %}>ALL (Log auth, bids, sales, admin changes, settings)</option>
+                            <option value="SECURITY" {% if audit_log_level == 'SECURITY' %}selected{% endif %}>SECURITY ONLY (Log logins, failures, permissions, password resets)</option>
+                            <option value="AUCTION" {% if audit_log_level == 'AUCTION' %}selected{% endif %}>AUCTION ONLY (Log bids, sales, unsold, purse operations)</option>
+                        </select>
+                    </div>
+
+                    <!-- Track Client IP Address -->
+                    <div class="form-check form-switch p-3 bg-light rounded border mb-3">
+                        <div class="ms-2">
+                            <input class="form-check-input" type="checkbox" role="switch" id="audit_track_ip" name="audit_track_ip" value="true" {% if audit_track_ip == 'true' %}checked{% endif %}>
+                            <label class="form-check-label text-dark fw-bold d-block" for="audit_track_ip">
+                                Record Client IP & User Agent
+                            </label>
+                            <small class="text-muted">Attaches IP addresses and session information to audit records for forensic security.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="col-12 text-end">
+            <button type="submit" class="btn btn-spl-primary px-4 py-2 fw-bold">
+                <i class="fa-solid fa-floppy-disk me-1"></i> Save Configuration & Audit Settings
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}

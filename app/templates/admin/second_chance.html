@@ -1,0 +1,977 @@
+{% extends "admin/base_admin.html" %}
+{% set active_page = 'second_chance' %}
+
+{% block title %}Second-Chance Auction Console — {{ event_name }}{% endblock %}
+
+{% block content %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 pb-3 border-bottom border-secondary-subtle">
+    <div>
+        <h2 class="fw-bold text-dark mb-1"><i class="fa-solid fa-rotate-right text-danger me-2"></i>Second-Chance Auction Console</h2>
+        <p class="text-muted small mb-0">Eligible unsold players &bull; 10s live timer &bull; Click team cards to place next bid</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('live.auction_live') }}" target="_blank" class="btn btn-danger btn-sm fw-bold shadow-sm">
+            <i class="fa-solid fa-desktop me-1"></i>Open Live Screen
+        </a>
+        <a href="{{ url_for('admin.final_squads') }}" class="btn btn-outline-primary btn-sm fw-bold">
+            <i class="fa-solid fa-people-group me-1"></i>Final Squads
+        </a>
+    </div>
+</div>
+
+<!-- Stats Metrics Banner -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="spl-card text-center py-3 border-start border-danger border-4 bg-white shadow-sm">
+            <span class="text-muted text-uppercase extra-small fw-bold">Total Unsold</span>
+            <h3 class="fw-bold text-dark mb-0 mt-1">{{ total_unsold }}</h3>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="spl-card text-center py-3 border-start border-success border-4 bg-white shadow-sm">
+            <span class="text-muted text-uppercase extra-small fw-bold">Eligible for 2nd Chance</span>
+            <h3 class="fw-bold text-success mb-0 mt-1" id="sc-eligible-stat">{{ eligible_unsold }}</h3>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="spl-card text-center py-3 border-start border-primary border-4 bg-white shadow-sm">
+            <span class="text-muted text-uppercase extra-small fw-bold">2nd Chance Sold</span>
+            <h3 class="fw-bold text-primary mb-0 mt-1">{{ second_chance_sold }}</h3>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="spl-card text-center py-3 border-start border-danger border-4 bg-white shadow-sm">
+            <span class="text-muted text-uppercase extra-small fw-bold">Auction Engine</span>
+            <h3 class="fw-bold text-danger mb-0 mt-1" id="sc-state-badge">SECOND CHANCE</h3>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     1. SECOND-CHANCE RULE NUMBER SEARCH & VERIFICATION CARD
+     ========================================== -->
+<div class="spl-card mb-4 border-2 border-danger shadow-sm bg-white" id="sc-entry-card">
+    <div class="p-3 p-md-4">
+        <div class="text-center mb-3">
+            <h4 class="fw-bold text-dark mb-1"><i class="fa-solid fa-magnifying-glass text-danger me-2"></i>Search by Rule Number</h4>
+            <p class="text-muted small mb-0">Search eligible unsold players by Rule Number, update rule number, or start 10-second bidding</p>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-8 col-lg-7">
+                <div id="sc-rule-error" class="alert alert-danger py-2 small d-none mb-3"></div>
+
+                <div class="input-group input-group-lg shadow-sm">
+                    <span class="input-group-text bg-light border-secondary-subtle text-danger fw-bold">#</span>
+                    <input type="text" id="sc-rule-input" class="form-control bg-white text-dark border-secondary-subtle font-monospace fw-bold" placeholder="e.g. 23-0456" autocomplete="off" onkeypress="if(event.key==='Enter') searchSecondChancePlayerByRule();">
+                    <button type="button" id="btn-sc-search" class="btn btn-danger fw-bold px-4 shadow-sm" onclick="searchSecondChancePlayerByRule()">
+                        <i class="fa-solid fa-magnifying-glass me-1"></i> Search
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Player Search Result Details Box -->
+        <div id="sc-player-search-result" class="d-none mt-4 p-3 p-md-4 rounded bg-light border border-secondary-subtle shadow-sm">
+            <div class="row g-3 align-items-center">
+                <!-- Col 1: Photo & Status -->
+                <div class="col-12 col-sm-3 col-md-3 text-center">
+                    <img id="sc-search-res-photo" src="/static/uploads/default_player.png" alt="Player Photo" class="rounded-circle border border-danger border-3 shadow-sm mb-2" width="100" height="100" style="object-fit: cover;" onerror="this.src='/static/uploads/default_player.png'">
+                    <div>
+                        <span class="badge bg-danger text-white font-monospace fs-6 px-3 py-1 mb-1 d-inline-block" id="sc-search-res-rule">RULE #--</span>
+                    </div>
+                    <div>
+                        <span class="badge bg-secondary fs-7 px-2.5 py-1" id="sc-search-res-status">UNSOLD</span>
+                    </div>
+                </div>
+
+                <!-- Col 2: Player Information -->
+                <div class="col-12 col-sm-9 col-md-5">
+                    <h3 class="fw-bold text-dark mb-1" id="sc-search-res-name">--</h3>
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        <span class="badge bg-light border border-primary text-primary fs-7" id="sc-search-res-role">BATSMAN</span>
+                        <span class="badge bg-secondary fs-7" id="sc-search-res-category">NORMAL</span>
+                    </div>
+                    <div class="small text-muted">
+                        <div><strong class="text-secondary">Department:</strong> <span class="text-dark" id="sc-search-res-branch">--</span> &bull; <strong class="text-secondary">Year:</strong> <span class="text-dark" id="sc-search-res-year">--</span></div>
+                        <div class="mt-1"><strong class="text-secondary">Base Price:</strong> <strong class="text-success font-monospace fs-6" id="sc-search-res-base-price">₹ 10,000</strong></div>
+                        <div id="sc-search-res-sold-info" class="text-danger small d-none mt-1 fw-bold"></div>
+                    </div>
+                </div>
+
+                <!-- Col 3: Update Rule Number & Start Action -->
+                <div class="col-12 col-md-4 border-start-md border-secondary-subtle ps-md-3">
+                    <!-- Update Rule Number Section -->
+                    <div class="p-2.5 rounded bg-white border border-secondary-subtle mb-3 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-muted extra-small fw-bold text-uppercase">Current Rule Number</span>
+                            <span class="badge bg-danger text-white font-monospace" id="sc-curr-rule-display">--</span>
+                        </div>
+                        <label class="text-muted extra-small fw-semibold d-block mb-1">New Rule Number</label>
+                        <div class="input-group input-group-sm mb-1">
+                            <input type="text" id="sc-new-rule-input" class="form-control bg-white text-dark border-secondary-subtle font-monospace" placeholder="e.g. 23-0789" onkeypress="if(event.key==='Enter') updateSecondChancePlayerRule();">
+                            <button type="button" class="btn btn-outline-danger fw-bold px-3" onclick="updateSecondChancePlayerRule()">
+                                Update
+                            </button>
+                        </div>
+                        <div id="sc-update-rule-feedback" class="extra-small d-none"></div>
+                    </div>
+
+                    <!-- Start Bidding Button / Sold Warning -->
+                    <div id="sc-start-auction-wrap">
+                        <button type="button" id="btn-start-sc-auction" class="btn btn-danger w-100 py-2.5 fw-bold shadow-sm" onclick="startAuctionForSearchedSCPlayer()">
+                            <i class="fa-solid fa-play me-1"></i> Start 10s Second-Chance Bidding
+                        </button>
+                    </div>
+                    <div id="sc-sold-warning" class="alert alert-danger py-2 small mb-0 d-none text-center fw-bold">
+                        <i class="fa-solid fa-ban me-1"></i> Already Sold. This player cannot be auctioned again.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Select Pills for Eligible Unsold Players -->
+        <div class="mt-4 pt-3 border-top border-secondary-subtle text-center">
+            <small class="text-muted d-block mb-2 fw-semibold">QUICK SELECT FROM ELIGIBLE UNSOLD PLAYERS:</small>
+            <div class="d-flex flex-wrap justify-content-center gap-1.5" style="max-height: 90px; overflow-y: auto;">
+                {% for p in eligible_players %}
+                <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 extra-small" onclick="quickSelectSecondChance('{{ p.rule_number or p.roll_number }}')">
+                    <strong class="text-danger">#{{ p.rule_number or p.roll_number }}</strong> {{ p.name }}
+                </button>
+                {% else %}
+                <span class="text-muted extra-small">No eligible unsold players waiting.</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     2. ACTIVE SECOND-CHANCE BIDDING ARENA
+     ========================================== -->
+<div id="sc-bidding-arena" class="d-none">
+    <!-- Sold Player 10-Second Celebration Banner -->
+    <div id="sc-sold-alert-banner" class="alert alert-success d-none py-3 px-4 rounded-4 border-2 border-danger shadow text-center mb-4 bg-white">
+        <div class="display-6 fw-black text-danger mb-1">🎉 CONGRATULATIONS! PLAYER SOLD! 🎉</div>
+        <div class="fs-5 text-dark mb-2">Sold to <strong id="sc-sold-winner-team" class="text-primary">--</strong> for <strong id="sc-sold-final-price" class="text-danger font-monospace">₹ 0</strong></div>
+        <div>
+            <span class="badge bg-light border border-danger text-danger fs-6 px-4 py-2 rounded-pill shadow-sm">
+                <i class="fa-solid fa-clock me-2"></i>Clearing in <span id="sc-sold-timer-seconds">10</span>s
+            </span>
+        </div>
+    </div>
+    <div class="row g-4 mb-4">
+        <!-- Player Card -->
+        <div class="col-12 col-lg-5">
+            <div class="spl-card h-100 bg-white border border-secondary-subtle shadow-sm">
+                <div class="spl-card-header d-flex justify-content-between align-items-center bg-light border-bottom border-secondary-subtle">
+                    <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-id-card text-danger me-2"></i>Second-Chance Player</h5>
+                    <span class="badge bg-danger text-white font-monospace fw-bold" id="sc-card-rule-number">RULE #--</span>
+                </div>
+                <div class="p-3 text-center">
+                    <img id="sc-card-player-photo" src="" alt="Player" class="rounded-circle border border-danger border-3 shadow mb-3 object-fit-cover" width="115" height="115" onerror="this.src='/static/uploads/default_player.png'">
+                    <h3 class="fw-bold text-dark mb-1" id="sc-card-player-name">--</h3>
+                    <div class="d-flex justify-content-center gap-2 mb-3">
+                        <span class="badge bg-light border border-primary text-primary fs-7" id="sc-card-player-role">BATSMAN</span>
+                        <span class="badge bg-secondary fs-7" id="sc-card-player-category">NORMAL</span>
+                    </div>
+
+                    <div class="p-3 bg-light rounded border border-secondary-subtle text-start mb-3 small">
+                        <div class="row g-2">
+                            <div class="col-6"><span class="text-muted">Branch:</span> <strong class="text-dark" id="sc-card-player-branch">--</strong></div>
+                            <div class="col-6"><span class="text-muted">Year:</span> <strong class="text-dark" id="sc-card-player-year">--</strong></div>
+                            <div class="col-12"><span class="text-muted">Experience:</span> <strong class="text-dark" id="sc-card-player-experience">--</strong></div>
+                        </div>
+                    </div>
+
+                    <div class="p-2.5 rounded bg-light border border-secondary-subtle text-center">
+                        <span class="text-muted extra-small d-block text-uppercase">Opening Base Price</span>
+                        <strong class="text-success fs-5 font-monospace" id="sc-card-base-price">₹ 10,000</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Bidding Board & Timer Display -->
+        <div class="col-12 col-lg-7">
+            <div class="spl-card h-100 d-flex flex-column justify-content-between bg-white border border-secondary-subtle shadow-sm">
+                <div>
+                    <!-- Current Bid Display & 10s Timer Banner -->
+                    <div class="p-3 rounded bg-light border border-danger-subtle mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted extra-small text-uppercase fw-bold"><i class="fa-solid fa-rotate-right me-1 text-danger"></i>2ND CHANCE BID BOARD</span>
+                            <!-- 10-Second Timer -->
+                            <div class="spl-timer-ring-container">
+                                <span class="spl-timer-badge text-danger bg-white border border-danger shadow-sm" id="sc-auction-timer-display">10s</span>
+                            </div>
+                        </div>
+
+                        <div class="text-center py-2">
+                            <span class="text-muted extra-small d-block text-uppercase fw-bold">CURRENT HIGHEST BID</span>
+                            <h1 class="fw-black text-danger display-4 my-1 font-monospace" id="sc-current-bid-display">₹ 10,000</h1>
+                            <div class="d-flex justify-content-center align-items-center gap-2 mt-2" id="sc-highest-bidder-info">
+                                <span class="text-muted small">Leading Team:</span> 
+                                <span class="badge bg-secondary fs-6 px-3 py-1.5" id="sc-highest-bidder-name">No Bids Placed Yet</span>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-2 pt-2 border-top border-secondary-subtle">
+                            <small class="text-muted">
+                                Next Minimum Bid: <strong class="text-dark font-monospace fs-6" id="sc-next-valid-bid-display">₹ 10,000</strong>
+                                <span class="badge bg-white border border-secondary-subtle text-dark ms-2" id="sc-bid-increment-step-badge">+₹2,000</span>
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Flash / Celebration Status Banner -->
+                    <div id="sc-sold-celebration-banner" class="alert alert-success d-none py-3 text-center shadow-sm bg-white border border-success">
+                        <h4 class="fw-bold mb-1 text-success" id="sc-sold-banner-title">🎉 SECOND-CHANCE SALE!</h4>
+                        <p class="mb-0 small text-dark" id="sc-sold-banner-desc">Sold to franchise</p>
+                    </div>
+
+                    <div id="sc-unsold-banner" class="alert alert-danger text-danger bg-danger-subtle border border-danger d-none py-3 text-center shadow-sm">
+                        <h4 class="fw-bold mb-1"><i class="fa-solid fa-ban me-1"></i> FINAL UNSOLD</h4>
+                        <p class="mb-0 small">No bids placed in Second-Chance within 10 seconds.</p>
+                    </div>
+                </div>
+
+                <!-- Admin Action Controls -->
+                <div class="pt-3 border-top border-secondary-subtle">
+                    <div class="row g-2 mb-2">
+                        <div class="col-6 col-md-3">
+                            <button type="button" class="btn btn-danger w-100 fw-bold btn-sm py-2 shadow-sm" onclick="scPauseAction()">
+                                <i class="fa-solid fa-pause me-1"></i> Pause
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <button type="button" class="btn btn-primary w-100 fw-bold btn-sm py-2 shadow-sm" onclick="scResumeAction()">
+                                <i class="fa-solid fa-forward me-1"></i> Resume
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <button type="button" class="btn btn-outline-danger w-100 fw-bold btn-sm py-2" onclick="scExtendTimerAction(10)">
+                                <i class="fa-solid fa-clock-rotate-left me-1"></i> +10s
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <button type="button" class="btn btn-outline-secondary w-100 fw-bold btn-sm py-2" onclick="scResetAction()">
+                                <i class="fa-solid fa-arrow-rotate-left me-1"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-12 col-md-7">
+                            <button type="button" class="btn btn-success btn-lg w-100 fw-bold shadow-sm" onclick="scFinalizeSoldAction()">
+                                <i class="fa-solid fa-gavel me-2"></i> MARK AS SOLD
+                            </button>
+                        </div>
+                        <div class="col-12 col-md-5">
+                            <button type="button" class="btn btn-outline-danger btn-lg w-100 fw-bold" onclick="scFinalizeUnsoldAction()">
+                                <i class="fa-solid fa-xmark me-2"></i> MARK UNSOLD
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         3. CLICKABLE FRANCHISE TEAM CARDS (ALL 6 TEAMS)
+         ========================================== -->
+    <div class="spl-card border-top border-danger border-3 mb-4 bg-white shadow-sm">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3 pb-2 border-bottom border-secondary-subtle">
+            <div>
+                <h5 class="fw-bold text-dark mb-0">
+                    <i class="fa-solid fa-shield-halved text-danger me-2"></i>Registered Franchise Teams — Click Team to Bid
+                </h5>
+                <small class="text-muted">Clicking any team automatically places the next valid bid for that team and resets the 10s timer</small>
+            </div>
+            <div>
+                <span class="badge bg-light border border-secondary-subtle text-dark px-3 py-1.5 font-monospace">
+                    Next Bid: <strong id="sc-header-next-bid-pill" class="text-danger">₹ 10,000</strong>
+                </span>
+            </div>
+        </div>
+
+        <div class="row g-3" id="sc-franchise-cards-container">
+            {% for f in franchises %}
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="team-bid-card p-2.5 text-center h-100 position-relative bg-white" id="sc-team-card-{{ f.id }}" data-franchise-id="{{ f.id }}">
+                    <!-- Current Leader Crown Badge -->
+                    <div class="team-leader-badge badge bg-danger text-white fw-bold position-absolute top-0 start-50 translate-middle shadow-sm d-none" id="sc-leader-badge-{{ f.id }}">
+                        <i class="fa-solid fa-crown me-1"></i> LEADER
+                    </div>
+
+                    <!-- Team Logo -->
+                    <div class="team-logo-wrapper mb-2 mt-1">
+                        <img src="{{ url_for('static', filename='uploads/' + f.logo) if f.logo and not f.logo.startswith('http') else (f.logo or url_for('static', filename='uploads/default_logo.png')) }}" 
+                             alt="{{ f.name }}" class="rounded-circle border border-2 team-logo" width="56" height="56" onerror="this.src='/static/uploads/default_logo.png'">
+                    </div>
+
+                    <!-- Team Name & Short Name -->
+                    <div class="fw-bold text-dark small text-truncate" title="{{ f.name }}">{{ f.name }}</div>
+                    <span class="badge bg-secondary extra-small font-monospace mb-2">{{ f.short_name }}</span>
+
+                    <!-- Purse Balance -->
+                    <div class="bg-light p-1.5 rounded border border-secondary-subtle mb-2">
+                        <span class="text-muted extra-small d-block text-uppercase fw-bold">Purse</span>
+                        <strong class="text-success small font-monospace" id="sc-team-purse-{{ f.id }}">₹ {{ f.remaining_purse | currency }}</strong>
+                    </div>
+
+                    <!-- Squad Count -->
+                    <div class="extra-small text-muted mb-2">
+                        Squad: <span class="text-dark fw-bold" id="sc-team-squad-{{ f.id }}">{{ f.squad_count }}</span>/{{ f.squad_limit }}
+                    </div>
+
+                    <!-- Action Button (Click to Bid) -->
+                    <button type="button" class="btn btn-sm btn-danger w-100 fw-bold py-1 team-bid-btn shadow-sm" id="sc-team-btn-{{ f.id }}">
+                        <i class="fa-solid fa-gavel me-1"></i> BID
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     4. ELIGIBLE UNSOLD PLAYERS ROSTER
+     ========================================== -->
+<div class="spl-card bg-white border border-secondary-subtle shadow-sm mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3 pb-3 border-bottom border-secondary-subtle">
+        <div>
+            <h5 class="fw-bold text-dark mb-1"><i class="fa-solid fa-users text-danger me-2"></i>Eligible Second-Chance Players</h5>
+            <p class="text-muted small mb-0">Only players marked eligible for second-chance. Click <strong>Auction Now</strong> to start bidding.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <input type="text" id="sc-table-search" class="form-control form-control-sm bg-white text-dark border-secondary-subtle" placeholder="Search rule #, name, role...">
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 font-sans" id="sc-players-table">
+            <thead class="text-dark small text-uppercase bg-light border-bottom border-secondary-subtle font-display">
+                <tr>
+                    <th class="ps-3 py-2">Photo</th>
+                    <th class="py-2">Rule #</th>
+                    <th class="py-2">Player Name</th>
+                    <th class="py-2">Role</th>
+                    <th class="py-2">Branch / Year</th>
+                    <th class="py-2">Category</th>
+                    <th class="py-2">Base Price</th>
+                    <th class="py-2 text-end pe-3">Action</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white">
+                {% for p in eligible_players %}
+                <tr class="sc-table-row">
+                    <td class="ps-3 py-2">
+                        <img src="{{ url_for('static', filename='uploads/' + p.photo) if p.photo and not p.photo.startswith('http') else (p.photo or url_for('static', filename='uploads/default_player.png')) }}" 
+                             alt="{{ p.name }}" class="rounded-circle object-fit-cover border border-secondary-subtle" width="40" height="40" onerror="this.src='/static/uploads/default_player.png'">
+                    </td>
+                    <td class="py-2 font-monospace fw-bold text-danger">#{{ p.rule_number or p.roll_number }}</td>
+                    <td class="py-2 fw-bold text-dark">{{ p.name }}</td>
+                    <td class="py-2"><span class="badge bg-light border border-primary text-primary">{{ p.role }}</span></td>
+                    <td class="py-2 small text-muted">{{ p.branch or '-' }} / Yr {{ p.year or '-' }}</td>
+                    <td class="py-2"><span class="badge bg-secondary">{{ p.category }}</span></td>
+                    <td class="py-2 font-monospace fw-bold text-success">₹ {{ p.base_price | currency }}</td>
+                    <td class="py-2 text-end pe-3">
+                        <button type="button" class="btn btn-danger btn-sm fw-bold shadow-sm" onclick="quickSelectSecondChance('{{ p.rule_number or p.roll_number }}')">
+                            <i class="fa-solid fa-bolt me-1"></i> Auction Now
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-circle-check fa-2x mb-2 d-block text-success"></i>
+                        No eligible unsold players remaining.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let scActivePlayerObj = null;
+let scCurrentBidVal = 10000;
+let scNextValidBidVal = 10000;
+let scHighestBidderId = null;
+let scAuctionStatus = 'WAITING';
+let scTimerSeconds = 10;
+let scTimerRunning = false;
+let scAutoFinalizing = false;
+let scIsSubmittingBid = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+    // 100ms high precision tick
+    setInterval(tickScTimer, 100);
+    // 1.2s state polling
+    pollScState();
+    setInterval(pollScState, 1200);
+
+    // Search filter for eligible table
+    const searchInput = document.getElementById('sc-table-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase().trim();
+            document.querySelectorAll('.sc-table-row').forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+    }
+
+    // Delegated click on second chance team cards
+    const container = document.getElementById('sc-franchise-cards-container');
+    if (container) {
+        container.addEventListener('click', (e) => {
+            const card = e.target.closest('.team-bid-card');
+            if (card && card.dataset.franchiseId) {
+                placeScTeamBid(parseInt(card.dataset.franchiseId, 10));
+            }
+        });
+    }
+});
+
+let searchedSCPlayerObj = null;
+
+function quickSelectSecondChance(ruleNo) {
+    document.getElementById('sc-rule-input').value = ruleNo;
+    searchSecondChancePlayerByRule(ruleNo);
+}
+
+// Requirement 5: Search player by Rule Number for Second Chance Auction
+async function searchSecondChancePlayerByRule(overrideRule = null) {
+    const input = document.getElementById('sc-rule-input');
+    const errBox = document.getElementById('sc-rule-error');
+    const resBox = document.getElementById('sc-player-search-result');
+    const rule = (overrideRule || input.value).trim();
+
+    errBox.classList.add('d-none');
+    errBox.textContent = '';
+    searchedSCPlayerObj = null;
+
+    if (!rule) {
+        errBox.classList.remove('d-none');
+        errBox.textContent = 'Please enter a Rule Number to search.';
+        resBox.classList.add('d-none');
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/auction/search-player?rule=${encodeURIComponent(rule)}&mode=second_chance`);
+        const data = await res.json();
+
+        if (!data.success || !data.player) {
+            errBox.classList.remove('d-none');
+            errBox.textContent = data.message || `No player found with Rule Number '${rule}'.`;
+            resBox.classList.add('d-none');
+            return;
+        }
+
+        const p = data.player;
+        searchedSCPlayerObj = p;
+
+        // Populate search result fields
+        const photoEl = document.getElementById('sc-search-res-photo');
+        if (p.photo && !p.photo.includes('default')) {
+            photoEl.src = p.photo.startsWith('http') ? p.photo : `/static/uploads/${p.photo}`;
+        } else {
+            photoEl.src = '/static/uploads/default_player.png';
+        }
+
+        document.getElementById('sc-search-res-rule').textContent = `RULE #${p.rule_number || p.roll_number}`;
+        document.getElementById('sc-search-res-name').textContent = p.name;
+        document.getElementById('sc-search-res-role').textContent = p.role || 'ALL-ROUNDER';
+        document.getElementById('sc-search-res-category').textContent = p.category || 'NORMAL';
+        document.getElementById('sc-search-res-branch').textContent = p.branch || '-';
+        document.getElementById('sc-search-res-year').textContent = p.year ? `${p.year}` : '-';
+        document.getElementById('sc-search-res-base-price').textContent = `₹ ${Number(p.base_price || 10000).toLocaleString()}`;
+        document.getElementById('sc-curr-rule-display').textContent = p.rule_number || p.roll_number;
+        document.getElementById('sc-new-rule-input').value = '';
+        document.getElementById('sc-update-rule-feedback').className = 'extra-small d-none';
+
+        const statusBadge = document.getElementById('sc-search-res-status');
+        const soldInfo = document.getElementById('sc-search-res-sold-info');
+        const startWrap = document.getElementById('sc-start-auction-wrap');
+        const soldWarn = document.getElementById('sc-sold-warning');
+
+        // Requirement 6: Second Chance Sold Player Protection
+        if (p.is_sold || data.is_sold || p.status === 'SOLD' || p.sold_to) {
+            statusBadge.className = 'badge bg-danger fs-7 px-2.5 py-1';
+            statusBadge.textContent = 'SOLD';
+            soldInfo.classList.remove('d-none');
+            soldInfo.innerHTML = `<i class="fa-solid fa-lock me-1"></i> Sold to <strong>${p.franchise_name || 'a team'}</strong> for <strong>₹ ${Number(p.sold_price || 0).toLocaleString()}</strong> (${p.auction_type || 'PRIMARY'})`;
+            startWrap.classList.add('d-none');
+            soldWarn.classList.remove('d-none');
+            soldWarn.innerHTML = `<i class="fa-solid fa-ban me-1"></i> Already Sold. This player cannot be auctioned again.`;
+        } else {
+            statusBadge.className = 'badge bg-danger text-white fs-7 px-2.5 py-1';
+            statusBadge.textContent = p.status || 'UNSOLD';
+            soldInfo.classList.add('d-none');
+            startWrap.classList.remove('d-none');
+            soldWarn.classList.add('d-none');
+        }
+
+        resBox.classList.remove('d-none');
+    } catch (err) {
+        errBox.classList.remove('d-none');
+        errBox.textContent = 'Error connecting to search service: ' + err.message;
+    }
+}
+
+// Requirement 5: Update Rule Number in Second Chance
+async function updateSecondChancePlayerRule() {
+    if (!searchedSCPlayerObj) return;
+
+    const newRuleInput = document.getElementById('sc-new-rule-input');
+    const feedback = document.getElementById('sc-update-rule-feedback');
+    const newRule = newRuleInput.value.trim();
+
+    feedback.className = 'extra-small d-none';
+
+    if (!newRule) {
+        feedback.className = 'extra-small text-danger mt-1 d-block';
+        feedback.textContent = 'Please enter a new Rule Number.';
+        return;
+    }
+
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    try {
+        const res = await fetch('/api/auction/update-rule-number', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+            body: JSON.stringify({
+                player_id: searchedSCPlayerObj.id,
+                new_rule_number: newRule
+            })
+        });
+
+        const data = await res.json();
+        if (!data.success) {
+            feedback.className = 'extra-small text-danger mt-1 d-block';
+            feedback.textContent = data.message || 'Failed to update Rule Number.';
+            return;
+        }
+
+        // Successfully updated
+        searchedSCPlayerObj.rule_number = data.player.rule_number;
+        searchedSCPlayerObj.roll_number = data.player.roll_number;
+        document.getElementById('sc-curr-rule-display').textContent = data.player.rule_number;
+        document.getElementById('sc-search-res-rule').textContent = `RULE #${data.player.rule_number}`;
+        document.getElementById('sc-rule-input').value = data.player.rule_number;
+
+        feedback.className = 'extra-small text-success mt-1 d-block';
+        feedback.textContent = `✓ Rule Number updated to '${data.player.rule_number}'.`;
+    } catch (err) {
+        feedback.className = 'extra-small text-danger mt-1 d-block';
+        feedback.textContent = 'Error updating rule number: ' + err.message;
+    }
+}
+
+// Requirement 6: Start 10s bidding for searched Second-Chance player
+async function startAuctionForSearchedSCPlayer() {
+    if (!searchedSCPlayerObj) return;
+
+    const errBox = document.getElementById('sc-rule-error');
+    errBox.classList.add('d-none');
+
+    // Strict validation
+    if (searchedSCPlayerObj.is_sold || searchedSCPlayerObj.status === 'SOLD' || searchedSCPlayerObj.sold_to) {
+        errBox.classList.remove('d-none');
+        errBox.textContent = `Already Sold: This player cannot be auctioned again.`;
+        return;
+    }
+
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    try {
+        // Step 1: Ensure second-chance mode is active on backend
+        await fetch('/api/auction/second-chance/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+        });
+
+        // Step 2: Activate player
+        const actRes = await fetch('/api/auction/activate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+            body: JSON.stringify({ player_id: searchedSCPlayerObj.id })
+        });
+        const actData = await actRes.json();
+        if (!actData.success) {
+            errBox.classList.remove('d-none');
+            errBox.textContent = actData.message || 'Failed to activate player.';
+            return;
+        }
+
+        // Step 3: Start 10s bidding timer
+        const startRes = await fetch('/api/auction/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+        });
+        const startData = await startRes.json();
+        if (!startData.success) {
+            errBox.classList.remove('d-none');
+            errBox.textContent = startData.message || 'Failed to start bidding timer.';
+            return;
+        }
+
+        // Hide search result, poll immediately
+        document.getElementById('sc-player-search-result').classList.add('d-none');
+        pollScState();
+    } catch (err) {
+        errBox.classList.remove('d-none');
+        errBox.textContent = 'Error launching second-chance auction: ' + err.message;
+    }
+}
+
+// Click Team Card to Bid in Second Chance
+async function placeScTeamBid(franchiseId) {
+    if (scAuctionStatus !== 'BIDDING' || scIsSubmittingBid) return;
+    if (scHighestBidderId === franchiseId) return; // Prevent duplicate bid by current leader
+
+    const card = document.getElementById(`sc-team-card-${franchiseId}`);
+    if (card && card.classList.contains('disabled')) return; // Prevent bid if team cannot bid
+
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    scIsSubmittingBid = true;
+
+    // Visual feedback
+    if (card) card.style.transform = 'scale(0.96)';
+
+    try {
+        const res = await fetch('/api/auction/admin-bid', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+            body: JSON.stringify({ franchise_id: franchiseId })
+        });
+        const data = await res.json();
+        if (!data.success) {
+            alert(data.message || 'Bid rejected');
+        } else {
+            // Reset 10s timer on valid bid
+            scTimerSeconds = 10;
+            scTimerRunning = true;
+            renderScTimer(10);
+            pollScState();
+        }
+    } catch (err) {
+        alert('Error placing bid: ' + err.message);
+    } finally {
+        scIsSubmittingBid = false;
+        if (card) card.style.transform = '';
+    }
+}
+
+// 100ms Precision Timer Tick
+function tickScTimer() {
+    if (scTimerRunning && scAuctionStatus === 'BIDDING') {
+        scTimerSeconds -= 0.1;
+        if (scTimerSeconds <= 0) {
+            scTimerSeconds = 0;
+            scTimerRunning = false;
+            renderScTimer(0);
+            handleScTimerExpired();
+        } else {
+            renderScTimer(Math.ceil(scTimerSeconds));
+        }
+    }
+}
+
+function renderScTimer(seconds) {
+    const timerDisplay = document.getElementById('sc-auction-timer-display');
+    if (!timerDisplay) return;
+
+    timerDisplay.textContent = `${seconds}s`;
+    if (seconds <= 3 && seconds > 0) {
+        timerDisplay.classList.add('urgent');
+    } else {
+        timerDisplay.classList.remove('urgent');
+    }
+}
+
+// Handle 10-Second Timer Expiry
+async function handleScTimerExpired() {
+    if (scAutoFinalizing || scAuctionStatus !== 'BIDDING') return;
+    scAutoFinalizing = true;
+
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    if (scHighestBidderId) {
+        try {
+            const res = await fetch('/api/auction/sold', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+            });
+            const data = await res.json();
+            if (data.success) {
+                showScCelebrationBanner(data.player_name, data.franchise_name, data.sold_price);
+            }
+        } catch (e) {
+            console.error('Auto-sold error:', e);
+        }
+    } else {
+        try {
+            await fetch('/api/auction/unsold', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+            });
+            showScUnsoldBanner();
+        } catch (e) {
+            console.error('Auto-unsold error:', e);
+        }
+    }
+
+    setTimeout(() => {
+        scAutoFinalizing = false;
+        pollScState();
+    }, 1500);
+}
+
+function showScCelebrationBanner(playerName, franchiseName, price) {
+    const banner = document.getElementById('sc-sold-celebration-banner');
+    if (!banner) return;
+    document.getElementById('sc-sold-banner-title').textContent = `🎉 SECOND-CHANCE SOLD: ${playerName}`;
+    document.getElementById('sc-sold-banner-desc').textContent = `Purchased by ${franchiseName} for ₹${Number(price).toLocaleString()}`;
+    banner.classList.remove('d-none');
+    document.getElementById('sc-unsold-banner')?.classList.add('d-none');
+}
+
+function showScUnsoldBanner() {
+    const banner = document.getElementById('sc-unsold-banner');
+    if (!banner) return;
+    banner.classList.remove('d-none');
+    document.getElementById('sc-sold-celebration-banner')?.classList.add('d-none');
+}
+
+// Manual Actions
+async function scFinalizeSoldAction() {
+    if (!confirm('Mark player as SOLD in Second-Chance?')) return;
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const res = await fetch('/api/auction/sold', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+    });
+    const data = await res.json();
+    if (data.success) {
+        showScCelebrationBanner(data.player_name, data.franchise_name, data.sold_price);
+        pollScState();
+    } else {
+        alert(data.message || 'Error finalizing sale.');
+    }
+}
+
+async function scFinalizeUnsoldAction() {
+    if (!confirm('Mark player as UNSOLD?')) return;
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const res = await fetch('/api/auction/unsold', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+    });
+    const data = await res.json();
+    if (data.success) {
+        showScUnsoldBanner();
+        pollScState();
+    } else {
+        alert(data.message || 'Error finalizing unsold.');
+    }
+}
+
+async function scPauseAction() {
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    await fetch('/api/auction/pause', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+    });
+    scTimerRunning = false;
+    pollScState();
+}
+
+async function scResumeAction() {
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    await fetch('/api/auction/resume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+    });
+    pollScState();
+}
+
+async function scExtendTimerAction(seconds) {
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    await fetch('/api/auction/extend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+        body: JSON.stringify({ seconds: seconds })
+    });
+    pollScState();
+}
+
+async function scResetAction() {
+    if (!confirm('Reset current auction to WAITING?')) return;
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    await fetch('/api/auction/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+    });
+    window.location.reload();
+}
+
+// Master Server State Polling
+async function pollScState() {
+    try {
+        const res = await fetch('/api/auction/state');
+        if (!res.ok) return;
+        const state = await res.json();
+
+        scAuctionStatus = state.status;
+        const badge = document.getElementById('sc-state-badge');
+        if (badge) {
+            badge.textContent = state.status;
+            if (state.status === 'BIDDING') badge.className = 'fw-bold text-success mb-0 mt-1';
+            else if (state.status === 'PAUSED') badge.className = 'fw-bold text-danger mb-0 mt-1';
+            else if (state.status === 'SOLD') badge.className = 'fw-bold text-primary mb-0 mt-1';
+            else if (state.status === 'UNSOLD') badge.className = 'fw-bold text-danger mb-0 mt-1';
+            else badge.className = 'fw-bold text-danger mb-0 mt-1';
+        }
+
+        // Active Player Visibility
+        const entryCard = document.getElementById('sc-entry-card');
+        const arena = document.getElementById('sc-bidding-arena');
+
+        if (state.active_player) {
+            // Requirements 1, 7, 8: 10-Second Sold Display & Auto-Removal in Second Chance
+            if (state.status === 'SOLD') {
+                let remainingSec = 10;
+                if (state.sold_until_timestamp) {
+                    remainingSec = Math.max(0, Math.ceil((state.sold_until_timestamp - Date.now()) / 1000));
+                } else if (state.sold_remaining_seconds !== undefined && state.sold_remaining_seconds !== null) {
+                    remainingSec = state.sold_remaining_seconds;
+                }
+
+                if (remainingSec <= 0) {
+                    // Exactly 10 seconds completed: automatically remove sold player
+                    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                    if (csrf) {
+                        fetch('/api/auction/clear-sold', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+                        }).catch(() => {});
+                    }
+                    scActivePlayerObj = null;
+                    entryCard?.classList.remove('d-none');
+                    arena?.classList.add('d-none');
+                    return;
+                }
+
+                const soldBanner = document.getElementById('sc-sold-alert-banner');
+                if (soldBanner) {
+                    soldBanner.classList.remove('d-none');
+                    const winTeam = state.winning_franchise || state.highest_bidder;
+                    document.getElementById('sc-sold-winner-team').textContent = winTeam ? winTeam.name : 'Winning Franchise';
+                    document.getElementById('sc-sold-final-price').textContent = `₹ ${Number(state.sold_price || state.current_bid).toLocaleString()}`;
+                    document.getElementById('sc-sold-timer-seconds').textContent = remainingSec;
+                }
+            } else {
+                const soldBanner = document.getElementById('sc-sold-alert-banner');
+                if (soldBanner) soldBanner.classList.add('d-none');
+            }
+
+            scActivePlayerObj = state.active_player;
+            entryCard?.classList.add('d-none');
+            arena?.classList.remove('d-none');
+
+            document.getElementById('sc-card-rule-number').textContent = `RULE #${state.active_player.rule_number || state.active_player.roll_number}`;
+            document.getElementById('sc-card-player-name').textContent = state.active_player.name;
+            document.getElementById('sc-card-player-role').textContent = state.active_player.role;
+            document.getElementById('sc-card-player-category').textContent = state.active_player.category;
+            document.getElementById('sc-card-player-branch').textContent = state.active_player.branch || '-';
+            document.getElementById('sc-card-player-year').textContent = state.active_player.year ? `Year ${state.active_player.year}` : '-';
+            document.getElementById('sc-card-player-experience').textContent = state.active_player.experience || 'Fresh Candidate';
+            document.getElementById('sc-card-base-price').textContent = `₹ ${Number(state.active_player.base_price || 10000).toLocaleString()}`;
+
+            const photoUrl = (state.active_player.photo && !state.active_player.photo.startsWith('http')) ? `/static/uploads/${state.active_player.photo}` : (state.active_player.photo || '/static/uploads/default_player.png');
+            document.getElementById('sc-card-player-photo').src = photoUrl;
+        } else {
+            scActivePlayerObj = null;
+            entryCard?.classList.remove('d-none');
+            arena?.classList.add('d-none');
+        }
+
+        // Bidding Numbers
+        scCurrentBidVal = state.current_bid || 0;
+        scNextValidBidVal = state.next_valid_bid || scCurrentBidVal;
+        scHighestBidderId = state.highest_bidder ? state.highest_bidder.id : null;
+
+        document.getElementById('sc-current-bid-display').textContent = `₹ ${Number(scCurrentBidVal).toLocaleString()}`;
+        document.getElementById('sc-next-valid-bid-display').textContent = `₹ ${Number(scNextValidBidVal).toLocaleString()}`;
+        document.getElementById('sc-header-next-bid-pill').textContent = `₹ ${Number(scNextValidBidVal).toLocaleString()}`;
+        document.getElementById('sc-bid-increment-step-badge').textContent = `+₹${Number(state.increment || 2000).toLocaleString()}`;
+
+        const bidderNameEl = document.getElementById('sc-highest-bidder-name');
+        if (state.highest_bidder) {
+            bidderNameEl.className = 'badge bg-danger text-white fs-6 px-3 py-1.5 fw-bold shadow-sm';
+            bidderNameEl.innerHTML = `<i class="fa-solid fa-crown me-1"></i> ${state.highest_bidder.name} (${state.highest_bidder.short_name})`;
+        } else {
+            bidderNameEl.className = 'badge bg-secondary fs-6 px-3 py-1.5';
+            bidderNameEl.textContent = 'No Bids Placed Yet (Opening Base Price)';
+        }
+
+        // Timer Sync
+        if (state.status === 'BIDDING') {
+            scTimerRunning = true;
+            scTimerSeconds = state.remaining_seconds != null ? state.remaining_seconds : 10;
+            renderScTimer(Math.ceil(scTimerSeconds));
+        } else {
+            scTimerRunning = false;
+            renderScTimer(state.remaining_seconds || 0);
+        }
+
+        // Render & Update Franchise Team Cards
+        if (state.franchises && state.franchises.length > 0) {
+            state.franchises.forEach(f => {
+                const card = document.getElementById(`sc-team-card-${f.id}`);
+                const purseEl = document.getElementById(`sc-team-purse-${f.id}`);
+                const squadEl = document.getElementById(`sc-team-squad-${f.id}`);
+                const btn = document.getElementById(`sc-team-btn-${f.id}`);
+                const leaderBadge = document.getElementById(`sc-leader-badge-${f.id}`);
+
+                if (purseEl) purseEl.textContent = `₹ ${Number(f.remaining_purse).toLocaleString()}`;
+                if (squadEl) squadEl.textContent = f.squad_count;
+
+                if (card && btn) {
+                    if (f.is_highest_bidder) {
+                        card.className = 'team-bid-card p-2.5 text-center h-100 position-relative leading-bidder bg-white';
+                        btn.className = 'btn btn-sm btn-danger w-100 fw-bold py-1 disabled shadow-sm';
+                        btn.innerHTML = `<i class="fa-solid fa-crown me-1"></i> LEADING`;
+                        leaderBadge?.classList.remove('d-none');
+                    } else if (f.can_bid) {
+                        card.className = 'team-bid-card p-2.5 text-center h-100 position-relative bg-white';
+                        btn.className = 'btn btn-sm btn-danger w-100 fw-bold py-1 shadow-sm';
+                        btn.innerHTML = `<i class="fa-solid fa-gavel me-1"></i> BID ₹${Number(scNextValidBidVal).toLocaleString()}`;
+                        leaderBadge?.classList.add('d-none');
+                    } else {
+                        card.className = 'team-bid-card p-2.5 text-center h-100 position-relative bg-white border border-secondary-subtle';
+                        btn.className = 'btn btn-sm btn-outline-secondary w-100 extra-small py-1 disabled';
+                        btn.textContent = f.cannot_bid_reason || 'Cannot Bid';
+                        leaderBadge?.classList.add('d-none');
+                    }
+                }
+            });
+        }
+    } catch (e) {
+        console.error('Second chance state poll error:', e);
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Event Control Panel — SPL Admin{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-sliders text-danger me-2"></i>Event Control Panel</h2>
+            <p class="text-muted mb-0">Master control panel for physical auction day operations</p>
+        </div>
+        <div>
+            <span class="badge bg-primary fs-6 px-3 py-2">
+                Current State: {{ state }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Quick Actions based on State -->
+    <div class="card shadow-sm border-0 mb-4 bg-white">
+        <div class="card-header bg-light text-dark fw-bold border-bottom border-secondary-subtle">
+            <i class="bi bi-play-circle text-danger me-2"></i>Global Action Controls
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.update_event_state') }}" class="row row-cols-lg-auto g-3 align-items-center">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="col-12">
+                    <label class="visually-hidden" for="event_state">State</label>
+                    <select class="form-select" id="event_state" name="state">
+                        <option value="SETUP" {% if state == 'SETUP' %}selected{% endif %}>SETUP</option>
+                        <option value="AUCTION_READY" {% if state == 'AUCTION_READY' %}selected{% endif %}>AUCTION_READY</option>
+                        <option value="PRIMARY_AUCTION" {% if state == 'PRIMARY_AUCTION' %}selected{% endif %}>PRIMARY_AUCTION</option>
+                        <option value="SECOND_CHANCE" {% if state == 'SECOND_CHANCE' %}selected{% endif %}>SECOND_CHANCE</option>
+                        <option value="SQUAD_REVIEW" {% if state == 'SQUAD_REVIEW' %}selected{% endif %}>SQUAD_REVIEW</option>
+                        <option value="SQUADS_LOCKED" {% if state == 'SQUADS_LOCKED' %}selected{% endif %}>SQUADS_LOCKED</option>
+                        <option value="FIXTURES_READY" {% if state == 'FIXTURES_READY' %}selected{% endif %}>FIXTURES_READY</option>
+                        <option value="TOURNAMENT_ACTIVE" {% if state == 'TOURNAMENT_ACTIVE' %}selected{% endif %}>TOURNAMENT_ACTIVE</option>
+                        <option value="COMPLETED" {% if state == 'COMPLETED' %}selected{% endif %}>COMPLETED</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-danger fw-bold shadow-sm">
+                        <i class="bi bi-check-circle me-1"></i>Update Event State
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Live Player Status -->
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-header bg-body fw-bold">
+                    <i class="bi bi-person-circle me-2"></i>Active Player & Bid Status
+                </div>
+                <div class="card-body">
+                    {% if current_player %}
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{{ current_player.photo_url or '/static/images/default-avatar.png' }}" class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                        <div>
+                            <h5 class="mb-1">{{ current_player.name }}</h5>
+                            <span class="badge bg-secondary">{{ current_player.role }}</span>
+                            <span class="badge bg-info text-dark">Roll: {{ current_player.roll_number }}</span>
+                        </div>
+                    </div>
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Current Bid:</span>
+                            <strong class="text-success">₹{{ "{:,}".format(current_bid) }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Highest Bidder:</span>
+                            <strong>{{ highest_bidder.name if highest_bidder else 'None' }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Base Price:</span>
+                            <span>₹{{ "{:,}".format(current_player.base_price or 10000) }}</span>
+                        </li>
+                    </ul>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-person-x fs-1 d-block mb-2"></i>
+                        No active player currently under the hammer.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-body d-flex justify-content-between">
+                    <a href="{{ url_for('admin.auction_control') }}" class="btn btn-sm btn-danger fw-bold shadow-sm">
+                        <i class="bi bi-hammer me-1"></i>Go to Auction Control
+                    </a>
+                    <a href="{{ url_for('live.auction_live') }}" target="_blank" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-projector me-1"></i>Open Projector View
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Squad & Purse Summary -->
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm border-0 bg-white">
+                <div class="card-header bg-light text-dark fw-bold border-bottom border-secondary-subtle">
+                    <i class="bi bi-shield-check text-primary me-2"></i>Franchise & Squad Overview
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Franchise</th>
+                                    <th>Squad Size</th>
+                                    <th>Purse Left</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in squad_stats %}
+                                <tr>
+                                    <td class="fw-bold">{{ item.franchise.name }}</td>
+                                    <td>
+                                        <span class="badge {% if item.squad_count >= 14 and item.squad_count <= 15 %}bg-success{% elif item.squad_count < 14 %}bg-primary{% else %}bg-danger{% endif %}">
+                                            {{ item.squad_count }} / 15
+                                        </span>
+                                    </td>
+                                    <td class="text-success fw-bold">₹{{ "{:,}".format(item.remaining_purse) }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-muted text-center">No franchises configured.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-body">
+                    <a href="{{ url_for('admin.auction_integrity_audit') }}" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-clipboard-check me-1"></i>Run Full Integrity Check
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

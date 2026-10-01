@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Auction Activity Feed — {{ franchise.name }}{% endblock %}
+
+{% block content_wrapper %}
+<div class="container py-3">
+    <!-- Header Bar & Sub-Navigation -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-primary text-uppercase fs-6 px-3 py-2">{{ franchise.short_name }}</span>
+            <div>
+                <h2 class="fw-bold text-dark mb-0">Franchise Activity Timeline</h2>
+                <small class="text-muted">Chronological feed of team events and acquisitions</small>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-sm">
+                <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- Sub-Navigation Links Bar -->
+    <div class="spl-card p-2 mb-4 bg-white shadow-sm border">
+        <div class="nav nav-pills gap-1">
+            <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.dashboard') }}"><i class="fa-solid fa-chart-pie me-1"></i> Dashboard</a>
+            <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.squad') }}"><i class="fa-solid fa-users me-1"></i> My Squad</a>
+            <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.purchases') }}"><i class="fa-solid fa-cart-shopping me-1"></i> Purchases</a>
+            <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.bids') }}"><i class="fa-solid fa-list-check me-1"></i> Bid History</a>
+            <a class="nav-link active bg-danger text-white fw-bold px-3 py-1.5" href="{{ url_for('franchise.activity') }}"><i class="fa-solid fa-timeline me-1"></i> Activity</a>
+            <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.profile') }}"><i class="fa-solid fa-id-card me-1"></i> Profile</a>
+        </div>
+    </div>
+
+    <!-- Activity Feed Container -->
+    <div class="spl-card bg-white shadow-sm border p-4">
+        <div class="spl-card-header pb-3 mb-3 border-bottom">
+            <h5 class="fw-semibold text-dark mb-0"><i class="fa-solid fa-clock-rotate-left text-danger me-2"></i>Event Feed Timeline</h5>
+        </div>
+
+        {% if events %}
+        <div class="timeline position-relative ps-4 ms-2">
+            {% for ev in events %}
+            <div class="timeline-item mb-4 position-relative">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <h6 class="fw-bold text-dark mb-0">
+                        {% if ev.type == 'PURCHASE' %}
+                            <i class="fa-solid fa-trophy text-danger me-2"></i>{{ ev.title }}
+                        {% else %}
+                            <i class="fa-solid fa-gavel text-primary me-2"></i>{{ ev.title }}
+                        {% endif %}
+                    </h6>
+                    <small class="text-muted">{{ ev.timestamp.strftime('%H:%M:%S (%Y-%m-%d)') }}</small>
+                </div>
+                <div class="text-muted small ps-4">{{ ev.subtitle }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="fa-solid fa-stream fa-3x mb-3 text-secondary"></i>
+            <h6 class="text-dark">NO ACTIVITY RECORDED YET</h6>
+            <p class="text-muted small mb-0">Bids and purchases made during live auctions will generate timeline entries here.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

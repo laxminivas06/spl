@@ -1,0 +1,257 @@
+{% extends "admin/base_admin.html" %}
+{% set active_page = 'audit_logs' %}
+
+{% block title %}Audit Logs — {{ event_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-1"><i class="fa-solid fa-clipboard-list text-danger me-2"></i>Audit Logs</h2>
+        <p class="text-muted small mb-0">Append-only audit trail recording logins, player modifications, auction bids, purse adjustments, and security changes.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <span class="badge bg-light text-primary border border-primary px-3 py-2 fs-6 shadow-sm">
+            <i class="fa-solid fa-shield-halved me-1 text-primary"></i> Immutable Audit Stream
+        </span>
+    </div>
+</div>
+
+<!-- Summary Metric Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="spl-card text-center py-3 border-start border-primary border-4 bg-white shadow-sm">
+            <span class="text-muted text-uppercase extra-small fw-bold">Total Logs</span>
+            <h3 class="fw-bold text-dark mb-0 mt-1">{{ total_events }}</h3>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="spl-card text-center py-3 border-start border-primary border-4 bg-white shadow-sm">
+            <span class="text-muted text-uppercase extra-small fw-bold">Auth & Logins</span>
+            <h3 class="fw-bold text-primary mb-0 mt-1">{{ login_events }}</h3>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="spl-card text-center py-3 border-start border-danger border-4 bg-white shadow-sm">
+            <span class="text-muted text-uppercase extra-small fw-bold">Auction & Bids</span>
+            <h3 class="fw-bold text-danger mb-0 mt-1">{{ auction_events }}</h3>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="spl-card text-center py-3 border-start border-danger border-4 bg-white shadow-sm">
+            <span class="text-muted text-uppercase extra-small fw-bold">Security & Alerts</span>
+            <h3 class="fw-bold text-danger mb-0 mt-1">{{ security_events }}</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Filter & Search Controls Card -->
+<div class="spl-card mb-4 p-3 bg-white border border-secondary-subtle shadow-sm">
+    <form method="GET" action="{{ url_for('admin.audit_logs') }}" class="row g-3 align-items-end">
+        <!-- Search Query -->
+        <div class="col-md-3">
+            <label class="form-label extra-small text-muted fw-bold">Search Keywords</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light border-secondary-subtle text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <input type="text" name="search" class="form-control form-control-sm bg-white text-dark border-secondary-subtle" placeholder="Action, IP, Gmail, details..." value="{{ search }}">
+            </div>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="col-6 col-md-2">
+            <label class="form-label extra-small text-muted fw-bold">Category</label>
+            <select name="category" class="form-select form-select-sm bg-white text-dark border-secondary-subtle">
+                <option value="">All Categories</option>
+                <option value="AUTH" {% if selected_category == 'AUTH' %}selected{% endif %}>Auth & Logins</option>
+                <option value="PLAYER" {% if selected_category == 'PLAYER' %}selected{% endif %}>Player Changes</option>
+                <option value="FRANCHISE" {% if selected_category == 'FRANCHISE' %}selected{% endif %}>Franchise Changes</option>
+                <option value="AUCTION" {% if selected_category == 'AUCTION' %}selected{% endif %}>Auction & Bids</option>
+                <option value="PURSE" {% if selected_category == 'PURSE' %}selected{% endif %}>Purse Changes</option>
+                <option value="SQUAD" {% if selected_category == 'SQUAD' %}selected{% endif %}>Squad Changes</option>
+                <option value="SECURITY" {% if selected_category == 'SECURITY' %}selected{% endif %}>Security Changes</option>
+                <option value="SETTINGS" {% if selected_category == 'SETTINGS' %}selected{% endif %}>Settings Changes</option>
+            </select>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="col-6 col-md-2">
+            <label class="form-label extra-small text-muted fw-bold">Status</label>
+            <select name="status" class="form-select form-select-sm bg-white text-dark border-secondary-subtle">
+                <option value="">All Statuses</option>
+                <option value="SUCCESS" {% if selected_status == 'SUCCESS' %}selected{% endif %}>SUCCESS</option>
+                <option value="FAILED" {% if selected_status == 'FAILED' %}selected{% endif %}>FAILED</option>
+                <option value="DENIED" {% if selected_status == 'DENIED' %}selected{% endif %}>DENIED</option>
+            </select>
+        </div>
+
+        <!-- Franchise Filter -->
+        <div class="col-6 col-md-2">
+            <label class="form-label extra-small text-muted fw-bold">Franchise</label>
+            <select name="franchise_id" class="form-select form-select-sm bg-white text-dark border-secondary-subtle">
+                <option value="">All Franchises</option>
+                {% for f in franchises %}
+                <option value="{{ f.id }}" {% if selected_franchise == f.id|string %}selected{% endif %}>{{ f.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Date Range -->
+        <div class="col-6 col-md-3">
+            <label class="form-label extra-small text-muted fw-bold">Date Range</label>
+            <div class="d-flex gap-1">
+                <input type="date" name="date_from" class="form-control form-control-sm bg-white text-dark border-secondary-subtle" value="{{ date_from }}" title="From date">
+                <input type="date" name="date_to" class="form-control form-control-sm bg-white text-dark border-secondary-subtle" value="{{ date_to }}" title="To date">
+            </div>
+        </div>
+
+        <!-- Submit & Reset Buttons -->
+        <div class="col-12 d-flex justify-content-between align-items-center pt-2 border-top border-secondary-subtle">
+            <span class="small text-muted">
+                Showing <strong>{{ logs | length }}</strong> of <strong>{{ total_matched }}</strong> matching events (Page {{ page }} of {{ total_pages }})
+            </span>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
+                <button type="submit" class="btn btn-danger btn-sm px-3 shadow-sm">
+                    <i class="fa-solid fa-filter me-1"></i>Filter Logs
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Audit Log Table Card -->
+<div class="spl-card p-0 overflow-hidden mb-4 bg-white border border-secondary-subtle shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 font-sans">
+            <thead class="bg-light text-dark small text-uppercase border-bottom border-secondary-subtle font-display">
+                <tr>
+                    <th class="ps-3 py-3">Timestamp</th>
+                    <th class="py-3">Actor / User</th>
+                    <th class="py-3">Category</th>
+                    <th class="py-3">Action</th>
+                    <th class="py-3">Target</th>
+                    <th class="py-3">Franchise</th>
+                    <th class="py-3">Status</th>
+                    <th class="pe-3 py-3">Details / Changes</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white">
+                {% for log in logs %}
+                <tr>
+                    <td class="ps-3 py-3 text-nowrap text-muted small font-monospace">
+                        <i class="fa-regular fa-clock me-1 text-primary"></i>
+                        {{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') if log.created_at else '-' }}
+                    </td>
+                    <td class="py-3">
+                        {% if log.user_email %}
+                            <span class="fw-semibold text-dark d-block small">{{ log.user_email }}</span>
+                        {% elif log.admin %}
+                            <span class="fw-semibold text-dark d-block small">{{ log.admin.display_name or log.admin.username }}</span>
+                        {% elif log.franchise %}
+                            <span class="fw-semibold text-primary d-block small">{{ log.franchise.name }}</span>
+                        {% else %}
+                            <span class="text-muted small">System / Visitor</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-3">
+                        {% set cat = log.category or 'GENERAL' %}
+                        {% if cat == 'AUTH' %}
+                            <span class="badge bg-primary-subtle text-primary border border-primary extra-small">AUTH</span>
+                        {% elif cat == 'PLAYER' %}
+                            <span class="badge bg-primary-subtle text-primary border border-primary extra-small">PLAYER</span>
+                        {% elif cat == 'FRANCHISE' %}
+                            <span class="badge bg-primary-subtle text-primary border border-primary extra-small">FRANCHISE</span>
+                        {% elif cat == 'AUCTION' %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger extra-small">AUCTION</span>
+                        {% elif cat == 'PURSE' or cat == 'SQUAD' %}
+                            <span class="badge bg-primary text-white extra-small">{{ cat }}</span>
+                        {% elif cat == 'SECURITY' %}
+                            <span class="badge bg-danger text-white extra-small">SECURITY</span>
+                        {% else %}
+                            <span class="badge bg-secondary extra-small">{{ cat }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-3">
+                        <code class="text-danger fw-bold small">{{ log.action }}</code>
+                    </td>
+                    <td class="py-3 small text-dark">
+                        {% if log.target_type %}
+                            {{ log.target_type }}{% if log.target_id %} #{{ log.target_id }}{% endif %}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-3 small">
+                        {% if log.franchise %}
+                            <span class="badge bg-light border border-secondary-subtle text-dark">
+                                <i class="fa-solid fa-shield-halved me-1 text-primary"></i>{{ log.franchise.short_name }}
+                            </span>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-3">
+                        {% if log.status == 'SUCCESS' %}
+                            <span class="badge bg-success-subtle text-success border border-success px-2 py-1 extra-small">
+                                <i class="fa-solid fa-check me-1"></i>SUCCESS
+                            </span>
+                        {% elif log.status == 'DENIED' %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger px-2 py-1 extra-small">
+                                <i class="fa-solid fa-ban me-1"></i>DENIED
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary px-2 py-1 extra-small">
+                                {{ log.status }}
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="pe-3 py-3 small text-muted">
+                        {% if log.new_value %}
+                            <span class="text-dark">{{ log.new_value }}</span>
+                        {% elif log.old_value %}
+                            <span class="text-muted">Prev: {{ log.old_value }}</span>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-clipboard-list fa-2x mb-2 d-block text-secondary"></i>
+                        No audit log entries matched your filter parameters.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    {% if total_pages > 1 %}
+    <div class="p-3 bg-light border-top border-secondary-subtle d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span class="small text-muted">Page {{ page }} of {{ total_pages }}</span>
+        <nav aria-label="Audit log pagination">
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                    <a class="page-link bg-white text-dark border-secondary-subtle" href="{{ url_for('admin.audit_logs', page=page-1, search=search, category=selected_category, action=selected_action, status=selected_status, franchise_id=selected_franchise, date_from=date_from, date_to=date_to) }}">Previous</a>
+                </li>
+                {% for p in range(1, total_pages + 1) %}
+                    {% if p == page %}
+                    <li class="page-item active"><span class="page-link bg-danger text-white border-danger fw-bold">{{ p }}</span></li>
+                    {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+                    <li class="page-item">
+                        <a class="page-link bg-white text-dark border-secondary-subtle" href="{{ url_for('admin.audit_logs', page=p, search=search, category=selected_category, action=selected_action, status=selected_status, franchise_id=selected_franchise, date_from=date_from, date_to=date_to) }}">{{ p }}</a>
+                    </li>
+                    {% elif p == page - 3 or p == page + 3 %}
+                    <li class="page-item disabled"><span class="page-link bg-white text-muted border-secondary-subtle">...</span></li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                    <a class="page-link bg-white text-dark border-secondary-subtle" href="{{ url_for('admin.audit_logs', page=page+1, search=search, category=selected_category, action=selected_action, status=selected_status, franchise_id=selected_franchise, date_from=date_from, date_to=date_to) }}">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

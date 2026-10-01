@@ -1,0 +1,314 @@
+{% extends "admin/base_admin.html" %}
+{% set active_page = 'dashboard' %}
+
+{% block title %}Admin Dashboard — {{ event_name }} Panel{% endblock %}
+
+{% block admin_content %}
+        <!-- Header Bar -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom border-secondary-subtle gap-3">
+            <div>
+                <h2 class="fw-bold text-dark mb-0">SPL Admin Control Center</h2>
+                <small class="text-muted">{{ event_subtitle }} Administrator Dashboard</small>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-outline-danger btn-sm fw-semibold">
+                    <i class="fa-solid fa-clipboard-list me-1"></i> VIEW AUDIT LOGS
+                </a>
+                <a href="{{ url_for('live.auction_live') }}" target="_blank" class="btn btn-outline-primary btn-sm fw-semibold">
+                    <i class="fa-solid fa-tv me-1"></i> Live Screen
+                </a>
+                <span class="badge bg-secondary fs-6 px-3 py-2">
+                    <i class="fa-solid fa-clock me-1"></i> AUCTION: {{ auction_status }}
+                </span>
+            </div>
+        </div>
+
+        <!-- 1. Clickable Summary Cards Grid -->
+        <div class="row g-4 mb-4">
+            <!-- Franchises -->
+            <div class="col-md-6 col-xl-3">
+                <a href="{{ url_for('admin.franchises') }}" class="text-decoration-none">
+                    <div class="spl-card h-100 bg-white border border-secondary-subtle shadow-sm transition-all cursor-pointer">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="text-muted small fw-bold">FRANCHISES</span>
+                            <div class="p-2 rounded bg-light text-primary border border-secondary-subtle"><i class="fa-solid fa-shield-halved"></i></div>
+                        </div>
+                        <h3 class="fw-bold text-dark mb-1">{{ total_franchises }}</h3>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">{{ active_franchises_count }} Active</small>
+                            <span class="text-primary small fw-semibold">View Details <i class="fa-solid fa-arrow-right ms-1"></i></span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Total Players -->
+            <div class="col-md-6 col-xl-3">
+                <a href="{{ url_for('admin.players') }}" class="text-decoration-none">
+                    <div class="spl-card h-100 bg-white border border-secondary-subtle shadow-sm transition-all cursor-pointer">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="text-muted small fw-bold">TOTAL PLAYERS</span>
+                            <div class="p-2 rounded bg-light text-danger border border-secondary-subtle"><i class="fa-solid fa-users"></i></div>
+                        </div>
+                        <h3 class="fw-bold text-dark mb-1">{{ total_players }}</h3>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">{{ available_players }} Available</small>
+                            <span class="text-danger small fw-semibold">View Players <i class="fa-solid fa-arrow-right ms-1"></i></span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Sold Players -->
+            <div class="col-md-6 col-xl-3">
+                <a href="{{ url_for('admin.players', status='SOLD') }}" class="text-decoration-none">
+                    <div class="spl-card h-100 bg-white border border-secondary-subtle shadow-sm transition-all cursor-pointer">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="text-muted small fw-bold">SOLD</span>
+                            <div class="p-2 rounded bg-light text-success border border-secondary-subtle"><i class="fa-solid fa-user-tag"></i></div>
+                        </div>
+                        <h3 class="fw-bold text-success mb-1">{{ sold_players }}</h3>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Acquired by teams</small>
+                            <span class="text-success small fw-semibold">View Sold <i class="fa-solid fa-arrow-right ms-1"></i></span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Unsold Players -->
+            <div class="col-md-6 col-xl-3">
+                <a href="{{ url_for('admin.players', status='UNSOLD') }}" class="text-decoration-none">
+                    <div class="spl-card h-100 bg-white border border-secondary-subtle shadow-sm transition-all cursor-pointer">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="text-muted small fw-bold">UNSOLD</span>
+                            <div class="p-2 rounded bg-light text-danger border border-secondary-subtle"><i class="fa-solid fa-user-xmark"></i></div>
+                        </div>
+                        <h3 class="fw-bold text-danger mb-1">{{ unsold_players }}</h3>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Eligible for second chance</small>
+                            <span class="text-danger small fw-semibold">View Unsold <i class="fa-solid fa-arrow-right ms-1"></i></span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- 2. Live Auction Status Banner -->
+        <div class="spl-card mb-4 bg-white border-2 border-danger shadow-sm">
+            <div class="row align-items-center g-3">
+                <div class="col-md-3">
+                    <span class="text-muted small fw-bold d-block text-uppercase">CURRENT PLAYER</span>
+                    <h4 class="fw-bold text-dark mb-0">
+                        {% if active_player %}
+                            {{ active_player.name }} <small class="text-muted">({{ active_player.roll_number }})</small>
+                        {% else %}
+                            <span class="text-muted fs-6">No Active Player</span>
+                        {% endif %}
+                    </h4>
+                </div>
+                <div class="col-md-3">
+                    <span class="text-muted small fw-bold d-block text-uppercase">CURRENT BID</span>
+                    <h3 class="fw-bold text-danger mb-0 font-monospace">
+                        {% if auction_state and auction_state.current_bid %}
+                            {{ auction_state.current_bid | currency }}
+                        {% else %}
+                            <span class="text-muted fs-6">₹0</span>
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="col-md-3">
+                    <span class="text-muted small fw-bold d-block text-uppercase">HIGHEST BIDDER</span>
+                    <h5 class="fw-bold text-primary mb-0">
+                        {% if highest_bidder %}
+                            <i class="fa-solid fa-shield-halved me-1"></i>{{ highest_bidder.name }}
+                        {% else %}
+                            <span class="text-muted fs-6">None</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="col-md-3 text-md-end">
+                    <a href="{{ url_for('admin.auction_control') }}" class="btn btn-danger btn-sm fw-bold shadow-sm">
+                        <i class="fa-solid fa-gavel me-1"></i> Open Auction Engine
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Operational Stages & Eligibility Status -->
+        <div class="row g-3 mb-4">
+            <!-- Primary Auction Summary -->
+            <div class="col-md-4">
+                <div class="spl-card h-100 border-start border-4 border-danger bg-white shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small fw-bold text-uppercase">Primary Auction</span>
+                        <span class="badge {% if auction_status.value == 'LIVE' %}bg-danger animate-pulse{% else %}bg-primary{% endif %}">
+                            {{ auction_status.value }}
+                        </span>
+                    </div>
+                    <h3 class="fw-bold text-dark mb-1">{{ primary_available }}</h3>
+                    <p class="text-muted small mb-3">Available players in Primary Pool</p>
+                    <a href="{{ url_for('admin.auction_control') }}" class="btn btn-sm btn-outline-danger w-100 fw-semibold">
+                        <i class="fa-solid fa-gavel me-1"></i> Primary Auction Engine
+                    </a>
+                </div>
+            </div>
+
+            <!-- Second Chance Auction Summary -->
+            <div class="col-md-4">
+                <div class="spl-card h-100 border-start border-4 border-primary bg-white shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small fw-bold text-uppercase">Second Chance Auction</span>
+                        <span class="badge {% if is_second_chance_active %}bg-success{% else %}bg-secondary{% endif %}">
+                            {% if is_second_chance_active %}ACTIVE{% else %}STANDBY{% endif %}
+                        </span>
+                    </div>
+                    <h3 class="fw-bold text-dark mb-1">{{ second_chance_eligible }}</h3>
+                    <p class="text-muted small mb-3">Unsold players eligible for 2nd chance ({{ second_chance_sold }} sold)</p>
+                    <a href="{{ url_for('admin.second_chance_dashboard') }}" class="btn btn-sm btn-outline-primary w-100 fw-semibold">
+                        <i class="fa-solid fa-arrows-rotate me-1"></i> Second Chance Console
+                    </a>
+                </div>
+            </div>
+
+            <!-- Team Bidding Readiness -->
+            <div class="col-md-4">
+                <div class="spl-card h-100 border-start border-4 {% if ineligible_teams_count == 0 and active_franchises_count > 0 %}border-success{% else %}border-danger{% endif %} bg-white shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small fw-bold text-uppercase">Team Bidding Eligibility</span>
+                        <span class="badge {% if ineligible_teams_count == 0 and active_franchises_count > 0 %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ eligible_teams_count }} / {{ active_franchises_count }} READY
+                        </span>
+                    </div>
+                    <h3 class="fw-bold text-dark mb-1">{{ eligible_teams_count }} <span class="fs-6 text-muted font-normal">/ {{ active_franchises_count }} Teams</span></h3>
+                    <p class="text-muted small mb-3">
+                        {% if ineligible_teams_count > 0 %}
+                            <span class="text-danger fw-semibold"><i class="fa-solid fa-triangle-exclamation me-1"></i>{{ ineligible_teams_count }} team(s) missing captain</span>
+                        {% else %}
+                            <span class="text-success fw-semibold"><i class="fa-solid fa-circle-check me-1"></i>All teams captained & eligible</span>
+                        {% endif %}
+                    </p>
+                    <a href="{{ url_for('admin.franchises') }}" class="btn btn-sm btn-outline-secondary w-100 fw-semibold">
+                        <i class="fa-solid fa-users me-1"></i> Inspect Team Captains
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Post-Auction Stage Callout (When both Primary and Second Chance are completed) -->
+        {% if both_auctions_completed %}
+        <div class="card bg-success-subtle border border-success p-3 mb-4 rounded-3 text-dark">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div>
+                    <h5 class="fw-bold text-success mb-1">
+                        <i class="fa-solid fa-trophy text-danger me-2"></i>Post-Auction Stage Unlocked!
+                    </h5>
+                    <p class="text-muted small mb-0">
+                        Both Primary Auction and Second Chance Auction have been completed. You can now add post-auction players with editable Room Number details.
+                    </p>
+                </div>
+                <div>
+                    <a href="{{ url_for('admin.players') }}?post_auction=1" class="btn btn-success fw-bold text-nowrap shadow-sm">
+                        <i class="fa-solid fa-user-plus me-1"></i> Add Post-Auction Player
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 4. Franchise Bidding Readiness & Overview Grid -->
+        <div class="row g-4 mb-4">
+            <div class="col-12 d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="fw-bold text-dark mb-0"><i class="fa-solid fa-shield-halved text-danger me-2"></i>Franchise Bidding Readiness</h4>
+                    <small class="text-muted">Rule: First member must be Captain. Maximum 15 members per team.</small>
+                </div>
+                <a href="{{ url_for('admin.franchises') }}" class="btn btn-outline-primary btn-sm fw-semibold"><i class="fa-solid fa-gear me-1"></i>Manage Franchises</a>
+            </div>
+            {% for f in all_franchises %}
+            <div class="col-md-6 col-xl-4">
+                <div class="spl-card h-100 position-relative bg-white border border-secondary-subtle shadow-sm {% if not f.is_eligible_for_bidding %}border-danger border-opacity-50{% endif %}">
+                    <!-- Eligibility Header Badge -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="{{ url_for('static', filename='uploads/' + (f.logo or 'default_logo.png')) }}" alt="{{ f.name }}" class="rounded bg-light border border-secondary-subtle p-1" style="width: 44px; height: 44px; object-fit: contain;">
+                            <div>
+                                <h6 class="fw-bold text-dark mb-0">{{ f.name }} <span class="badge bg-primary text-uppercase fs-8">{{ f.short_name }}</span></h6>
+                                <small class="text-muted"><i class="fa-solid fa-user-tie me-1"></i>{{ f.owner_name or 'Franchise Representative' }}</small>
+                            </div>
+                        </div>
+                        <div>
+                            {% if f.is_eligible_for_bidding %}
+                                <span class="badge bg-success-subtle text-success border border-success fs-8">
+                                    <i class="fa-solid fa-check me-1"></i>ELIGIBLE
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger fs-8">
+                                    <i class="fa-solid fa-ban me-1"></i>NOT ELIGIBLE
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Captain Status -->
+                    <div class="p-2 rounded bg-light border border-secondary-subtle mb-3 small">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-muted">Team Captain:</span>
+                            {% if f.has_captain %}
+                                <span class="text-dark fw-bold"><i class="fa-solid fa-crown text-danger me-1"></i>{{ f.captain_name }}</span>
+                            {% else %}
+                                <span class="text-danger fw-semibold"><i class="fa-solid fa-triangle-exclamation me-1"></i>Not Assigned</span>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Status:</span>
+                            {% if f.has_captain %}
+                                <span class="badge bg-success-subtle text-success fs-8"><i class="fa-solid fa-check me-1"></i>Captain Added</span>
+                            {% else %}
+                                <span class="badge bg-danger-subtle text-danger fs-8"><i class="fa-solid fa-xmark me-1"></i>Team Captain Required</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Squad & Financial Metrics -->
+                    <div class="row text-center g-2 small mb-3">
+                        <div class="col-4">
+                            <div class="p-2 bg-light rounded border border-secondary-subtle">
+                                <span class="text-muted d-block fs-8">MEMBERS</span>
+                                {% if f.squad_count >= 15 %}
+                                    <span class="fw-bold text-danger fs-7">15/15 Full</span>
+                                {% else %}
+                                    <span class="fw-bold text-dark fs-6">{{ f.squad_count }} / 15</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 bg-light rounded border border-secondary-subtle">
+                                <span class="text-muted d-block fs-8">SPENT</span>
+                                <span class="fw-bold text-danger fs-7">{{ f.spent_purse | currency }}</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 bg-light rounded border border-secondary-subtle">
+                                <span class="text-muted d-block fs-8">PURSE REM.</span>
+                                <span class="fw-bold text-success fs-7">{{ f.remaining_purse | currency }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('admin.inspect_franchise', id=f.id) }}" class="btn btn-outline-primary btn-sm flex-fill fw-semibold">
+                            <i class="fa-solid fa-eye me-1"></i> View Team
+                        </a>
+                        {% if not f.has_captain %}
+                            <a href="{{ url_for('admin.inspect_franchise', id=f.id) }}" class="btn btn-danger btn-sm text-nowrap fw-semibold shadow-sm">
+                                <i class="fa-solid fa-user-plus me-1"></i> Add Captain
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+{% endblock %}

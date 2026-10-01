@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Official Match Fixtures — {{ event_name }}{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <span class="badge bg-primary text-white px-3 py-2 fs-6 fw-bold mb-2">TOURNAMENT SCHEDULE</span>
+    <h1 class="fw-extrabold text-primary display-5 mb-2">MATCH FIXTURES & SCHEDULE</h1>
+    <p class="text-muted">Official match schedule for the Sphoorthy Premier League.</p>
+</div>
+
+{% if fixtures %}
+<div class="row g-4 justify-content-center">
+    {% for match in fixtures %}
+    <div class="col-md-6 col-lg-4">
+        <div class="spl-card text-center p-4 h-100 bg-white shadow-sm border border-top border-4 {% if match.status == 'LIVE' %}border-danger{% else %}border-primary{% endif %}">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="badge bg-light text-dark border fw-bold">MATCH #{{ "%02d" % match.match_number }}</span>
+                <span class="badge bg-light text-primary border">{{ match.stage }}</span>
+            </div>
+
+            <!-- Teams Versus Matchup -->
+            <div class="row align-items-center py-3 my-2 bg-light rounded border">
+                <div class="col-5">
+                    <img src="{{ url_for('static', filename='uploads/' + match.team_a.logo) if match.team_a and match.team_a.logo and not match.team_a.logo.startswith('http') else (match.team_a.logo if match.team_a and match.team_a.logo else url_for('static', filename='uploads/default_logo.png')) }}" 
+                         alt="{{ match.team_a.name if match.team_a else 'Team A' }}" class="rounded-circle object-fit-cover border border-primary mb-2" width="50" height="50">
+                    <h6 class="fw-bold text-primary mb-0">{{ match.team_a.short_name if match.team_a else 'TBA' }}</h6>
+                </div>
+                <div class="col-2 px-0">
+                    <span class="fw-bold text-danger fs-5">VS</span>
+                </div>
+                <div class="col-5">
+                    <img src="{{ url_for('static', filename='uploads/' + match.team_b.logo) if match.team_b and match.team_b.logo and not match.team_b.logo.startswith('http') else (match.team_b.logo if match.team_b and match.team_b.logo else url_for('static', filename='uploads/default_logo.png')) }}" 
+                         alt="{{ match.team_b.name if match.team_b else 'Team B' }}" class="rounded-circle object-fit-cover border border-danger mb-2" width="50" height="50">
+                    <h6 class="fw-bold text-danger mb-0">{{ match.team_b.short_name if match.team_b else 'TBA' }}</h6>
+                </div>
+            </div>
+
+            <!-- Date, Time, Venue Details -->
+            <div class="text-muted small mt-3">
+                <div><i class="fa-solid fa-calendar me-1 text-primary"></i>{{ match.match_date or 'Date TBD' }}</div>
+                <div><i class="fa-solid fa-clock me-1 text-primary"></i>{{ match.match_time or 'Time TBD' }}</div>
+                <div><i class="fa-solid fa-location-dot me-1 text-danger"></i>{{ match.venue }}</div>
+            </div>
+
+            <div class="mt-3 pt-2 border-top">
+                {% if match.status == 'UPCOMING' %}
+                    <span class="badge bg-primary text-white px-3 py-1">UPCOMING</span>
+                {% elif match.status == 'LIVE' %}
+                    <span class="badge bg-danger px-3 py-1 animate-pulse">LIVE NOW 🔴</span>
+                {% else %}
+                    <span class="badge bg-light text-dark border px-3 py-1">COMPLETED</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="spl-card text-center py-5 my-4 bg-white shadow-sm border">
+    <i class="fa-solid fa-calendar-xmark fs-1 text-primary mb-3"></i>
+    <h4 class="fw-bold text-dark">Fixtures Not Published Yet</h4>
+    <p class="text-muted mb-0">The official tournament schedule will be published shortly by the tournament organizers.</p>
+</div>
+{% endif %}
+{% endblock %}

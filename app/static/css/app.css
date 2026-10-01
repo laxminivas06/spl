@@ -1,0 +1,929 @@
+/* SPL — Sphoorthy Premier League Professional Sports Auction System CSS */
+/* LIGHT THEME ONLY — RED PRIMARY ACCENT & DARK BLUE SECONDARY ACCENT */
+
+/* ==========================================
+   1. DESIGN TOKENS & COLOR SYSTEM
+   ========================================== */
+:root {
+  /* Clean Light Theme Foundation */
+  --spl-bg-main: #f8fafc;
+  --spl-bg-card: #ffffff;
+  --spl-bg-card-hover: #f1f5f9;
+  --spl-bg-sidebar: #ffffff;
+  --spl-bg-input: #ffffff;
+  --spl-bg-modal: #ffffff;
+  --spl-bg-dropdown: #ffffff;
+  --spl-bg-surface: #f1f5f9;
+  --spl-dark-frame: #ffffff;
+
+  /* Typography Colors (High Contrast) */
+  --spl-text-primary: #1e293b;
+  --spl-text-secondary: #475569;
+  --spl-text-muted: #64748b;
+  --spl-text-heading: #0f172a;
+  --spl-text-inverse: #ffffff;
+
+  /* Primary Accent: Red (Replacing all Yellow accents) */
+  --spl-accent-red: #dc2626;
+  --spl-accent-red-hover: #b91c1c;
+  --spl-accent-red-subtle: #fef2f2;
+  --spl-accent-red-border: #fecaca;
+
+  /* Secondary Accent: Dark Blue (Replacing all Cyan / Light-Blue accents) */
+  --spl-accent-dark-blue: #1e3a8a;
+  --spl-accent-dark-blue-hover: #1e40af;
+  --spl-accent-dark-blue-subtle: #eff6ff;
+  --spl-accent-dark-blue-border: #bfdbfe;
+
+  /* Legacy Variable Aliases mapped directly to Red / Dark Blue */
+  --spl-accent-cyan: #1e3a8a;       /* Redirected from Cyan to Dark Blue */
+  --spl-accent-blue: #1e3a8a;
+  --spl-accent-gold: #dc2626;       /* Redirected from Yellow to Red */
+  --spl-accent-gold-hover: #b91c1c;
+  --spl-accent-orange: #ea580c;
+  --spl-accent-bid-red: #dc2626;
+  --spl-accent-bid-crimson: #b91c1c;
+  --spl-border: #e2e8f0;
+
+  /* Borders & Surfaces */
+  --spl-border-color: #e2e8f0;
+  --spl-border-subtle: #f1f5f9;
+
+  --spl-card-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  --spl-table-stripe: #f8fafc;
+  --spl-table-hover: #f1f5f9;
+
+  --spl-input-bg: #ffffff;
+  --spl-input-text: #0f172a;
+  --spl-input-placeholder: #94a3b8;
+  --spl-input-border: #cbd5e1;
+
+  --spl-success-bg: #d1fae5;
+  --spl-success-text: #047857;
+  --spl-success-border: #a7f3d0;
+
+  /* Warning replaces Yellow with Red */
+  --spl-warning-bg: #fef2f2;
+  --spl-warning-text: #dc2626;
+  --spl-warning-border: #fecaca;
+
+  --spl-danger-bg: #fee2e2;
+  --spl-danger-text: #dc2626;
+  --spl-danger-border: #fca5a5;
+
+  --spl-projector-bg: #f8fafc;
+  --spl-projector-card: #ffffff;
+}
+
+/* ==========================================
+   2. GLOBAL RESET & BASE TYPOGRAPHY
+   ========================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--spl-bg-main);
+  color: var(--spl-text-primary);
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4, h5, h6, .font-display {
+  color: var(--spl-text-heading);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  margin-top: 0;
+  letter-spacing: -0.015em;
+}
+
+.font-sans {
+  font-family: 'Inter', sans-serif !important;
+}
+
+a {
+  color: var(--spl-accent-dark-blue);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--spl-accent-red);
+}
+
+.text-muted {
+  color: var(--spl-text-muted) !important;
+}
+
+.text-dark {
+  color: #0f172a !important;
+}
+
+.text-white {
+  color: #ffffff !important;
+}
+
+/* Global Selection Styling (Subtle Red Tint, No Ash/Grey/Black Drag Block) */
+::selection {
+  background-color: #fee2e2 !important;
+  color: #0f172a !important;
+}
+::-moz-selection {
+  background-color: #fee2e2 !important;
+  color: #0f172a !important;
+}
+
+/* ==========================================
+   3. COLOR OVERRIDES (YELLOW -> RED, CYAN -> DARK BLUE)
+   ========================================== */
+/* Yellow -> Red */
+.text-warning, .text-gold {
+  color: var(--spl-accent-red) !important;
+}
+
+.bg-warning {
+  background-color: var(--spl-accent-red) !important;
+  color: #ffffff !important;
+}
+
+.bg-warning-subtle {
+  background-color: var(--spl-accent-red-subtle) !important;
+  color: var(--spl-accent-red) !important;
+  border-color: var(--spl-accent-red-border) !important;
+}
+
+.border-warning {
+  border-color: var(--spl-accent-red) !important;
+}
+
+.btn-warning {
+  background-color: var(--spl-accent-red) !important;
+  border-color: var(--spl-accent-red) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25) !important;
+}
+
+.btn-warning:hover, .btn-warning:focus, .btn-warning:active {
+  background-color: var(--spl-accent-red-hover) !important;
+  border-color: var(--spl-accent-red-hover) !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 16px rgba(185, 28, 28, 0.35) !important;
+}
+
+.btn-outline-warning {
+  color: var(--spl-accent-red) !important;
+  border-color: var(--spl-accent-red) !important;
+}
+
+.btn-outline-warning:hover {
+  background-color: var(--spl-accent-red) !important;
+  border-color: var(--spl-accent-red) !important;
+  color: #ffffff !important;
+}
+
+/* Light Blue / Cyan -> Dark Blue */
+.text-cyan, .text-info {
+  color: var(--spl-accent-dark-blue) !important;
+}
+
+.bg-cyan, .bg-info {
+  background-color: var(--spl-accent-dark-blue) !important;
+  color: #ffffff !important;
+}
+
+.bg-info-subtle {
+  background-color: var(--spl-accent-dark-blue-subtle) !important;
+  color: var(--spl-accent-dark-blue) !important;
+  border-color: var(--spl-accent-dark-blue-border) !important;
+}
+
+.border-cyan, .border-info {
+  border-color: var(--spl-accent-dark-blue) !important;
+}
+
+.btn-info {
+  background-color: var(--spl-accent-dark-blue) !important;
+  border-color: var(--spl-accent-dark-blue) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25) !important;
+}
+
+.btn-info:hover, .btn-info:focus, .btn-info:active {
+  background-color: var(--spl-accent-dark-blue-hover) !important;
+  border-color: var(--spl-accent-dark-blue-hover) !important;
+  color: #ffffff !important;
+}
+
+.btn-outline-cyan, .btn-outline-info {
+  color: var(--spl-accent-dark-blue) !important;
+  border-color: var(--spl-accent-dark-blue) !important;
+}
+
+.btn-outline-cyan:hover, .btn-outline-info:hover {
+  background-color: var(--spl-accent-dark-blue) !important;
+  border-color: var(--spl-accent-dark-blue) !important;
+  color: #ffffff !important;
+}
+
+/* ==========================================
+   4. CARDS & SURFACES (CLEAN WHITE, NO ASH/GREY)
+   ========================================== */
+.spl-card, .card {
+  background-color: #ffffff !important;
+  border: 1px solid var(--spl-border-color);
+  border-radius: 14px;
+  box-shadow: var(--spl-card-shadow);
+  color: var(--spl-text-primary);
+  padding: 1.25rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.25s ease;
+}
+
+.spl-card:hover {
+  border-color: #cbd5e1;
+}
+
+.spl-card-header, .card-header {
+  background-color: transparent;
+  border-bottom: 1px solid var(--spl-border-color);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  color: var(--spl-text-heading);
+}
+
+.card-footer {
+  background-color: transparent;
+  border-top: 1px solid var(--spl-border-color);
+}
+
+/* Neutralize legacy dark container classes */
+.bg-dark, .bg-black {
+  background-color: #f8fafc !important;
+  color: #1e293b !important;
+}
+
+.bg-dark-frame {
+  background-color: #ffffff !important;
+}
+
+/* ==========================================
+   5. ALWAYS-VISIBLE RULE NUMBER SECTION (Requirement 1)
+   ========================================== */
+.spl-rule-number-bar {
+  background: #ffffff !important;
+  border: 2px solid var(--spl-accent-red) !important;
+  border-radius: 14px;
+  box-shadow: 0 4px 20px -2px rgba(220, 38, 38, 0.12);
+  transition: all 0.2s ease;
+}
+
+.spl-rule-number-bar:focus-within {
+  box-shadow: 0 6px 24px -2px rgba(220, 38, 38, 0.22);
+}
+
+/* ==========================================
+   6. TABLES & DATA GRIDS (LIGHT THEME ONLY, NO BLACK/ASH)
+   (Requirement 2, 3, 7)
+   ========================================== */
+.table, .table-spl, .spl-excel-table, table {
+  color: #1e293b !important;
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  vertical-align: middle;
+  width: 100%;
+}
+
+.table th, .table-spl th, .spl-excel-table th, table th {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  font-size: 0.8rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #cbd5e1 !important;
+  padding: 0.85rem 1rem;
+}
+
+.table td, .table-spl td, .spl-excel-table td, table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #f1f5f9 !important;
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+}
+
+/* Neutralize all Bootstrap .table-dark occurrences */
+.table-dark, .table-dark > *, .table-dark th, .table-dark td {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  border-color: #e2e8f0 !important;
+}
+
+.table-dark thead th {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Subtle, clean hover (NO ash/grey/black block) */
+.table-hover > tbody > tr:hover > *,
+.table tbody tr:hover td,
+.spl-excel-table tbody tr:hover td {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* Active / Click / Tap / Selected states (NEVER BLACK, NEVER ASH/GREY) */
+.table tbody tr:active td,
+.table tbody tr:focus td,
+.table tbody tr.active td,
+.table tbody tr.selected td,
+.table-active,
+.table-active > th,
+.table-active > td,
+.spl-excel-table tbody tr:active td,
+.spl-excel-table tbody tr.selected td {
+  background-color: #eff6ff !important; /* Soft dark-blue tint */
+  color: #1e3a8a !important;
+  border-color: #bfdbfe !important;
+}
+
+.player-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--spl-border-color);
+}
+
+/* ==========================================
+   7. SIDEBAR & NAVIGATION (LIGHT THEME)
+   ========================================== */
+.spl-admin-layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+}
+
+.spl-sidebar {
+  width: 260px;
+  background-color: #ffffff;
+  border-right: 1px solid var(--spl-border-color);
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1040;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.spl-brand {
+  padding: 1.25rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--spl-border-color);
+  color: #0f172a;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.spl-nav {
+  padding: 0.75rem 0;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.spl-nav-item {
+  display: flex;
+  align-items: center;
+  padding: 0.65rem 1.25rem;
+  color: #475569;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.spl-nav-item i {
+  margin-right: 0.75rem;
+  width: 20px;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.spl-nav-item:hover {
+  color: var(--spl-accent-red);
+  background-color: #fef2f2;
+}
+
+.spl-nav-item.active {
+  color: var(--spl-accent-red);
+  background-color: #fef2f2;
+  border-left: 3px solid var(--spl-accent-red);
+}
+
+.spl-sidebar-footer {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--spl-border-color);
+  background: #f8fafc;
+}
+
+/* Mobile Top Navbar */
+.spl-mobile-navbar {
+  display: none;
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--spl-border-color);
+  padding: 0.75rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+}
+
+.spl-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1030;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.spl-sidebar-backdrop.show {
+  display: block;
+  opacity: 1;
+}
+
+.spl-content {
+  flex-grow: 1;
+  padding: 1.5rem;
+  margin-left: 260px;
+  background-color: var(--spl-bg-main);
+  min-height: 100vh;
+}
+
+@media (max-width: 991.98px) {
+  .spl-mobile-navbar {
+    display: flex;
+  }
+  .spl-sidebar {
+    transform: translateX(-100%);
+  }
+  .spl-sidebar.show {
+    transform: translateX(0);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  }
+  .spl-content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+}
+
+/* ==========================================
+   8. GLOBAL HEADER & TOP STATUS BAR
+   ========================================== */
+.spl-global-header {
+  background: #ffffff !important;
+  border: 1px solid var(--spl-border-color) !important;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+  transition: all 0.25s ease;
+}
+
+.spl-logo-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spl-live-pulse-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.65rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--spl-accent-red);
+}
+
+.spl-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--spl-accent-red);
+  box-shadow: 0 0 8px rgba(220, 38, 38, 0.8);
+  animation: pulse-ring 1.8s infinite ease-in-out;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.9; }
+  50% { transform: scale(1.15); opacity: 0.4; }
+  100% { transform: scale(0.95); opacity: 0.9; }
+}
+
+/* ==========================================
+   9. BUTTONS
+   ========================================== */
+.btn {
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 0.55rem 1.15rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.02em;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+/* Primary Action: Red */
+.btn-spl-primary, .btn-danger {
+  background: var(--spl-accent-red) !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  border: 1px solid var(--spl-accent-red) !important;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25);
+}
+
+.btn-spl-primary:hover, .btn-danger:hover {
+  background: var(--spl-accent-red-hover) !important;
+  border-color: var(--spl-accent-red-hover) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(220, 38, 38, 0.35);
+}
+
+/* Secondary Action: Dark Blue */
+.btn-spl-secondary, .btn-primary {
+  background: var(--spl-accent-dark-blue) !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  border: 1px solid var(--spl-accent-dark-blue) !important;
+  box-shadow: 0 4px 14px rgba(30, 58, 138, 0.2);
+}
+
+.btn-spl-secondary:hover, .btn-primary:hover {
+  background: var(--spl-accent-dark-blue-hover) !important;
+  border-color: var(--spl-accent-dark-blue-hover) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+.btn-outline-primary {
+  color: var(--spl-accent-dark-blue) !important;
+  border-color: var(--spl-accent-dark-blue) !important;
+  background-color: transparent !important;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--spl-accent-dark-blue) !important;
+  color: #ffffff !important;
+}
+
+.btn-outline-danger {
+  color: var(--spl-accent-red) !important;
+  border-color: var(--spl-accent-red) !important;
+  background-color: transparent !important;
+}
+
+.btn-outline-danger:hover {
+  background-color: var(--spl-accent-red) !important;
+  color: #ffffff !important;
+}
+
+.btn-pass {
+  background: #ffffff !important;
+  color: var(--spl-text-secondary) !important;
+  font-weight: 700;
+  border: 1px solid var(--spl-border-color) !important;
+  transition: all 0.2s ease;
+}
+
+.btn-pass:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* ==========================================
+   10. FORMS & INPUTS
+   ========================================== */
+.form-control, .form-select {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  border-radius: 8px;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--spl-accent-red) !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15) !important;
+  outline: none;
+}
+
+.form-label {
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--spl-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 0.35rem;
+}
+
+/* ==========================================
+   11. TEAM BID CARDS (NO ASH/GREY, NO DISABLE FADE)
+   (Requirements 3, 4, 5)
+   ========================================== */
+.team-bid-card {
+  background: #ffffff !important;
+  border: 2px solid var(--spl-border-color) !important;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.team-bid-card:hover:not(.disabled) {
+  transform: translateY(-3px);
+  border-color: var(--spl-accent-dark-blue) !important;
+  box-shadow: 0 8px 24px rgba(30, 58, 138, 0.12);
+}
+
+.team-bid-card:active:not(.disabled) {
+  transform: scale(0.98);
+}
+
+/* Leading Bidder: Red Accent (No Yellow!) */
+.team-bid-card.leading-bidder {
+  border-color: var(--spl-accent-red) !important;
+  background: #fff5f5 !important;
+  box-shadow: 0 0 20px rgba(220, 38, 38, 0.25) !important;
+  animation: leaderGlowRed 1.8s infinite alternate;
+}
+
+@keyframes leaderGlowRed {
+  0% { box-shadow: 0 0 10px rgba(220, 38, 38, 0.2); }
+  100% { box-shadow: 0 0 22px rgba(220, 38, 38, 0.4); }
+}
+
+/* Teams with Spent Purse / Inactive states (NEVER FADED TO ASH/GREY) */
+.team-bid-card.disabled {
+  opacity: 1 !important;
+  filter: none !important;
+  cursor: not-allowed;
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+.team-bid-card .team-logo {
+  object-fit: cover;
+  transition: transform 0.2s ease;
+  background: #ffffff;
+  border: 2px solid var(--spl-border-color);
+}
+
+.team-bid-card:hover:not(.disabled) .team-logo {
+  transform: scale(1.06);
+}
+
+.team-bid-card .team-leader-badge {
+  font-size: 0.68rem;
+  letter-spacing: 0.5px;
+  z-index: 2;
+  background-color: var(--spl-accent-red) !important;
+  color: #ffffff !important;
+}
+
+/* ==========================================
+   12. TIMER BADGES & AUCTION CLOCK (RED)
+   ========================================== */
+.spl-timer-ring-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 90px;
+}
+
+.spl-timer-badge {
+  font-size: 1.85rem;
+  font-weight: 900;
+  font-family: monospace;
+  padding: 0.35rem 1.1rem;
+  border-radius: 12px;
+  background: #fef2f2 !important;
+  color: var(--spl-accent-red) !important;
+  border: 2px solid #f87171 !important;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.15);
+  transition: all 0.2s ease;
+}
+
+.spl-timer-badge.urgent {
+  background: #fee2e2 !important;
+  border-color: var(--spl-accent-red) !important;
+  color: var(--spl-accent-red) !important;
+  animation: timerUrgentRed 0.6s infinite ease-in-out;
+}
+
+@keyframes timerUrgentRed {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.06); box-shadow: 0 0 18px rgba(220, 38, 38, 0.5); }
+  100% { transform: scale(1); }
+}
+
+/* ==========================================
+   13. BADGES & MODALS
+   ========================================== */
+.badge {
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+}
+
+.modal-content, .modal-content-spl {
+  background-color: #ffffff;
+  border: 1px solid var(--spl-border-color);
+  border-radius: 16px;
+  color: var(--spl-text-primary);
+  box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.15);
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--spl-border-color);
+  padding: 1.25rem 1.5rem;
+}
+
+.modal-footer {
+  border-top: 1px solid var(--spl-border-color);
+  padding: 1rem 1.5rem;
+}
+
+/* ==========================================
+   14. LOGIN SCREEN (LIGHT THEME)
+   ========================================== */
+.spl-login-wrapper {
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.spl-login-emblem {
+  background: #ffffff;
+  border: 1px solid var(--spl-border-color);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  transition: transform 0.3s ease;
+}
+
+.spl-login-emblem:hover {
+  transform: scale(1.05);
+}
+
+.spl-login-card {
+  background: #ffffff !important;
+  border: 1px solid var(--spl-border-color) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 16px 36px -10px rgba(15, 23, 42, 0.08) !important;
+  color: var(--spl-text-heading);
+}
+
+.btn-google-signin-clean {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  transition: all 0.2s ease !important;
+}
+
+.btn-google-signin-clean:hover {
+  background: #f8fafc !important;
+  border-color: var(--spl-accent-red) !important;
+  color: var(--spl-accent-red) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(220, 38, 38, 0.15);
+}
+
+/* ==========================================
+   15. RESPONSIVE HELPERS & MOBILE VIEWPORTS
+   (Requirements 9 & 10)
+   ========================================== */
+.max-w-1440 {
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.extra-small, .fs-7 {
+  font-size: 0.78rem !important;
+}
+
+.fs-8 {
+  font-size: 0.7rem !important;
+}
+
+/* Intelligent Responsive Table Container */
+.table-responsive {
+  -webkit-overflow-scrolling: touch;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
+
+/* Touch targets and mobile scaling */
+@media (max-width: 768px) {
+  .spl-rule-number-bar {
+    padding: 0.75rem 1rem !important;
+  }
+  .spl-card {
+    padding: 1rem !important;
+  }
+  .btn-sm {
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-lg {
+    min-height: 48px;
+  }
+  .table th, .table td {
+    padding: 0.65rem 0.75rem !important;
+    font-size: 0.85rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  body {
+    font-size: 0.9rem;
+  }
+  .spl-timer-badge {
+    font-size: 1.35rem;
+    padding: 0.25rem 0.65rem;
+  }
+  .team-bid-card {
+    padding: 0.6rem !important;
+    border-radius: 10px;
+  }
+  .team-bid-card .team-logo {
+    width: 40px;
+    height: 40px;
+  }
+  .spl-card {
+    padding: 0.75rem !important;
+    border-radius: 12px;
+  }
+  .spl-rule-number-bar {
+    padding: 0.65rem 0.85rem !important;
+    border-radius: 10px;
+  }
+  .spl-rule-number-bar h6 {
+    font-size: 0.85rem;
+  }
+  .btn {
+    min-height: 40px;
+    font-size: 0.85rem;
+  }
+  .modal-dialog {
+    margin: 0.5rem;
+  }
+}

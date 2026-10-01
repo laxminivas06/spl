@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Auction Integrity Audit — {{ event_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-primary mb-1"><i class="fa-solid fa-calculator me-2 text-danger"></i>Auction & Purse Integrity Audit</h2>
+        <p class="text-muted small mb-0">Deep diagnostic validation of league purses, squad counts, and transaction consistency.</p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left me-1"></i>Dashboard
+    </a>
+</div>
+
+<!-- Overall Status Card -->
+<div class="spl-card mb-4 border-2 bg-white shadow-sm {% if is_passed %}border-success{% else %}border-danger{% endif %} p-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+            {% if is_passed %}
+            <div class="bg-success text-white rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 55px; height: 55px;">
+                <i class="fa-solid fa-check fs-2"></i>
+            </div>
+            <div>
+                <h4 class="fw-bold text-success mb-0">✓ ALL INTEGRITY CHECKS PASSED</h4>
+                <p class="text-muted small mb-0">Database transactions, purse calculations, and squad rules are 100% consistent.</p>
+            </div>
+            {% else %}
+            <div class="bg-danger text-white rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 55px; height: 55px;">
+                <i class="fa-solid fa-circle-exclamation fs-2"></i>
+            </div>
+            <div>
+                <h4 class="fw-bold text-danger mb-0">⚠ INTEGRITY ERRORS DETECTED</h4>
+                <p class="text-muted small mb-0">Admin investigation required. Correct discrepancies in database before proceeding.</p>
+            </div>
+            {% endif %}
+        </div>
+        <div class="text-end">
+            <span class="text-muted small d-block">Audit Timestamp</span>
+            <strong class="text-dark small">{{ report.timestamp }}</strong>
+        </div>
+    </div>
+
+    {% if report.integrity_errors %}
+    <div class="mt-3 pt-3 border-top">
+        <h6 class="fw-bold text-danger mb-2">Detected Discrepancies:</h6>
+        <ul class="mb-0 text-danger small">
+            {% for err in report.integrity_errors %}
+            <li>{{ err }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Purse Calculation Verification Table -->
+<div class="spl-card mb-4 bg-white shadow-sm border p-0 overflow-hidden">
+    <div class="p-3 bg-light border-bottom">
+        <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-coins me-2 text-danger"></i>Franchise Purse Math Verification</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light text-dark small text-uppercase">
+                <tr>
+                    <th class="ps-3 py-2">Franchise Name</th>
+                    <th class="py-2">Starting Purse</th>
+                    <th class="py-2">Confirmed Spending</th>
+                    <th class="py-2">Actual Remaining Purse</th>
+                    <th class="py-2">Expected Remaining Purse</th>
+                    <th class="py-2 pe-3">Purse Math Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for check in report.purse_checks %}
+                <tr>
+                    <td class="ps-3 py-2 fw-bold text-dark">{{ check.franchise_name }}</td>
+                    <td class="py-2 font-monospace">Rs. {{ check.starting_purse | currency }}</td>
+                    <td class="py-2 text-danger fw-bold font-monospace">Rs. {{ check.spent | currency }}</td>
+                    <td class="py-2 fw-bold text-success font-monospace">Rs. {{ check.remaining | currency }}</td>
+                    <td class="py-2 font-monospace">Rs. {{ check.expected_remaining | currency }}</td>
+                    <td class="py-2 pe-3">
+                        {% if check.is_valid %}
+                            <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i>VERIFIED</span>
+                        {% else %}
+                            <span class="badge bg-danger"><i class="fa-solid fa-xmark me-1"></i>MISMATCH</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Squad Capacity Verification Table -->
+<div class="spl-card bg-white shadow-sm border p-0 overflow-hidden">
+    <div class="p-3 bg-light border-bottom">
+        <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-users-rectangle me-2 text-danger"></i>Franchise Squad Size Verification</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light text-dark small text-uppercase">
+                <tr>
+                    <th class="ps-3 py-2">Franchise Name</th>
+                    <th class="py-2">Current Squad Count</th>
+                    <th class="py-2">Maximum Squad Limit</th>
+                    <th class="py-2">Required Min / Max Rule (14-15)</th>
+                    <th class="py-2 pe-3">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for check in report.squad_checks %}
+                <tr>
+                    <td class="ps-3 py-2 fw-bold text-dark">{{ check.franchise_name }}</td>
+                    <td class="py-2 fw-bold text-primary">{{ check.count }} Players</td>
+                    <td class="py-2">{{ check.limit }} Max</td>
+                    <td class="py-2">14 Min — 15 Max</td>
+                    <td class="py-2 pe-3">
+                        {% if check.status == 'VALID' %}
+                            <span class="badge bg-success">VALID ({{ check.count }}/15)</span>
+                        {% elif check.status == 'INCOMPLETE' %}
+                            <span class="badge bg-danger text-white">INCOMPLETE ({{ check.count }}/14)</span>
+                        {% else %}
+                            <span class="badge bg-danger">EXCEEDED CAPACITY</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

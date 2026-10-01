@@ -1,0 +1,311 @@
+{% extends "admin/base_admin.html" %}
+{% set active_page = 'franchises' %}
+
+{% block title %}Franchisee Management — {{ event_name }}{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom gap-3">
+    <div>
+        <h2 class="fw-bold text-dark mb-0"><i class="fa-solid fa-shield-halved text-danger me-2"></i>Franchisee Management</h2>
+        <small class="text-muted">Manage teams, purse allocations, squad limits, captain assignments, and registered Gmail login accounts</small>
+    </div>
+    <button type="button" class="btn btn-spl-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#addFranchiseModal">
+        <i class="fa-solid fa-plus me-1"></i> Add Franchisee
+    </button>
+</div>
+
+<!-- Franchises Grid -->
+<div class="row g-4">
+    {% for f in franchises %}
+    <div class="col-12 col-md-6 col-xl-4">
+        <div class="spl-card h-100 d-flex flex-column justify-content-between shadow-sm bg-white border">
+            <div>
+                <!-- Header with Logo and Title -->
+                <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom">
+                    {% if f.logo and f.logo.startswith('http') %}
+                        <img src="{{ f.logo }}" alt="{{ f.name }}" class="rounded bg-light border p-1" style="width: 58px; height: 58px; object-fit: contain;" onerror="this.src='/static/uploads/default_logo.png'">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='uploads/' + (f.logo or 'default_logo.png')) }}" alt="{{ f.name }}" class="rounded bg-light border p-1" style="width: 58px; height: 58px; object-fit: contain;" onerror="this.src='/static/uploads/default_logo.png'">
+                    {% endif %}
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h5 class="fw-bold text-dark mb-0 text-truncate">{{ f.name }}</h5>
+                            <span class="badge bg-primary text-uppercase">{{ f.short_name }}</span>
+                        </div>
+                        <small class="text-muted text-truncate d-block">
+                            <i class="fa-solid fa-user-tie me-1 text-primary"></i>{{ f.owner_name or 'Owner Not Assigned' }}
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Financial & Squad Stats -->
+                <div class="row g-2 mb-3 text-center">
+                    <div class="col-6">
+                        <div class="p-2 rounded bg-light border">
+                            <span class="text-muted extra-small d-block">STARTING PURSE</span>
+                            <strong class="text-dark fs-6 font-monospace">₹{{ f.starting_purse | currency }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded bg-light border">
+                            <span class="text-muted extra-small d-block">REMAINING PURSE</span>
+                            <strong class="text-success fs-6 font-monospace">₹{{ f.remaining_purse | currency }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded bg-light border">
+                            <span class="text-muted extra-small d-block">SPENT PURSE</span>
+                            <strong class="text-danger fs-6 font-monospace">₹{{ f.spent_purse | currency }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded bg-light border">
+                            <span class="text-muted extra-small d-block">SQUAD CAPACITY</span>
+                            <strong class="text-primary fs-6 font-monospace">{{ f.squad_count }} / {{ f.squad_limit }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Captain Card Details -->
+                <div class="p-2.5 bg-light border rounded mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
+                        <span class="text-primary small fw-bold"><i class="fa-solid fa-crown text-danger me-1"></i>Team Captain</span>
+                        {% if f.captain_rule_number %}
+                            <span class="badge bg-light text-dark border font-monospace">Rule #{{ f.captain_rule_number }}</span>
+                        {% else %}
+                            <span class="badge bg-light text-muted border">Unassigned</span>
+                        {% endif %}
+                    </div>
+                    <div class="small">
+                        <div class="text-dark fw-semibold mb-1">{{ f.captain_name or (f.captain.name if f.captain else 'Not Appointed') }}</div>
+                        <div class="text-muted extra-small">
+                            Dept: <span class="text-dark">{{ f.captain_department or (f.captain.branch if f.captain else 'N/A') }}</span> | 
+                            Year: <span class="text-dark">{{ f.captain_year or (f.captain.year if f.captain else 'N/A') }}</span> | 
+                            Category: <span class="badge bg-light text-dark border extra-small">{{ f.captain_category or (f.captain.category if f.captain else 'NORMAL') }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gmail & Auth Status -->
+                <div class="p-2.5 bg-light border rounded mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted extra-small fw-semibold">REGISTERED GMAIL:</span>
+                        {% if f.authorized_email %}
+                            <span class="badge bg-light text-primary border extra-small text-truncate" style="max-width: 170px;">
+                                <i class="fa-brands fa-google me-1"></i>{{ f.authorized_email }}
+                            </span>
+                        {% else %}
+                            <span class="badge bg-light text-muted border extra-small">No Gmail Set</span>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted extra-small fw-semibold">LOGIN STATUS:</span>
+                        <form method="POST" action="{{ url_for('admin.toggle_franchise_status', id=f.id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm py-0 px-2 fw-bold {% if f.is_active %}btn-outline-success{% else %}btn-outline-danger{% endif %}" title="Click to {% if f.is_active %}Disable{% else %}Enable{% endif %} Franchisee Login" style="font-size: 0.72rem;">
+                                <i class="fa-solid {% if f.is_active %}fa-circle-check{% else %}fa-ban{% endif %} me-1"></i>{% if f.is_active %}ENABLED{% else %}DISABLED{% endif %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Action Buttons -->
+            <div class="pt-2 border-top d-flex justify-content-between align-items-center gap-2">
+                <a href="{{ url_for('admin.inspect_franchise', id=f.id) }}" class="btn btn-outline-primary btn-sm flex-grow-1">
+                    <i class="fa-solid fa-users-viewfinder me-1"></i> View Squad ({{ f.squad_count }})
+                </a>
+                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#editFranchiseModal{{ f.id }}" title="Edit Franchisee">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Franchise Modal for {{ f.id }} -->
+    <div class="modal fade" id="editFranchiseModal{{ f.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content bg-white text-dark border">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-pen-to-square text-danger me-2"></i>Edit Franchisee: {{ f.name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ url_for('admin.edit_franchise', id=f.id) }}" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-semibold">FRANCHISEE NAME *</label>
+                                <input type="text" class="form-control form-control-spl" name="name" value="{{ f.name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-semibold">SHORT CODE *</label>
+                                <input type="text" class="form-control form-control-spl" name="short_name" value="{{ f.short_name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-semibold">OWNER NAME</label>
+                                <input type="text" class="form-control form-control-spl" name="owner_name" value="{{ f.owner_name or '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-semibold">REGISTERED GMAIL (FOR LOGIN) *</label>
+                                <input type="email" class="form-control form-control-spl" name="authorized_email" value="{{ f.authorized_email or '' }}" placeholder="owner@gmail.com">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-semibold">PURSE AMOUNT (₹)</label>
+                                <input type="number" class="form-control form-control-spl" name="starting_purse" value="{{ f.starting_purse }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-semibold">SQUAD LIMIT</label>
+                                <input type="number" class="form-control form-control-spl" name="squad_limit" value="{{ f.squad_limit }}">
+                            </div>
+
+                            <!-- Captain Assignment Details -->
+                            <div class="col-12 mt-2 pt-2 border-top">
+                                <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-crown text-danger me-2"></i>Captain Details & Player Validation</h6>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-muted small fw-semibold">CAPTAIN RULE NUMBER</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" class="form-control form-control-spl" id="cap_rule_{{ f.id }}" name="captain_rule_number" value="{{ f.captain_rule_number or '' }}" placeholder="e.g. 24">
+                                    <button type="button" class="btn btn-outline-primary" onclick="validateCaptainRule('{{ f.id }}')" title="Auto-fill from Player database">
+                                        <i class="fa-solid fa-magnifying-glass"></i> Check
+                                    </button>
+                                </div>
+                                <div id="cap_msg_{{ f.id }}" class="extra-small mt-1 text-muted"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-muted small fw-semibold">CAPTAIN NAME</label>
+                                <input type="text" class="form-control form-control-spl form-control-sm" id="cap_name_{{ f.id }}" name="captain_name" value="{{ f.captain_name or '' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-muted small fw-semibold">CAPTAIN CATEGORY</label>
+                                <input type="text" class="form-control form-control-spl form-control-sm" id="cap_cat_{{ f.id }}" name="captain_category" value="{{ f.captain_category or '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-semibold">CAPTAIN DEPARTMENT / BRANCH</label>
+                                <input type="text" class="form-control form-control-spl form-control-sm" id="cap_dept_{{ f.id }}" name="captain_department" value="{{ f.captain_department or '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-semibold">CAPTAIN YEAR</label>
+                                <input type="text" class="form-control form-control-spl form-control-sm" id="cap_year_{{ f.id }}" name="captain_year" value="{{ f.captain_year or '' }}">
+                            </div>
+
+                            <!-- Logo & Status -->
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-semibold">UPLOAD NEW LOGO</label>
+                                <input type="file" class="form-control form-control-spl" name="logo_file" accept="image/*">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-semibold">OR LOGO URL</label>
+                                <input type="url" class="form-control form-control-spl" name="logo_url" value="{{ f.logo if f.logo and f.logo.startswith('http') else '' }}" placeholder="https://...">
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check form-switch pt-2">
+                                    <input class="form-check-input" type="checkbox" name="is_active" id="activeSwitch{{ f.id }}" {% if f.is_active %}checked{% endif %}>
+                                    <label class="form-check-label text-dark fw-semibold" for="activeSwitch{{ f.id }}">Franchisee Active Status</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-spl-primary btn-sm">Save Franchisee</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Add Franchise Modal -->
+<div class="modal fade" id="addFranchiseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-white text-dark border">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-shield-plus text-danger me-2"></i>Create New Franchisee</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.add_franchise') }}" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">FRANCHISEE NAME *</label>
+                            <input type="text" class="form-control form-control-spl" name="name" placeholder="Cyber Vipers" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">SHORT CODE *</label>
+                            <input type="text" class="form-control form-control-spl" name="short_name" placeholder="CV" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">OWNER NAME</label>
+                            <input type="text" class="form-control form-control-spl" name="owner_name" placeholder="John Smith">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">REGISTERED GMAIL (FOR LOGIN) *</label>
+                            <input type="email" class="form-control form-control-spl" name="authorized_email" placeholder="owner@gmail.com" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">PURSE AMOUNT (₹) *</label>
+                            <input type="number" class="form-control form-control-spl font-monospace" name="starting_purse" value="300000" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">SQUAD LIMIT *</label>
+                            <input type="number" class="form-control form-control-spl font-monospace" name="squad_limit" value="15" required>
+                        </div>
+                    </div>
+                    <div class="alert alert-light border mt-3 mb-0 small text-muted">
+                        <i class="fa-solid fa-info-circle text-primary me-1"></i> Captain profile, logo, and photo can be updated by the Franchisee upon Gmail login.
+                    </div>
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-spl-primary btn-sm"><i class="fa-solid fa-check me-1"></i>Create Franchisee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function validateCaptainRule(idSuffix) {
+    const input = document.getElementById(`cap_rule_${idSuffix}`);
+    const msg = document.getElementById(`cap_msg_${idSuffix}`);
+    const val = input.value.trim();
+
+    if (!val) {
+        msg.className = 'extra-small mt-1 text-danger';
+        msg.textContent = 'Enter a rule number to validate';
+        return;
+    }
+
+    msg.className = 'extra-small mt-1 text-primary';
+    msg.textContent = 'Searching player...';
+
+    fetch(`/admin/players/by-rule/${encodeURIComponent(val)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.player) {
+                const p = data.player;
+                document.getElementById(`cap_name_${idSuffix}`).value = p.name;
+                document.getElementById(`cap_dept_${idSuffix}`).value = p.branch || '';
+                document.getElementById(`cap_year_${idSuffix}`).value = p.year || '';
+                document.getElementById(`cap_cat_${idSuffix}`).value = p.category || 'NORMAL';
+
+                msg.className = 'extra-small mt-1 text-success';
+                msg.textContent = `✓ Found: ${p.name} (${p.branch || 'General'})`;
+            } else {
+                msg.className = 'extra-small mt-1 text-danger';
+                msg.textContent = `✗ ${data.message || 'Player not found'}`;
+            }
+        })
+        .catch(err => {
+            msg.className = 'extra-small mt-1 text-danger';
+            msg.textContent = 'Validation lookup error.';
+        });
+}
+</script>
+{% endblock %}

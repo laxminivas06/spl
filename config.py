@@ -1,63 +1,47 @@
 import os
+from dotenv import load_dotenv
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-DATA_DIR = os.path.join(BASE_DIR, 'data')
-UPLOAD_DIR = os.path.join(BASE_DIR, 'static', 'uploads')
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'svg', 'xlsx', 'xls', 'csv'}
+load_dotenv(os.path.join(BASE_DIR, '.env'), override=True)
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'kspl-auction-secret-key-2026')
-DEBUG = True
+# Allow HTTP transport for local development OAuth flows
+os.environ['AUTHLIB_INSECURE_TRANSPORT'] = '1'
 
-# JSON storage file paths
-TEAMS_FILE = os.path.join(DATA_DIR, 'teams.json')
-PLAYERS_FILE = os.path.join(DATA_DIR, 'players.json')
-AUCTION_FILE = os.path.join(DATA_DIR, 'auction.json')
-BIDS_FILE = os.path.join(DATA_DIR, 'bids.json')
-SETTINGS_FILE = os.path.join(DATA_DIR, 'settings.json')
-AUDIT_FILE = os.path.join(DATA_DIR, 'audit_log.json')
-STUDENTS_FILE = os.path.join(DATA_DIR, 'students.json')
+class Config:
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'spl-auction-secret-key-2026-sphoorthy'
+    JSON_DATA_DIR = os.environ.get('JSON_DATA_DIR') or os.path.join(BASE_DIR, 'instance', 'data')
+    WTF_CSRF_ENABLED = True
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB max upload size
+    UPLOAD_FOLDER = os.path.join(BASE_DIR, 'app', 'static', 'uploads')
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 
-# Core SPL Constants
-DEFAULT_PURSE = 500000  # ₹5,00,000 per franchise
-MAX_SQUAD_SIZE = 15     # 15 players max per franchise
-DEFAULT_BASE_PRICE = 10000
-DEFAULT_TIMER_SECONDS = 30
+    # Google OAuth Configuration
+    GOOGLE_CLIENT_ID = (os.environ.get('GOOGLE_CLIENT_ID') or 'MOCK_GOOGLE_CLIENT_ID').strip().strip('"\'')
+    GOOGLE_CLIENT_SECRET = (os.environ.get('GOOGLE_CLIENT_SECRET') or 'MOCK_GOOGLE_CLIENT_SECRET').strip().strip('"\'')
+    GOOGLE_REDIRECT_URI = (os.environ.get('GOOGLE_REDIRECT_URI') or 'http://127.0.0.1:5001/auth/google/callback').strip().strip('"\'')
 
-# Student Registration Constants
-MAX_PHOTO_SIZE_BYTES = 100 * 1024  # 100 KB maximum photo size
-DOB_FORMAT = 'DDMMYYYY'
-STUDENT_YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year']
-STUDENT_DEPARTMENTS = [
-    'CSE',
-    'CSE - Cyber Security',
-    'CSE - AI & ML',
-    'CSE - Data Science',
-    'ECE',
-    'EEE',
-    'MECH',
-    'CIVIL',
-    'IT'
-]
-STUDENT_PLAYING_ROLES = ['Batsman', 'Bowler', 'All-Rounder']
+    # Administrator Email Configuration
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'laxminivasmorishetty143@gmail.com').strip()
+    ADMIN_EMAILS = [e.strip().lower() for e in os.environ.get('ADMIN_EMAILS', 'laxminivasmorishetty143@gmail.com,laxminivasmorishetty143@gmai.com').split(',') if e.strip()]
 
+class DevelopmentConfig(Config):
+    DEBUG = True
 
-# System role accounts (Admin & Anchor)
-# Team accounts are dynamically managed in teams.json with authorized Gmails
-ROLES = {
-    'admin': {
-        'username': 'admin',
-        'password': 'admin123',
-        'email': 'admin@spl.edu',
-        'role': 'admin',
-        'title': 'SPL Auction Administrator'
-    },
-    'anchor': {
-        'username': 'anchor',
-        'password': 'anchor123',
-        'email': 'anchor@spl.edu',
-        'role': 'anchor',
-        'title': 'SPL Anchor / Auctioneer'
-    }
+class TestingConfig(Config):
+    TESTING = True
+    JSON_DATA_DIR = os.path.join(BASE_DIR, 'instance', 'test_data')
+    WTF_CSRF_ENABLED = False
+    GOOGLE_CLIENT_ID = 'TEST_GOOGLE_CLIENT_ID'
+    GOOGLE_CLIENT_SECRET = 'TEST_GOOGLE_CLIENT_SECRET'
+    GOOGLE_REDIRECT_URI = 'http://localhost:5000/auth/google/callback'
+
+class ProductionConfig(Config):
+    DEBUG = False
+
+config_by_name = {
+    'dev': DevelopmentConfig,
+    'test': TestingConfig,
+    'testing': TestingConfig,
+    'prod': ProductionConfig,
+    'default': DevelopmentConfig
 }
-
-

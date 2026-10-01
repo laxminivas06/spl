@@ -1,0 +1,339 @@
+{
+  "version": "2.0-json",
+  "timestamp": "2026-10-01T02:33:56.642125",
+  "tables": {
+    "system_settings": [
+      {
+        "id": 1,
+        "key": "event_name",
+        "value": "SPL",
+        "updated_at": "2026-10-01T02:33:56.639849"
+      },
+      {
+        "id": 2,
+        "key": "event_subtitle",
+        "value": "Sphoorthy Premier League",
+        "updated_at": "2026-10-01T02:33:56.639807"
+      },
+      {
+        "id": 3,
+        "key": "starting_purse",
+        "value": "300000",
+        "updated_at": "2026-10-01T02:33:56.639802"
+      },
+      {
+        "id": 4,
+        "key": "squad_limit",
+        "value": "15",
+        "updated_at": "2026-10-01T02:33:56.639858"
+      },
+      {
+        "id": 5,
+        "key": "base_price",
+        "value": "10000",
+        "updated_at": "2026-10-01T02:33:56.639891"
+      },
+      {
+        "id": 6,
+        "key": "timer_seconds",
+        "value": "10",
+        "updated_at": "2026-10-01T02:33:56.639805"
+      },
+      {
+        "id": 7,
+        "key": "bid_increment_step",
+        "value": "5000",
+        "updated_at": "2026-10-01T02:33:56.639894"
+      },
+      {
+        "id": 8,
+        "key": "theme_default",
+        "value": "dark",
+        "updated_at": "2026-10-01T02:33:56.639860"
+      },
+      {
+        "id": 9,
+        "key": "SHOW_PURCHASE_PRICE_PUBLICLY",
+        "value": "true",
+        "updated_at": "2026-10-01T02:33:56.639886"
+      },
+      {
+        "id": 10,
+        "key": "audit_logging_enabled",
+        "value": "true",
+        "updated_at": "2026-10-01T02:33:56.639856"
+      },
+      {
+        "id": 11,
+        "key": "audit_retention_days",
+        "value": "90",
+        "updated_at": "2026-10-01T02:33:56.639888"
+      },
+      {
+        "id": 12,
+        "key": "audit_log_level",
+        "value": "ALL",
+        "updated_at": "2026-10-01T02:33:56.639810"
+      },
+      {
+        "id": 13,
+        "key": "audit_track_ip",
+        "value": "true",
+        "updated_at": "2026-10-01T02:33:56.639796"
+      }
+    ],
+    "auction_state": [
+      {
+        "id": 1,
+        "status": "WAITING",
+        "active_player_id": null,
+        "current_bid": 0.0,
+        "highest_bidder_id": null,
+        "timer_seconds": 30,
+        "timer_end": null,
+        "paused_seconds_left": null,
+        "last_bid_at": null,
+        "started_at": null,
+        "updated_at": "2026-10-01T02:33:56.639878"
+      }
+    ],
+    "users": [
+      {
+        "id": 1,
+        "username": "admin",
+        "email": "admin@sphoorthyengg.ac.in",
+        "display_name": "System Administrator",
+        "google_subject_id": null,
+        "password_hash": "scrypt:32768:8:1$HiTecy7omC1vPWvx$ea14331c786980aec61bca5fa76ebda85df260dee7bb5667fa39bcee643bd013a1c25871c5a673865a05ea43efa70719c2e9530bb1d7234effea6c38f5cffddc",
+        "role": "ADMIN",
+        "franchise_id": null,
+        "is_active": true,
+        "created_at": "2026-10-01T02:33:56.186568",
+        "last_login_at": null
+      },
+      {
+        "id": 2,
+        "username": "cybervipers",
+        "email": "cybervipers@sphoorthyengg.ac.in",
+        "display_name": "Cyber Vipers",
+        "google_subject_id": null,
+        "password_hash": "scrypt:32768:8:1$SJBEsyze4lAxZFJI$0ab590e216c977e2c095b5b5a13b601a513b295757b2c512ab9f1b61b9a2bef054bc7343eadb0ef3579e84f4c7759ce41fedbc0a76001dfd6549697b23d67cc8",
+        "role": "FRANCHISE",
+        "franchise_id": 1,
+        "is_active": true,
+        "created_at": "2026-10-01T02:33:56.250124",
+        "last_login_at": null
+      },
+      {
+        "id": 3,
+        "username": "techtitans",
+        "email": "techtitans@sphoorthyengg.ac.in",
+        "display_name": "Tech Titans",
+        "google_subject_id": null,
+        "password_hash": "scrypt:32768:8:1$o7J2fL8Ykoqw1g9W$0ddb542542fe51b66e9503a8538aec78b0346b36ca02c6c6f8f80b083a6dd2e54e99e57dcd2df20190a176fd9074146276ec8f5cbb8e3939b367dc1e02338eb5",
+        "role": "FRANCHISE",
+        "franchise_id": 2,
+        "is_active": true,
+        "created_at": "2026-10-01T02:33:56.314097",
+        "last_login_at": null
+      },
+      {
+        "id": 4,
+        "username": "neuralhawks",
+        "email": "neuralhawks@sphoorthyengg.ac.in",
+        "display_name": "Neural Hawks",
+        "google_subject_id": null,
+        "password_hash": "scrypt:32768:8:1$Vst9VGAPRngQ5bIr$2f575e97955ab18d822e5393fcc72fc6fa905c409ac3e82deeabad97efc466884d127086e54fcdbabc6ffc111f4abed8b8615f89bf30de2730f47269918081a3",
+        "role": "FRANCHISE",
+        "franchise_id": 3,
+        "is_active": true,
+        "created_at": "2026-10-01T02:33:56.377743",
+        "last_login_at": null
+      },
+      {
+        "id": 5,
+        "username": "dataphoenix",
+        "email": "dataphoenix@sphoorthyengg.ac.in",
+        "display_name": "Data Phoenix",
+        "google_subject_id": null,
+        "password_hash": "scrypt:32768:8:1$ttKXtMUt4XNT3oas$c93c36b3d7b1258590c3a9f3919c44593a4556f9f5464af0b4425b95a301dc99a3d4980bd3ee40bbb3ef057df1e86cc886b29be7890103d228f6d5a0c0135f26",
+        "role": "FRANCHISE",
+        "franchise_id": 4,
+        "is_active": true,
+        "created_at": "2026-10-01T02:33:56.442049",
+        "last_login_at": null
+      },
+      {
+        "id": 6,
+        "username": "circuitchargers",
+        "email": "circuitchargers@sphoorthyengg.ac.in",
+        "display_name": "Circuit Chargers",
+        "google_subject_id": null,
+        "password_hash": "scrypt:32768:8:1$AR039UPfqZPCaPMs$9aec347df57ffcd0865ab62169afb7d95a18a92a758952da13142966d3faae2efb58920189529880b4e07dfb486be01c5b8dcf6525d7393314fb64f1a9767c39",
+        "role": "FRANCHISE",
+        "franchise_id": 5,
+        "is_active": true,
+        "created_at": "2026-10-01T02:33:56.505252",
+        "last_login_at": null
+      },
+      {
+        "id": 7,
+        "username": "irongiants",
+        "email": "irongiants@sphoorthyengg.ac.in",
+        "display_name": "Iron Giants",
+        "google_subject_id": null,
+        "password_hash": "scrypt:32768:8:1$3ndoZvVo3PSRIBUI$d73e5a8fbdf9a9e7530341a0a007796c3e1ca36854ce04e16f53679f9e738f287296e1c9d426769e47e3576ff90c2b3c79f89061d9184432ea2e12b3b7df0579",
+        "role": "FRANCHISE",
+        "franchise_id": 6,
+        "is_active": true,
+        "created_at": "2026-10-01T02:33:56.569477",
+        "last_login_at": null
+      }
+    ],
+    "franchises": [
+      {
+        "id": 1,
+        "name": "Cyber Vipers",
+        "short_name": "F01",
+        "logo": null,
+        "authorized_email": "cybervipers@sphoorthyengg.ac.in",
+        "owner_name": "Cyber Vipers Owner",
+        "google_auth_enabled": true,
+        "starting_purse": 300000.0,
+        "remaining_purse": 300000.0,
+        "squad_limit": 15,
+        "captain_name": null,
+        "captain_rule_number": null,
+        "captain_department": null,
+        "captain_year": null,
+        "captain_category": null,
+        "captain_photo": null,
+        "captain_id": null,
+        "vice_captain_id": null,
+        "is_active": true,
+        "created_at": "2026-10-01T02:33:56.250097",
+        "updated_at": "2026-10-01T02:33:56.639831"
+      },
+      {
+        "id": 2,
+        "name": "Tech Titans",
+        "short_name": "F02",
+        "logo": null,
+        "authorized_email": "techtitans@sphoorthyengg.ac.in",
+        "owner_name": "Tech Titans Owner",
+        "google_auth_enabled": true,
+        "starting_purse": 300000.0,
+        "remaining_purse": 300000.0,
+        "squad_limit": 15,
+        "captain_name": null,
+        "captain_rule_number": null,
+        "captain_department": null,
+        "captain_year": null,
+        "captain_category": null,
+        "captain_photo": null,
+        "captain_id": null,
+        "vice_captain_id": null,
+        "is_active": true,
+        "created_at": "2026-10-01T02:33:56.314068",
+        "updated_at": "2026-10-01T02:33:56.639872"
+      },
+      {
+        "id": 3,
+        "name": "Neural Hawks",
+        "short_name": "F03",
+        "logo": null,
+        "authorized_email": "neuralhawks@sphoorthyengg.ac.in",
+        "owner_name": "Neural Hawks Owner",
+        "google_auth_enabled": true,
+        "starting_purse": 300000.0,
+        "remaining_purse": 300000.0,
+        "squad_limit": 15,
+        "captain_name": null,
+        "captain_rule_number": null,
+        "captain_department": null,
+        "captain_year": null,
+        "captain_category": null,
+        "captain_photo": null,
+        "captain_id": null,
+        "vice_captain_id": null,
+        "is_active": true,
+        "created_at": "2026-10-01T02:33:56.377715",
+        "updated_at": "2026-10-01T02:33:56.639818"
+      },
+      {
+        "id": 4,
+        "name": "Data Phoenix",
+        "short_name": "F04",
+        "logo": null,
+        "authorized_email": "dataphoenix@sphoorthyengg.ac.in",
+        "owner_name": "Data Phoenix Owner",
+        "google_auth_enabled": true,
+        "starting_purse": 300000.0,
+        "remaining_purse": 300000.0,
+        "squad_limit": 15,
+        "captain_name": null,
+        "captain_rule_number": null,
+        "captain_department": null,
+        "captain_year": null,
+        "captain_category": null,
+        "captain_photo": null,
+        "captain_id": null,
+        "vice_captain_id": null,
+        "is_active": true,
+        "created_at": "2026-10-01T02:33:56.442016",
+        "updated_at": "2026-10-01T02:33:56.639863"
+      },
+      {
+        "id": 5,
+        "name": "Circuit Chargers",
+        "short_name": "F05",
+        "logo": null,
+        "authorized_email": "circuitchargers@sphoorthyengg.ac.in",
+        "owner_name": "Circuit Chargers Owner",
+        "google_auth_enabled": true,
+        "starting_purse": 300000.0,
+        "remaining_purse": 300000.0,
+        "squad_limit": 15,
+        "captain_name": null,
+        "captain_rule_number": null,
+        "captain_department": null,
+        "captain_year": null,
+        "captain_category": null,
+        "captain_photo": null,
+        "captain_id": null,
+        "vice_captain_id": null,
+        "is_active": true,
+        "created_at": "2026-10-01T02:33:56.505220",
+        "updated_at": "2026-10-01T02:33:56.639825"
+      },
+      {
+        "id": 6,
+        "name": "Iron Giants",
+        "short_name": "F06",
+        "logo": null,
+        "authorized_email": "irongiants@sphoorthyengg.ac.in",
+        "owner_name": "Iron Giants Owner",
+        "google_auth_enabled": true,
+        "starting_purse": 300000.0,
+        "remaining_purse": 300000.0,
+        "squad_limit": 15,
+        "captain_name": null,
+        "captain_rule_number": null,
+        "captain_department": null,
+        "captain_year": null,
+        "captain_category": null,
+        "captain_photo": null,
+        "captain_id": null,
+        "vice_captain_id": null,
+        "is_active": true,
+        "created_at": "2026-10-01T02:33:56.569429",
+        "updated_at": "2026-10-01T02:33:56.639844"
+      }
+    ],
+    "bids": [],
+    "transactions": [],
+    "fixtures": [],
+    "players": [],
+    "audit_logs": []
+  }
+}

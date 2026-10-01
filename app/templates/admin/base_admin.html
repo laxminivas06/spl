@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block content_wrapper %}
+<div class="spl-admin-layout">
+    <!-- Backdrop for mobile collapsible sidebar -->
+    <div class="spl-sidebar-backdrop" id="sidebarBackdrop" onclick="toggleAdminSidebar(false)"></div>
+
+    <!-- Fixed / Collapsible Left Sidebar matching ui.html -->
+    <aside class="spl-sidebar" id="adminSidebar">
+        <div class="spl-brand flex-column align-items-center text-center py-4 border-bottom border-secondary border-opacity-25 bg-white">
+            <div class="d-flex align-items-center justify-content-between w-100 mb-2">
+                <div class="d-flex align-items-center gap-2 mx-auto">
+                    <svg viewBox="0 0 100 100" class="w-8 h-8 text-danger" fill="currentColor">
+                        <path d="M48 6 C35 7 24 13 16 23 C9 32 6 42 7 53 C9 67 18 78 30 86 C40 92 51 94 62 92 C74 88 85 79 91 67 C97 55 96 40 89 29 C82 17 71 9 58 6 C55 5 50 5 48 6 Z" fill="#1e3a8a" opacity="0.12" />
+                        <path d="M45 20 C48 20 50 18 50 15 C50 12 48 10 45 10 C42 10 40 12 40 15 C40 18 42 20 45 20 Z" fill="#dc2626"/>
+                        <path d="M38 27 L49 22 L55 35 L48 38 L43 29 L38 48 L32 45 L38 27 Z" fill="#1e3a8a"/>
+                        <path d="M55 35 L70 48 L65 52 L52 38 Z" fill="#dc2626"/>
+                        <path d="M48 38 L58 72 L50 74 L42 45 Z" fill="#1e3a8a"/>
+                    </svg>
+                    <span class="fs-6 fw-black text-dark font-display uppercase tracking-wide">{{ event_name or 'SPL' }} <span class="text-danger">ADMIN</span></span>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary d-lg-none" onclick="toggleAdminSidebar(false)" aria-label="Close menu">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <span class="text-danger font-display uppercase extra-small tracking-wider fw-bold">Live Control System</span>
+        </div>
+
+        <nav class="spl-nav">
+            <a href="{{ url_for('admin.dashboard') }}" class="spl-nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+                <i class="fa-solid fa-chart-pie"></i> <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('admin.players') }}" class="spl-nav-item {% if active_page == 'players' %}active{% endif %}">
+                <i class="fa-solid fa-users"></i> <span>Players</span>
+            </a>
+            <a href="{{ url_for('admin.franchises') }}" class="spl-nav-item {% if active_page == 'franchises' %}active{% endif %}">
+                <i class="fa-solid fa-shield-halved"></i> <span>Franchisees</span>
+            </a>
+            <a href="{{ url_for('admin.auction_control') }}" class="spl-nav-item {% if active_page == 'auction' %}active{% endif %}">
+                <i class="fa-solid fa-gavel"></i> <span>Primary Auction</span>
+            </a>
+            <a href="{{ url_for('admin.second_chance_dashboard') }}" class="spl-nav-item {% if active_page == 'second_chance' %}active{% endif %}">
+                <i class="fa-solid fa-rotate-right"></i> <span>Second Chance</span>
+            </a>
+            <a href="{{ url_for('admin.final_squads') }}" class="spl-nav-item {% if active_page == 'final_squads' %}active{% endif %}">
+                <i class="fa-solid fa-people-group"></i> <span>Final Squads</span>
+            </a>
+            <a href="{{ url_for('admin.auction_summary') }}" class="spl-nav-item {% if active_page == 'auction_summary' or active_page == 'history' %}active{% endif %}">
+                <i class="fa-solid fa-clock-rotate-left"></i> <span>Auction History</span>
+            </a>
+            <a href="{{ url_for('admin.users_management') }}" class="spl-nav-item {% if active_page == 'users' %}active{% endif %}">
+                <i class="fa-solid fa-user-shield"></i> <span>Users & Security</span>
+            </a>
+            <a href="{{ url_for('admin.audit_logs') }}" class="spl-nav-item {% if active_page == 'audit_logs' %}active{% endif %}">
+                <i class="fa-solid fa-clipboard-list"></i> <span>Audit Logs</span>
+            </a>
+            <a href="{{ url_for('admin.settings') }}" class="spl-nav-item {% if active_page == 'settings' %}active{% endif %}">
+                <i class="fa-solid fa-gears"></i> <span>Settings</span>
+            </a>
+        </nav>
+
+        <div class="spl-sidebar-footer bg-light">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="small text-truncate me-2" style="max-width: 140px;">
+                    <div class="text-dark fw-semibold small text-truncate">{{ current_user.display_name or current_user.username }}</div>
+                    <div class="text-muted extra-small text-truncate">{{ current_user.email or current_user.role }}</div>
+                </div>
+                <span class="badge bg-danger extra-small">{{ current_user.role }}</span>
+            </div>
+            <div>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-sm w-100 font-display" title="Logout">
+                    <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="d-flex flex-column flex-grow-1 w-100" style="overflow-x: hidden;">
+        <!-- Top Navbar for Mobile/Tablet -->
+        <header class="spl-mobile-navbar bg-white border-bottom">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleAdminSidebar(true)" aria-label="Open navigation menu">
+                <i class="fa-solid fa-bars fs-5"></i>
+            </button>
+            <div class="fw-bold text-danger">
+                <i class="fa-solid fa-gavel me-1"></i> {{ event_name or 'SPL' }}
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ url_for('live.auction_live') }}" target="_blank" class="btn btn-outline-danger btn-sm" title="Live Screen">
+                    <i class="fa-solid fa-tv"></i>
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-secondary btn-sm" title="Logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="spl-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ category }} alert-dismissible fade show mb-4 shadow-sm" role="alert">
+                    <i class="fa-solid fa-circle-info me-2"></i>{{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            {% block admin_content %}
+                {% block content %}{% endblock %}
+            {% endblock %}
+        </main>
+    </div>
+</div>
+
+<script>
+function toggleAdminSidebar(show) {
+    const sidebar = document.getElementById('adminSidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    if (show) {
+        sidebar.classList.add('show');
+        backdrop.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    } else {
+        sidebar.classList.remove('show');
+        backdrop.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,606 @@
+{% extends "admin/base_admin.html" %}
+{% set active_page = 'players' %}
+
+{% block title %}Player Database Management — {{ event_name }}{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom border-secondary gap-3">
+    <div>
+        <h2 class="fw-bold text-dark mb-0"><i class="fa-solid fa-users text-danger me-2"></i>Player Database</h2>
+        <small class="text-muted">Manage registered players, Excel-style records, and CSV dataset imports</small>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#importCsvModal">
+            <i class="fa-solid fa-file-csv me-1"></i> Import CSV (With Preview)
+        </button>
+        <button type="button" class="btn btn-spl-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#addPlayerModal">
+            <i class="fa-solid fa-user-plus me-1"></i> Add Player
+        </button>
+    </div>
+</div>
+
+<!-- Post-Auction Stage Unlocked Banner (Requirements 7: After Primary & Second Chance Completed) -->
+{% if both_auctions_completed %}
+<div class="card bg-success-subtle border border-success p-3 mb-4 rounded-3 text-white">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+            <h5 class="fw-bold text-success mb-1">
+                <i class="fa-solid fa-trophy text-danger me-2"></i>Post-Auction Player Addition Unlocked!
+            </h5>
+            <p class="text-white-50 small mb-0">
+                Both Primary Auction and Second Chance Auction are completed. You can now add post-auction players with editable Room Number details.
+            </p>
+        </div>
+        <div>
+            <button type="button" class="btn btn-success fw-bold text-nowrap" data-bs-toggle="modal" data-bs-target="#addPlayerModal">
+                <i class="fa-solid fa-user-plus me-1"></i> Add Post-Auction Player
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Search & Filter Control Bar -->
+<div class="spl-card mb-4 p-3 bg-white shadow-sm border">
+    <form method="GET" action="{{ url_for('admin.players') }}" id="playerFilterForm" class="row g-2 align-items-center">
+        <div class="col-12 col-md-4">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light border text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <input type="text" class="form-control form-control-spl" id="playerSearchInput" name="search" placeholder="Search name, rule number, branch..." value="{{ search }}">
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <select class="form-select form-select-spl form-select-sm" name="role" onchange="this.form.submit()">
+                <option value="">All Roles</option>
+                {% for r in roles %}
+                <option value="{{ r }}" {% if selected_role == r %}selected{% endif %}>{{ r }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <select class="form-select form-select-spl form-select-sm" name="category" onchange="this.form.submit()">
+                <option value="">All Categories</option>
+                {% for c in categories %}
+                <option value="{{ c }}" {% if selected_category == c %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <select class="form-select form-select-spl form-select-sm" name="status" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                {% for s in statuses %}
+                <option value="{{ s }}" {% if selected_status == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6 col-md-2 d-flex gap-1">
+            <button type="submit" class="btn btn-outline-primary btn-sm flex-grow-1"><i class="fa-solid fa-filter"></i> Filter</button>
+            <a href="{{ url_for('admin.players') }}" class="btn btn-outline-secondary btn-sm" title="Reset filters"><i class="fa-solid fa-rotate-left"></i></a>
+        </div>
+    </form>
+</div>
+
+<!-- Player Count Stats Summary -->
+<div class="d-flex justify-content-between align-items-center mb-2 px-1">
+    <small class="text-muted fw-semibold">
+        Showing <span class="text-primary fw-bold">{{ players | length }}</span> players
+    </small>
+    <div class="d-flex gap-2">
+        <span class="badge bg-success-subtle text-success border border-success extra-small">AVAILABLE: {{ players | selectattr('status', 'equalto', 'AVAILABLE') | list | length }}</span>
+        <span class="badge bg-primary-subtle text-primary border border-primary extra-small">SOLD: {{ players | selectattr('status', 'equalto', 'SOLD') | list | length }}</span>
+        <span class="badge bg-danger-subtle text-danger border border-danger extra-small">UNSOLD: {{ players | selectattr('status', 'equalto', 'UNSOLD') | list | length }}</span>
+    </div>
+</div>
+
+<!-- Excel-Like Responsive Table Container -->
+<div class="spl-excel-table-container shadow-sm mb-4">
+    <table class="spl-excel-table mb-0" id="excelPlayersTable">
+        <thead>
+            <tr>
+                <th style="width: 55px;" class="text-center">Photo</th>
+                <th onclick="sortTable(1)" title="Click to sort by Rule Number">Rule No <i class="fa-solid fa-sort ms-1 extra-small text-muted"></i></th>
+                <th onclick="sortTable(2)" title="Click to sort by Name">Player Name <i class="fa-solid fa-sort ms-1 extra-small text-muted"></i></th>
+                <th onclick="sortTable(3)" title="Click to sort by Role">Role <i class="fa-solid fa-sort ms-1 extra-small text-muted"></i></th>
+                <th>Branch & Year</th>
+                <th>Room No</th>
+                <th>Experience</th>
+                <th onclick="sortTable(7)" title="Click to sort by Category">Category <i class="fa-solid fa-sort ms-1 extra-small text-muted"></i></th>
+                <th onclick="sortTable(8)" title="Click to sort by Base Price">Base Price <i class="fa-solid fa-sort ms-1 extra-small text-muted"></i></th>
+                <th onclick="sortTable(9)" title="Click to sort by Status">Status <i class="fa-solid fa-sort ms-1 extra-small text-muted"></i></th>
+                <th>Franchisee</th>
+                <th class="text-end" style="width: 110px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if players %}
+                {% for p in players %}
+                <tr>
+                    <td class="text-center">
+                        {% if p.photo and p.photo.startswith('http') %}
+                            <img src="{{ p.photo }}" alt="{{ p.name }}" class="player-thumb" onerror="this.src='https://via.placeholder.com/40?text=SPL'">
+                        {% elif p.photo %}
+                            <img src="{{ url_for('static', filename='uploads/' + p.photo) }}" alt="{{ p.name }}" class="player-thumb" onerror="this.src='https://via.placeholder.com/40?text=SPL'">
+                        {% else %}
+                            <div class="player-thumb bg-light border d-flex align-items-center justify-content-center text-primary">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td class="fw-bold text-danger font-monospace">#{{ p.roll_number }}</td>
+                    <td>
+                        <div class="fw-bold text-dark">{{ p.name }}</div>
+                    </td>
+                    <td><span class="badge badge-role">{{ p.role }}</span></td>
+                    <td class="small text-muted">
+                        {{ p.branch or 'N/A' }} {% if p.year %}(Yr {{ p.year }}){% endif %}
+                    </td>
+                    <td class="small font-monospace text-primary fw-semibold">
+                        {{ p.room_number or '---' }}
+                    </td>
+                    <td class="small text-muted">{{ p.experience or '---' }}</td>
+                    <td><span class="badge badge-category">{{ p.category }}</span></td>
+                    <td class="text-danger fw-bold font-monospace">₹{{ p.base_price | currency }}</td>
+                    <td>
+                        {% if p.status == 'AVAILABLE' %}
+                            <span class="badge badge-status-available">AVAILABLE</span>
+                        {% elif p.status == 'SOLD' %}
+                            <span class="badge badge-status-sold">SOLD</span>
+                        {% else %}
+                            <span class="badge badge-status-unsold">{{ p.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if p.franchise %}
+                            <span class="badge bg-light border text-dark fw-bold">
+                                {{ p.franchise.short_name }}
+                            </span>
+                        {% else %}
+                            <span class="text-muted extra-small">---</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <div class="d-inline-flex gap-1">
+                            <button type="button" class="btn btn-outline-primary btn-sm py-0 px-1" onclick="viewPlayerModal({{ p.id }})" title="View Profile">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm py-0 px-1" data-bs-toggle="modal" data-bs-target="#editPlayerModal{{ p.id }}" title="Edit Player">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <form method="POST" action="{{ url_for('admin.delete_player', id=p.id) }}" class="d-inline" onsubmit="return confirm('Delete player #{{ p.roll_number }}?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-1" title="Delete Player">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- Edit Modal for Player {{ p.id }} -->
+                <div class="modal fade" id="editPlayerModal{{ p.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content modal-content-spl">
+                            <div class="modal-header modal-header-spl">
+                                <h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-user-pen text-danger me-2"></i>Edit {{ p.name }}</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <form method="POST" action="{{ url_for('admin.edit_player', id=p.id) }}" enctype="multipart/form-data">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="modal-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted small fw-semibold">RULE NUMBER *</label>
+                                            <input type="text" class="form-control form-control-spl" name="roll_number" value="{{ p.roll_number }}" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted small fw-semibold">FULL NAME *</label>
+                                            <input type="text" class="form-control form-control-spl" name="name" value="{{ p.name }}" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted small fw-semibold">ROLE</label>
+                                            <select class="form-select form-select-spl" name="role">
+                                                {% for r in roles %}
+                                                <option value="{{ r }}" {% if p.role == r %}selected{% endif %}>{{ r }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted small fw-semibold">CATEGORY</label>
+                                            <select class="form-select form-select-spl" name="category">
+                                                {% for c in categories %}
+                                                <option value="{{ c }}" {% if p.category == c %}selected{% endif %}>{{ c }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted small fw-semibold">BASE PRICE (₹)</label>
+                                            <input type="number" class="form-control form-control-spl" name="base_price" value="{{ p.base_price }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted small fw-semibold">STATUS</label>
+                                            <select class="form-select form-select-spl" name="status">
+                                                {% for s in statuses %}
+                                                <option value="{{ s }}" {% if p.status == s %}selected{% endif %}>{{ s }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted small fw-semibold">BRANCH</label>
+                                            <input type="text" class="form-control form-control-spl" name="branch" value="{{ p.branch or '' }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted small fw-semibold">YEAR</label>
+                                            <input type="text" class="form-control form-control-spl" name="year" value="{{ p.year or '' }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted small fw-semibold">ROOM NUMBER</label>
+                                            <input type="text" class="form-control form-control-spl" name="room_number" value="{{ p.room_number or '' }}" placeholder="e.g. Room 204">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted small fw-semibold">EXPERIENCE</label>
+                                            <input type="text" class="form-control form-control-spl" name="experience" value="{{ p.experience or '' }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted small fw-semibold">UPLOAD NEW PHOTO</label>
+                                            <input type="file" class="form-control form-control-spl" name="photo_file" accept="image/*">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted small fw-semibold">OR PHOTO URL</label>
+                                            <input type="url" class="form-control form-control-spl" name="photo_url" placeholder="https://..." value="{{ p.photo if p.photo and p.photo.startswith('http') else '' }}">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer modal-footer-spl">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-spl-primary btn-sm">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="11" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-users-slash fa-2x mb-2 d-block"></i>
+                        No players matching the selected filters found.
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Add Player Modal -->
+<div class="modal fade" id="addPlayerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-spl">
+            <div class="modal-header modal-header-spl">
+                <h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-user-plus text-danger me-2"></i>Add New Player</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.add_player') }}" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">RULE NUMBER *</label>
+                            <input type="text" class="form-control form-control-spl" name="roll_number" placeholder="e.g. 24" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">FULL NAME *</label>
+                            <input type="text" class="form-control form-control-spl" name="name" placeholder="Arjun Reddy" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">ROLE</label>
+                            <select class="form-select form-select-spl" name="role">
+                                {% for r in roles %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">CATEGORY</label>
+                            <select class="form-select form-select-spl" name="category">
+                                {% for c in categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">BASE PRICE (₹)</label>
+                            <input type="number" class="form-control form-control-spl" name="base_price" value="10000">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">STATUS</label>
+                            <select class="form-select form-select-spl" name="status">
+                                {% for s in statuses %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">BRANCH</label>
+                            <input type="text" class="form-control form-control-spl" name="branch" placeholder="CSE">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">YEAR</label>
+                            <input type="text" class="form-control form-control-spl" name="year" placeholder="3">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">ROOM NUMBER</label>
+                            <input type="text" class="form-control form-control-spl" name="room_number" placeholder="e.g. Room 204">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">EXPERIENCE</label>
+                            <input type="text" class="form-control form-control-spl" name="experience" placeholder="College Team">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">UPLOAD PHOTO</label>
+                            <input type="file" class="form-control form-control-spl" name="photo_file" accept="image/*">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">OR PHOTO URL</label>
+                            <input type="url" class="form-control form-control-spl" name="photo_url" placeholder="https://...">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-spl">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-spl-primary btn-sm">Add Player</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Import CSV Modal with Live Preview & Duplicate Detection -->
+<div class="modal fade" id="importCsvModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content modal-content-spl">
+            <div class="modal-header modal-header-spl">
+                <h5 class="modal-title fw-bold text-white"><i class="fa-solid fa-file-csv text-info me-2"></i>Import Players CSV (With Validation)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.import_csv') }}" enctype="multipart/form-data" id="csvImportForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <p class="text-muted small mb-2">Supported CSV Column Headers (case-insensitive):</p>
+                    <code class="d-block p-2 bg-light rounded border text-primary small mb-3">
+                        Rule Number, Name, Photo, Role, Branch, Year, Experience, Category, Base Price
+                    </code>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">SELECT CSV FILE TO PREVIEW</label>
+                        <input type="file" class="form-control form-control-spl" id="csvFileInput" name="csv_file" accept=".csv" required onchange="handleCsvFileSelected(this)">
+                    </div>
+
+                    <!-- Live Preview Container -->
+                    <div id="csvPreviewContainer" class="d-none mt-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-table-list text-danger me-1"></i>Pre-Import Validation Summary</h6>
+                            <span id="previewLoadingSpinner" class="spinner-border spinner-border-sm text-danger d-none"></span>
+                        </div>
+
+                        <!-- Summary Badges -->
+                        <div class="row g-2 mb-3 text-center" id="previewBadges">
+                            <div class="col-3">
+                                <div class="p-2 rounded bg-light border">
+                                    <small class="text-muted d-block extra-small">TOTAL ROWS</small>
+                                    <strong class="text-primary fs-6" id="badgeTotal">0</strong>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="p-2 rounded bg-light border">
+                                    <small class="text-muted d-block extra-small">VALID</small>
+                                    <strong class="text-success fs-6" id="badgeValid">0</strong>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="p-2 rounded bg-light border">
+                                    <small class="text-muted d-block extra-small">DUPLICATES</small>
+                                    <strong class="text-danger fs-6" id="badgeDuplicates">0</strong>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="p-2 rounded bg-light border">
+                                    <small class="text-muted d-block extra-small">ERRORS</small>
+                                    <strong class="text-danger fs-6" id="badgeErrors">0</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview Table -->
+                        <div class="table-responsive rounded border" style="max-height: 220px; overflow-y: auto;">
+                            <table class="table table-sm table-hover mb-0 extra-small" id="csvPreviewTable">
+                                <thead>
+                                    <tr class="text-dark bg-light">
+                                        <th>#</th>
+                                        <th>Rule No</th>
+                                        <th>Name</th>
+                                        <th>Role</th>
+                                        <th>Category</th>
+                                        <th>Base Price</th>
+                                        <th>Validation Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="csvPreviewTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-spl">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" id="btnConfirmImport" class="btn btn-spl-primary btn-sm" data-loading-text="Importing...">
+                        <i class="fa-solid fa-cloud-arrow-up me-1"></i>Confirm & Import Valid Players
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Player Profile Modal -->
+<div class="modal fade" id="playerProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-spl">
+            <div class="modal-header modal-header-spl">
+                <h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-id-card text-danger me-2"></i>Player Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4" id="playerProfileModalBody">
+                <div class="spinner-border text-danger" role="status"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function viewPlayerModal(playerId) {
+    const modal = new bootstrap.Modal(document.getElementById('playerProfileModal'));
+    const modalBody = document.getElementById('playerProfileModalBody');
+    modalBody.innerHTML = '<div class="spinner-border text-danger my-4" role="status"></div>';
+    modal.show();
+
+    fetch(`/admin/players/${playerId}/json`)
+        .then(res => res.json())
+        .then(data => {
+            const photoSrc = data.photo && data.photo.startsWith('http') ? data.photo : '/static/uploads/' + (data.photo || 'default_player.png');
+            modalBody.innerHTML = `
+                <div class="spl-card border-0 bg-transparent p-0">
+                    <div class="mb-3">
+                        <img src="${photoSrc}" class="rounded-circle border border-danger shadow" width="100" height="100" style="object-fit:cover;" onerror="this.src='https://via.placeholder.com/100?text=SPL'">
+                    </div>
+                    <h3 class="fw-bold text-dark mb-0">${data.name}</h3>
+                    <div class="text-danger fw-semibold mb-3">Rule Number: ${data.rule_number || data.roll_number}</div>
+                    <div class="d-flex justify-content-center gap-2 mb-3">
+                        <span class="badge badge-role">${data.role}</span>
+                        <span class="badge badge-category">${data.category}</span>
+                        <span class="badge badge-status-${data.status.toLowerCase()}">${data.status}</span>
+                    </div>
+                    <div class="p-3 bg-light rounded border text-start mb-3">
+                        <div class="row g-2 small">
+                            <div class="col-6"><span class="text-muted">Branch:</span> <strong class="text-dark">${data.branch || 'N/A'}</strong></div>
+                            <div class="col-6"><span class="text-muted">Year:</span> <strong class="text-dark">${data.year || 'N/A'}</strong></div>
+                            ${data.room_number ? `<div class="col-12"><span class="text-muted">Room Number:</span> <strong class="text-primary font-monospace">${data.room_number}</strong></div>` : ''}
+                            <div class="col-12"><span class="text-muted">Experience:</span> <strong class="text-dark">${data.experience || 'None'}</strong></div>
+                            ${data.franchise_name ? `<div class="col-12"><span class="text-muted">Franchisee:</span> <strong class="text-primary">${data.franchise_name} (${data.franchise_short})</strong></div>` : ''}
+                            ${data.sold_price ? `<div class="col-12"><span class="text-muted">Purchased Price:</span> <strong class="text-success">₹${Number(data.sold_price).toLocaleString()}</strong> (${data.auction_type || 'PRIMARY'})</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="fs-4 text-danger fw-bold font-monospace">Base Price: ₹${Number(data.base_price).toLocaleString()}</div>
+                </div>
+            `;
+        })
+        .catch(err => {
+            modalBody.innerHTML = '<div class="text-danger py-4">Failed to load player details.</div>';
+        });
+}
+
+function handleCsvFileSelected(input) {
+    if (!input.files || !input.files[0]) return;
+
+    const container = document.getElementById('csvPreviewContainer');
+    const spinner = document.getElementById('previewLoadingSpinner');
+    const tbody = document.getElementById('csvPreviewTableBody');
+
+    container.classList.remove('d-none');
+    spinner.classList.remove('d-none');
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-3 text-muted">Analyzing CSV rows & checking duplicates...</td></tr>';
+
+    const formData = new FormData();
+    formData.append('csv_file', input.files[0]);
+
+    const csrf = document.querySelector('input[name="csrf_token"]').value;
+
+    fetch('/admin/players/preview-csv', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrf },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        spinner.classList.add('d-none');
+        if (data.success && data.preview) {
+            const p = data.preview;
+            document.getElementById('badgeTotal').textContent = p.total;
+            document.getElementById('badgeValid').textContent = p.valid_count;
+            document.getElementById('badgeDuplicates').textContent = p.duplicate_count;
+            document.getElementById('badgeErrors').textContent = p.error_count;
+
+            tbody.innerHTML = '';
+            p.preview_rows.slice(0, 30).forEach(r => {
+                let badgeClass = 'bg-success';
+                if (r.status === 'DUPLICATE') badgeClass = 'bg-danger text-white';
+                else if (r.status === 'ERROR') badgeClass = 'bg-danger';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${r.row_num}</td>
+                    <td class="fw-bold text-danger font-monospace">${r.rule_number || '---'}</td>
+                    <td>${r.name || '---'}</td>
+                    <td>${r.role}</td>
+                    <td>${r.category}</td>
+                    <td>₹${Number(r.base_price || 10000).toLocaleString()}</td>
+                    <td><span class="badge ${badgeClass}">${r.status}: ${r.message}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            if (p.preview_rows.length > 30) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="7" class="text-center text-muted py-1">... and ${p.preview_rows.length - 30} more rows</td>`;
+                tbody.appendChild(tr);
+            }
+        } else {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-danger py-2">${data.message || 'Failed to parse CSV preview'}</td></tr>`;
+        }
+    })
+    .catch(err => {
+        spinner.classList.add('d-none');
+        tbody.innerHTML = '<tr><td colspan="7" class="text-danger py-2">Error communicating with preview service.</td></tr>';
+    });
+}
+
+function sortTable(n) {
+    const table = document.getElementById("excelPlayersTable");
+    let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+    switching = true;
+    dir = "asc";
+    while (switching) {
+        switching = false;
+        rows = table.rows;
+        for (i = 1; i < (rows.length - 1); i++) {
+            shouldSwitch = false;
+            x = rows[i].getElementsByTagName("TD")[n];
+            y = rows[i + 1].getElementsByTagName("TD")[n];
+            if (!x || !y) continue;
+            let xVal = x.innerText.toLowerCase().replace(/[₹,]/g, '').trim();
+            let yVal = y.innerText.toLowerCase().replace(/[₹,]/g, '').trim();
+
+            let xNum = parseFloat(xVal);
+            let yNum = parseFloat(yVal);
+            let isNumeric = !isNaN(xNum) && !isNaN(yNum);
+
+            if (dir === "asc") {
+                if (isNumeric ? xNum > yNum : xVal > yVal) {
+                    shouldSwitch = true;
+                    break;
+                }
+            } else if (dir === "desc") {
+                if (isNumeric ? xNum < yNum : xVal < yVal) {
+                    shouldSwitch = true;
+                    break;
+                }
+            }
+        }
+        if (shouldSwitch) {
+            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+            switching = true;
+            switchcount++;
+        } else {
+            if (switchcount === 0 && dir === "asc") {
+                dir = "desc";
+                switching = true;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

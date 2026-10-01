@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Database Backup & Restore — SPL Admin{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-hdd-network text-primary me-2"></i>Database Backup & Restore</h2>
+            <p class="text-muted mb-0">Safe database snapshots and recovery management</p>
+        </div>
+        <div>
+            <form method="POST" action="{{ url_for('admin.trigger_backup') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger fw-bold shadow-sm">
+                    <i class="bi bi-plus-circle me-1"></i>Create New Backup
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4 bg-white">
+        <div class="card-header bg-light text-dark fw-bold border-bottom border-secondary-subtle">
+            <i class="bi bi-archive text-danger me-2"></i>Available Database Backups
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Filename</th>
+                            <th>Created Timestamp</th>
+                            <th>File Size</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for backup in backups %}
+                        <tr>
+                            <td class="font-monospace fw-bold text-dark">{{ backup.filename }}</td>
+                            <td>{{ backup.created_at }}</td>
+                            <td>{{ backup.size_formatted }}</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#restoreModal{{ loop.index }}">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i>Restore
+                                </button>
+
+                                <!-- Restore Modal -->
+                                <div class="modal fade text-start" id="restoreModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-danger text-white">
+                                                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Database Restore</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="alert alert-danger bg-white border border-danger text-danger">
+                                                    <strong>THIS ACTION CAN REPLACE CURRENT DATA.</strong>
+                                                    <p class="mb-0 mt-1 small">Restoring from <code>{{ backup.filename }}</code> will overwrite active database records. An automatic pre-restore backup will be generated first.</p>
+                                                </div>
+                                                <p>Are you sure you want to proceed with restoring this snapshot?</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Back</button>
+                                                <form method="POST" action="{{ url_for('admin.trigger_restore') }}">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                    <input type="hidden" name="filename" value="{{ backup.filename }}">
+                                                    <button type="submit" class="btn btn-danger fw-bold">Confirm Restore</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-muted text-center py-4">No backups found. Click "Create New Backup" above to generate a snapshot.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
