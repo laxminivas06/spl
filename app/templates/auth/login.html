@@ -4,34 +4,42 @@
 
 {% block extra_css %}
 <style>
-    /* ── Login page layout ────────────────────────────────────── */
+    /* ── Login page layout (Fully Responsive) ─────────────────── */
     .spl-login-outer {
-        min-height: calc(100vh - 120px);
+        min-height: 100vh;
+        min-height: 100dvh;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: clamp(1rem, 4vw, 3rem) clamp(0.75rem, 4vw, 1.5rem);
+        padding: clamp(0.75rem, 3vh, 2rem) clamp(0.75rem, 3vw, 1.25rem);
+        width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
     }
 
-    /* ── Card ─────────────────────────────────────────────────── */
+    /* ── Card Container ───────────────────────────────────────── */
     .spl-login-card {
         width: 100%;
         max-width: 440px;
+        margin: 0 auto;
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 20px;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07), 0 1px 4px rgba(0, 0, 0, 0.04);
+        border-radius: clamp(14px, 3.5vw, 20px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
         overflow: hidden;
+        box-sizing: border-box;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     /* ── Header stripe ────────────────────────────────────────── */
     .spl-login-header-stripe {
         background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #dc2626 100%);
-        padding: clamp(1.5rem, 4vw, 2.25rem) clamp(1.25rem, 4vw, 2rem);
+        padding: clamp(1.25rem, 4vw, 2rem) clamp(1rem, 3.5vw, 1.75rem);
         text-align: center;
         position: relative;
         overflow: hidden;
+        box-sizing: border-box;
     }
 
     .spl-login-header-stripe::before {
@@ -41,44 +49,49 @@
         left: -50%;
         width: 200%;
         height: 200%;
-        background: radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.07) 0%, transparent 60%);
+        background: radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.08) 0%, transparent 60%);
         pointer-events: none;
     }
 
     .spl-login-emblem {
-        width: clamp(64px, 14vw, 88px);
-        height: clamp(64px, 14vw, 88px);
-        background: rgba(255, 255, 255, 0.12);
-        border: 2px solid rgba(255, 255, 255, 0.25);
+        width: clamp(52px, 12vw, 76px);
+        height: clamp(52px, 12vw, 76px);
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid rgba(255, 255, 255, 0.3);
         border-radius: 50%;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 1rem;
-        backdrop-filter: blur(4px);
+        margin-bottom: 0.75rem;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     }
 
     .spl-event-name {
-        font-size: clamp(1.1rem, 4vw, 1.5rem);
-        font-weight: 900;
+        font-size: clamp(1.05rem, 4vw, 1.45rem);
+        font-weight: 800;
         color: #ffffff;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.04em;
         text-transform: uppercase;
-        line-height: 1.2;
+        line-height: 1.25;
         margin-bottom: 0.25rem;
+        word-break: break-word;
     }
 
     .spl-event-sub {
-        font-size: clamp(0.65rem, 2.5vw, 0.75rem);
-        color: rgba(255, 255, 255, 0.75);
+        font-size: clamp(0.68rem, 2.2vw, 0.78rem);
+        color: rgba(255, 255, 255, 0.85);
         text-transform: uppercase;
-        letter-spacing: 0.12em;
+        letter-spacing: 0.1em;
         font-weight: 600;
+        word-break: break-word;
     }
 
     /* ── Body ─────────────────────────────────────────────────── */
     .spl-login-body {
-        padding: clamp(1.5rem, 4vw, 2rem) clamp(1.25rem, 4vw, 2rem);
+        padding: clamp(1.25rem, 4vw, 1.85rem) clamp(1rem, 3.5vw, 1.75rem);
+        box-sizing: border-box;
     }
 
     /* ── Google button ────────────────────────────────────────── */
@@ -88,13 +101,13 @@
         justify-content: center;
         gap: 0.75rem;
         width: 100%;
-        padding: clamp(0.75rem, 2.5vw, 0.9rem) 1.25rem;
+        padding: clamp(0.7rem, 2.5vw, 0.85rem) 1rem;
         background: #ffffff;
         color: #1f2937 !important;
         border: 1.5px solid #d1d5db;
         border-radius: 12px;
         font-family: var(--spl-font-display, 'Montserrat', sans-serif);
-        font-size: clamp(0.875rem, 2.5vw, 1rem);
+        font-size: clamp(0.85rem, 2.5vw, 0.98rem);
         font-weight: 600;
         cursor: pointer;
         text-decoration: none;
@@ -102,7 +115,10 @@
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
         position: relative;
         overflow: hidden;
-        min-height: 52px;
+        min-height: 48px;
+        box-sizing: border-box;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
     }
 
     .btn-google-oauth:hover {
@@ -144,11 +160,14 @@
     .spl-auth-error-card {
         background: #fef2f2;
         border: 1.5px solid #fca5a5;
-        border-radius: 14px;
-        padding: 1rem 1.15rem;
+        border-radius: 12px;
+        padding: clamp(0.75rem, 2.5vw, 1rem);
         margin-bottom: 1.25rem;
-        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.08);
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.06);
         text-align: left;
+        box-sizing: border-box;
+        word-break: break-word;
+        overflow-wrap: anywhere;
     }
 
     .spl-auth-error-title {
@@ -172,6 +191,7 @@
         display: inline-flex;
         align-items: center;
         gap: 0.4rem;
+        max-width: 100%;
         background: #ffffff;
         border: 1px solid #fecaca;
         border-radius: 8px;
@@ -180,8 +200,10 @@
         color: #991b1b;
         margin-top: 0.6rem;
         word-break: break-all;
+        overflow-wrap: anywhere;
         font-family: var(--spl-font-mono, monospace);
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        box-sizing: border-box;
     }
 
     .spl-auth-error-hint {
@@ -200,11 +222,12 @@
         border-radius: 10px;
         color: #1e3a8a !important;
         padding: 0.75rem 1rem;
-        font-size: 0.875rem;
+        font-size: clamp(0.78rem, 2.2vw, 0.875rem);
         display: flex;
         align-items: flex-start;
         gap: 0.6rem;
         margin-bottom: 1.25rem;
+        box-sizing: border-box;
     }
 
     .spl-auth-info i {
@@ -228,11 +251,12 @@
         background: #f8fafc;
         border: 1px solid #e2e8f0;
         border-radius: 10px;
-        padding: 0.75rem 0.95rem;
+        padding: clamp(0.65rem, 2vw, 0.8rem) clamp(0.75rem, 2.5vw, 0.95rem);
         font-size: clamp(0.72rem, 2vw, 0.78rem);
         color: #475569 !important;
-        line-height: 1.5;
+        line-height: 1.45;
         text-align: left;
+        box-sizing: border-box;
     }
 
     .spl-access-notice i {
@@ -241,27 +265,22 @@
         color: #dc2626 !important;
     }
 
-    /* ── Responsive tweaks ────────────────────────────────────── */
+    /* ── Viewport-specific responsive adjustments ─────────────── */
     @media (max-width: 480px) {
-        .spl-login-card {
-            border-radius: 16px;
+        .spl-login-outer {
+            padding: 0.5rem 0.6rem;
+            justify-content: flex-start;
+            padding-top: 1rem;
         }
 
-        .spl-login-outer {
-            padding: 0.75rem 0.5rem;
-            min-height: calc(100vh - 40px);
+        .spl-login-card {
+            border-radius: 14px;
         }
     }
 
     @media (min-width: 992px) {
         .spl-login-card {
-            max-width: 460px;
-        }
-    }
-
-    @media (min-width: 1400px) {
-        .spl-login-card {
-            max-width: 480px;
+            max-width: 450px;
         }
     }
 </style>
@@ -382,7 +401,7 @@
     </div>
 
     <!-- Global Footer -->
-    <div class="w-100 mt-3" style="max-width: 900px;">
+    <div class="w-100 mt-3" style="max-width: 440px;">
         {% include "includes/footer.html" %}
     </div>
 

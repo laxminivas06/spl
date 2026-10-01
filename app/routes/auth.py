@@ -88,10 +88,16 @@ def google_login():
 
     # Real OAuth
     try:
-        redirect_uri = (
-            current_app.config.get('GOOGLE_REDIRECT_URI')
-            or url_for('auth.google_callback', _external=True)
-        )
+        # Dynamically adapt redirect_uri to the active request host (PythonAnywhere vs localhost)
+        if 'pythonanywhere' in request.host:
+            redirect_uri = 'https://splsankalp.pythonanywhere.com/auth/google/callback'
+        elif '127.0.0.1' in request.host or 'localhost' in request.host:
+            redirect_uri = f"{request.scheme}://{request.host}/auth/google/callback"
+        else:
+            redirect_uri = (
+                current_app.config.get('GOOGLE_REDIRECT_URI')
+                or url_for('auth.google_callback', _external=True)
+            )
         return oauth.google.authorize_redirect(redirect_uri)
     except Exception as e:
         log_audit(None, 'GOOGLE_LOGIN_FAILED', 'User', None, None,
