@@ -3,84 +3,84 @@
     "id": 1,
     "key": "event_name",
     "value": "SPL",
-    "updated_at": "2026-10-01T14:00:31.384540"
+    "updated_at": "2026-10-01T16:19:05.335483"
   },
   {
     "id": 2,
     "key": "event_subtitle",
     "value": "Sphoorthy Premier League",
-    "updated_at": "2026-10-01T14:00:31.384543"
+    "updated_at": "2026-10-01T16:19:05.335495"
   },
   {
     "id": 3,
     "key": "starting_purse",
     "value": "300000",
-    "updated_at": "2026-10-01T14:00:31.384555"
+    "updated_at": "2026-10-01T16:19:05.335501"
   },
   {
     "id": 4,
     "key": "squad_limit",
     "value": "15",
-    "updated_at": "2026-10-01T14:00:31.384563"
+    "updated_at": "2026-10-01T16:19:05.335504"
   },
   {
     "id": 5,
     "key": "base_price",
     "value": "10000",
-    "updated_at": "2026-10-01T14:00:31.384576"
+    "updated_at": "2026-10-01T16:19:05.335517"
   },
   {
     "id": 6,
     "key": "timer_seconds",
     "value": "30",
-    "updated_at": "2026-10-01T14:00:31.384600"
+    "updated_at": "2026-10-01T16:19:05.335538"
   },
   {
     "id": 7,
     "key": "bid_increment_step",
     "value": "5000",
-    "updated_at": "2026-10-01T14:00:31.384608"
+    "updated_at": "2026-10-01T16:19:05.335560"
   },
   {
     "id": 8,
     "key": "theme_default",
     "value": "light",
-    "updated_at": "2026-10-01T14:00:31.384610"
+    "updated_at": "2026-10-01T16:19:05.335576"
   },
   {
     "id": 9,
     "key": "SHOW_PURCHASE_PRICE_PUBLICLY",
     "value": "true",
-    "updated_at": "2026-10-01T14:00:31.384616"
+    "updated_at": "2026-10-01T16:19:05.335592"
   },
   {
     "id": 10,
     "key": "audit_logging_enabled",
     "value": "true",
-    "updated_at": "2026-10-01T14:00:31.384587"
+    "updated_at": "2026-10-01T16:19:05.335530"
   },
   {
     "id": 11,
     "key": "audit_retention_days",
     "value": "90",
-    "updated_at": "2026-10-01T14:00:31.384634"
+    "updated_at": "2026-10-01T16:19:05.335598"
   },
   {
     "id": 12,
     "key": "audit_log_level",
     "value": "ALL",
-    "updated_at": "2026-10-01T14:00:31.384648"
+    "updated_at": "2026-10-01T16:19:05.335440"
   },
   {
     "id": 13,
     "key": "audit_track_ip",
     "value": "true",
-    "updated_at": "2026-10-01T14:00:31.384653"
+    "updated_at": "2026-10-01T16:19:05.335447"
   },
   {
     "id": 14,
     "key": "second_chance_active",
     "value": "true",
-    "updated_at": "2026-10-01T14:00:31.384659"
+    "updated_at": "2026-10-01T16:19:05.335453"
   }
 ]
