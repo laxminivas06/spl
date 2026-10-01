@@ -1,10 +1,11 @@
+import secrets
 from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, session
 from flask_login import login_user, logout_user, login_required, current_user
 from app.extensions import db
 from app.models import User, Franchise
 from app.services.audit_service import log_audit
-from app.services.oauth_service import oauth
+from app.services.oauth_service import oauth, build_google_auth_url, exchange_google_code
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -92,13 +93,32 @@ def google_login():
         if 'pythonanywhere' in request.host:
             redirect_uri = 'https://splsankalp.pythonanywhere.com/auth/google/callback'
         elif '127.0.0.1' in request.host or 'localhost' in request.host:
-            redirect_uri = f"{request.scheme}://{request.host}/auth/google/callback"
+            port_suffix = f":{request.host.split(':')[1]}" if ':' in request.host else ""
+            redirect_uri = f"http://127.0.0.1{port_suffix}/auth/google/callback"
         else:
             redirect_uri = (
                 current_app.config.get('GOOGLE_REDIRECT_URI')
                 or url_for('auth.google_callback', _external=True)
             )
-        return oauth.google.authorize_redirect(redirect_uri)
+
+        client_id = current_app.config.get('GOOGLE_CLIENT_ID')
+        state = secrets.token_urlsafe(32)
+        nonce = secrets.token_urlsafe(32)
+        session['oauth_state'] = state
+        session['oauth_nonce'] = nonce
+        session['oauth_redirect_uri'] = redirect_uri
+
+        # If Authlib is installed and functional, attempt it first
+        if oauth and hasattr(oauth, 'google') and getattr(oauth, 'google', None) is not None:
+            try:
+                return oauth.google.authorize_redirect(redirect_uri)
+            except Exception as oauth_err:
+                pass
+
+        # Direct Google OAuth 2.0 Authorization URL (Zero network call, 100% reliable)
+        auth_url = build_google_auth_url(client_id, redirect_uri, state, nonce)
+        return redirect(auth_url)
+
     except Exception as e:
         log_audit(None, 'GOOGLE_LOGIN_FAILED', 'User', None, None,
                   f"OAuth initiation error: {e}", status='FAILED')
@@ -149,12 +169,44 @@ def google_callback():
     else:
         # ── Real OAuth token exchange ─────────────────────────────────────────
         try:
-            token = oauth.google.authorize_access_token()
-            userinfo = token.get('userinfo') or {}
-            if not userinfo:
-                userinfo = oauth.google.get(
-                    'https://www.googleapis.com/oauth2/v3/userinfo'
-                ).json()
+            returned_state = request.args.get('state')
+            saved_state = session.pop('oauth_state', None)
+            saved_redirect_uri = session.pop('oauth_redirect_uri', None)
+
+            # Determine redirect URI matching what was used during authorization
+            if saved_redirect_uri:
+                redirect_uri = saved_redirect_uri
+            elif 'pythonanywhere' in request.host:
+                redirect_uri = 'https://splsankalp.pythonanywhere.com/auth/google/callback'
+            elif '127.0.0.1' in request.host or 'localhost' in request.host:
+                port_suffix = f":{request.host.split(':')[1]}" if ':' in request.host else ""
+                redirect_uri = f"http://127.0.0.1{port_suffix}/auth/google/callback"
+            else:
+                redirect_uri = (
+                    current_app.config.get('GOOGLE_REDIRECT_URI')
+                    or url_for('auth.google_callback', _external=True)
+                )
+
+            code = request.args.get('code')
+            userinfo = {}
+
+            # Strategy A: If Authlib is installed and functional, attempt it
+            if oauth and hasattr(oauth, 'google') and getattr(oauth, 'google', None) is not None:
+                try:
+                    token = oauth.google.authorize_access_token()
+                    userinfo = token.get('userinfo') or {}
+                    if not userinfo:
+                        userinfo = oauth.google.get(
+                            'https://www.googleapis.com/oauth2/v3/userinfo'
+                        ).json()
+                except Exception as oauth_err:
+                    userinfo = {}
+
+            # Strategy B: Resilient direct token exchange (works without Authlib and with PythonAnywhere proxy)
+            if not userinfo.get('email') and code:
+                client_id = current_app.config.get('GOOGLE_CLIENT_ID')
+                client_secret = current_app.config.get('GOOGLE_CLIENT_SECRET')
+                userinfo = exchange_google_code(code, redirect_uri, client_id, client_secret)
 
             google_email = (userinfo.get('email') or '').strip().lower()
             email_verified = userinfo.get('email_verified', True)
@@ -196,7 +248,7 @@ def google_callback():
             return render_template(
                 'auth/login.html',
                 is_oauth_unconfigured=False,
-                auth_error="Google authentication could not be completed. Please try again.",
+                auth_error=f"Google authentication could not be completed. Please try again.",
                 auth_error_title="Authentication Error"
             )
 
