@@ -55,20 +55,41 @@
 <div class="spl-card mb-4 border-2 border-danger shadow-sm bg-white" id="sc-entry-card">
     <div class="p-3 p-md-4">
         <div class="text-center mb-3">
-            <h4 class="fw-bold text-dark mb-1"><i class="fa-solid fa-magnifying-glass text-danger me-2"></i>Search by Rule Number</h4>
-            <p class="text-muted small mb-0">Search eligible unsold players by Rule Number, update rule number, or start 10-second bidding</p>
+            <h4 class="fw-bold text-dark mb-1"><i class="fa-solid fa-magnifying-glass text-danger me-2"></i>Search by Player Name or Rule Number</h4>
+            <p class="text-muted small mb-0">Search eligible unsold players by Rule Number (e.g. R01) or Player Name (e.g. RAHUL), update rule number, or start 10-second bidding</p>
         </div>
 
         <div class="row justify-content-center">
             <div class="col-12 col-md-8 col-lg-7">
                 <div id="sc-rule-error" class="alert alert-danger py-2 small d-none mb-3"></div>
 
-                <div class="input-group input-group-lg shadow-sm">
-                    <span class="input-group-text bg-light border-secondary-subtle text-danger fw-bold">#</span>
-                    <input type="text" id="sc-rule-input" class="form-control bg-white text-dark border-secondary-subtle font-monospace fw-bold" placeholder="e.g. 23-0456" autocomplete="off" onkeypress="if(event.key==='Enter') searchSecondChancePlayerByRule();">
-                    <button type="button" id="btn-sc-search" class="btn btn-danger fw-bold px-4 shadow-sm" onclick="searchSecondChancePlayerByRule()">
-                        <i class="fa-solid fa-magnifying-glass me-1"></i> Search
-                    </button>
+                <div class="position-relative">
+                    <div class="input-group input-group-lg shadow-sm">
+                        <span class="input-group-text bg-light border-secondary-subtle text-danger fw-bold"><i class="fa-solid fa-magnifying-glass"></i></span>
+                        <input type="text" id="sc-rule-input" class="form-control bg-white text-dark border-secondary-subtle font-monospace fw-bold"
+                               placeholder="e.g. R01 or RAHUL KUMAR" autocomplete="off" style="text-transform: uppercase;"
+                               oninput="this.value = this.value.toUpperCase(); handleLiveSuggestionsSC(this.value);"
+                               onkeypress="if(event.key==='Enter') searchSecondChancePlayerByRule();">
+                        <button type="button" id="btn-sc-search" class="btn btn-danger fw-bold px-4 shadow-sm" onclick="searchSecondChancePlayerByRule()">
+                            <i class="fa-solid fa-magnifying-glass me-1"></i> Search
+                        </button>
+                    </div>
+                    <!-- Live Autocomplete Suggestions Box (Requirement 8) -->
+                    <div id="sc-suggestions" class="position-absolute w-100 bg-white border border-danger shadow-lg rounded-3 p-1 d-none z-3 mt-1 text-start"
+                         style="top: 100%; left: 0; max-height: 260px; overflow-y: auto;"></div>
+                </div>
+
+                <!-- Recent Searches Section (Requirement 9) -->
+                <div id="sc-recent-searches-box" class="mt-3 text-start">
+                    <div class="d-flex align-items-center justify-content-between mb-1.5">
+                        <span class="text-dark extra-small fw-bold font-display text-uppercase">
+                            <i class="fa-solid fa-clock-rotate-left me-1 text-danger"></i> Recent Searches:
+                        </span>
+                        <button type="button" class="btn btn-link p-0 text-muted extra-small text-decoration-none" onclick="clearSCRecentSearches()">Clear All</button>
+                    </div>
+                    <div class="d-flex flex-wrap gap-1.5" id="sc-recent-searches-pills">
+                        <span class="text-muted extra-small fst-italic">No recent searches yet</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -76,14 +97,16 @@
         <!-- Player Search Result Details Box -->
         <div id="sc-player-search-result" class="d-none mt-4 p-3 p-md-4 rounded bg-light border border-secondary-subtle shadow-sm">
             <div class="row g-3 align-items-center">
-                <!-- Col 1: Photo & Status -->
+                <!-- Col 1: Photo & Status (SQUARE PHOTO FRAME) -->
                 <div class="col-12 col-sm-3 col-md-3 text-center">
-                    <img id="sc-search-res-photo" src="/static/uploads/default_player.png" alt="Player Photo" class="rounded-circle border border-danger border-3 shadow-sm mb-2" width="100" height="100" style="object-fit: cover;" onerror="this.src='/static/uploads/default_player.png'">
-                    <div>
-                        <span class="badge bg-danger text-white font-monospace fs-6 px-3 py-1 mb-1 d-inline-block" id="sc-search-res-rule">RULE #--</span>
+                    <div class="border border-danger border-2 rounded-3 shadow-sm overflow-hidden mb-2 mx-auto" style="width: 105px; height: 105px; aspect-ratio: 1/1;">
+                        <img id="sc-search-res-photo" src="/static/uploads/default_player.png" alt="Player Photo" class="w-100 h-100 object-fit-cover" onerror="this.src='/static/uploads/default_player.png'">
                     </div>
                     <div>
-                        <span class="badge bg-secondary fs-7 px-2.5 py-1" id="sc-search-res-status">UNSOLD</span>
+                        <span class="badge bg-danger-subtle text-danger border border-danger font-monospace fs-6 px-3 py-1 mb-1 d-inline-block" id="sc-search-res-rule">RULE #--</span>
+                    </div>
+                    <div>
+                        <span class="badge bg-secondary-subtle text-dark border border-secondary-subtle fs-7 px-2.5 py-1" id="sc-search-res-status">UNSOLD</span>
                     </div>
                 </div>
 
@@ -91,8 +114,13 @@
                 <div class="col-12 col-sm-9 col-md-5">
                     <h3 class="fw-bold text-dark mb-1" id="sc-search-res-name">--</h3>
                     <div class="d-flex flex-wrap gap-2 mb-2">
-                        <span class="badge bg-light border border-primary text-primary fs-7" id="sc-search-res-role">BATSMAN</span>
-                        <span class="badge bg-secondary fs-7" id="sc-search-res-category">NORMAL</span>
+                        <!-- Category Badge with exact icon image (Requirement 1) -->
+                        <span class="badge bg-light border border-danger text-dark fs-7 d-inline-flex align-items-center gap-1.5 py-1 px-2.5">
+                            <img id="sc-search-res-role-icon" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4saHQo4zw7BjytkA_qmWEUs8QViHyauRwpwqzANrRrQ&s=10"
+                                 class="category-icon-img" style="width: 18px; height: 18px; object-fit: contain;">
+                            <span id="sc-search-res-role">BATSMAN</span>
+                        </span>
+                        <span class="badge bg-secondary-subtle text-dark border border-secondary-subtle fs-7 py-1 px-2.5" id="sc-search-res-category">NORMAL</span>
                     </div>
                     <div class="small text-muted">
                         <div><strong class="text-secondary">Department:</strong> <span class="text-dark" id="sc-search-res-branch">--</span> &bull; <strong class="text-secondary">Year:</strong> <span class="text-dark" id="sc-search-res-year">--</span></div>
@@ -107,11 +135,11 @@
                     <div class="p-2.5 rounded bg-white border border-secondary-subtle mb-3 shadow-sm">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <span class="text-muted extra-small fw-bold text-uppercase">Current Rule Number</span>
-                            <span class="badge bg-danger text-white font-monospace" id="sc-curr-rule-display">--</span>
+                            <span class="badge bg-danger-subtle text-danger border border-danger font-monospace" id="sc-curr-rule-display">--</span>
                         </div>
                         <label class="text-muted extra-small fw-semibold d-block mb-1">New Rule Number</label>
                         <div class="input-group input-group-sm mb-1">
-                            <input type="text" id="sc-new-rule-input" class="form-control bg-white text-dark border-secondary-subtle font-monospace" placeholder="e.g. 23-0789" onkeypress="if(event.key==='Enter') updateSecondChancePlayerRule();">
+                            <input type="text" id="sc-new-rule-input" class="form-control bg-white text-dark border-secondary-subtle font-monospace" placeholder="e.g. R99" onkeypress="if(event.key==='Enter') updateSecondChancePlayerRule();">
                             <button type="button" class="btn btn-outline-danger fw-bold px-3" onclick="updateSecondChancePlayerRule()">
                                 Update
                             </button>
@@ -163,26 +191,31 @@
         </div>
     </div>
     <div class="row g-4 mb-4">
-        <!-- Player Card -->
+        <!-- Player Card (SQUARE PHOTO FRAME) -->
         <div class="col-12 col-lg-5">
             <div class="spl-card h-100 bg-white border border-secondary-subtle shadow-sm">
                 <div class="spl-card-header d-flex justify-content-between align-items-center bg-light border-bottom border-secondary-subtle">
                     <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-id-card text-danger me-2"></i>Second-Chance Player</h5>
-                    <span class="badge bg-danger text-white font-monospace fw-bold" id="sc-card-rule-number">RULE #--</span>
+                    <span class="badge bg-danger-subtle text-danger border border-danger font-monospace fw-bold" id="sc-card-rule-number">RULE #--</span>
                 </div>
                 <div class="p-3 text-center">
-                    <img id="sc-card-player-photo" src="" alt="Player" class="rounded-circle border border-danger border-3 shadow mb-3 object-fit-cover" width="115" height="115" onerror="this.src='/static/uploads/default_player.png'">
+                    <div class="border border-danger border-3 rounded-3 shadow mb-3 overflow-hidden bg-white mx-auto" style="width: 120px; height: 120px; aspect-ratio: 1/1;">
+                        <img id="sc-card-player-photo" src="" alt="Player" class="w-100 h-100 object-fit-cover" onerror="this.src='/static/uploads/default_player.png'">
+                    </div>
                     <h3 class="fw-bold text-dark mb-1" id="sc-card-player-name">--</h3>
                     <div class="d-flex justify-content-center gap-2 mb-3">
-                        <span class="badge bg-light border border-primary text-primary fs-7" id="sc-card-player-role">BATSMAN</span>
-                        <span class="badge bg-secondary fs-7" id="sc-card-player-category">NORMAL</span>
+                        <span class="badge bg-light border border-danger text-dark fs-7 d-inline-flex align-items-center gap-1.5 py-1 px-2.5">
+                            <img id="sc-card-role-icon" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4saHQo4zw7BjytkA_qmWEUs8QViHyauRwpwqzANrRrQ&s=10"
+                                 class="category-icon-img" style="width: 18px; height: 18px; object-fit: contain;">
+                            <span id="sc-card-player-role">BATSMAN</span>
+                        </span>
+                        <span class="badge bg-secondary-subtle text-dark border border-secondary-subtle fs-7 py-1 px-2.5" id="sc-card-player-category">NORMAL</span>
                     </div>
 
                     <div class="p-3 bg-light rounded border border-secondary-subtle text-start mb-3 small">
                         <div class="row g-2">
                             <div class="col-6"><span class="text-muted">Branch:</span> <strong class="text-dark" id="sc-card-player-branch">--</strong></div>
                             <div class="col-6"><span class="text-muted">Year:</span> <strong class="text-dark" id="sc-card-player-year">--</strong></div>
-                            <div class="col-12"><span class="text-muted">Experience:</span> <strong class="text-dark" id="sc-card-player-experience">--</strong></div>
                         </div>
                     </div>
 
@@ -302,7 +335,7 @@
             <div class="col-6 col-md-4 col-xl-2">
                 <div class="team-bid-card p-2.5 text-center h-100 position-relative bg-white" id="sc-team-card-{{ f.id }}" data-franchise-id="{{ f.id }}">
                     <!-- Current Leader Crown Badge -->
-                    <div class="team-leader-badge badge bg-danger text-white fw-bold position-absolute top-0 start-50 translate-middle shadow-sm d-none" id="sc-leader-badge-{{ f.id }}">
+                    <div class="team-leader-badge badge bg-danger-subtle text-danger border border-danger fw-bold position-absolute top-0 start-50 translate-middle shadow-sm d-none" id="sc-leader-badge-{{ f.id }}">
                         <i class="fa-solid fa-crown me-1"></i> LEADER
                     </div>
 
@@ -411,7 +444,122 @@ let scTimerRunning = false;
 let scAutoFinalizing = false;
 let scIsSubmittingBid = false;
 
+const SC_CATEGORY_ICONS = {
+    BATSMAN: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4saHQo4zw7BjytkA_qmWEUs8QViHyauRwpwqzANrRrQ&s=10',
+    BOWLER: 'https://media.istockphoto.com/id/2026855771/vector/cricket-ball-icon-isolated-on-white-background.jpg?s=612x612&w=0&k=20&c=PITZXH3lkWfkNfsYtFqVajAWKntdiXteyTZEOr-o90I=',
+    ALL_ROUNDER: 'https://static.vecteezy.com/system/resources/previews/000/363/479/non_2x/vector-glyph-black-icon.jpg',
+    WICKETKEEPER: 'https://static.thenounproject.com/png/2005527-200.png'
+};
+
+function getCategoryIconSC(role) {
+    const key = String(role || '').toUpperCase().trim();
+    if (key.includes('BOWL') || key.includes('BALL')) return SC_CATEGORY_ICONS.BOWLER;
+    if (key.includes('ALL') || key.includes('ROUND')) return SC_CATEGORY_ICONS.ALL_ROUNDER;
+    if (key.includes('WICKET') || key.includes('KEEP') || key.includes('WK')) return SC_CATEGORY_ICONS.WICKETKEEPER;
+    return SC_CATEGORY_ICONS.BATSMAN;
+}
+
+// Live Autocomplete Suggestions (Requirement 8)
+let scSuggestionDebounceTimer = null;
+function handleLiveSuggestionsSC(val) {
+    clearTimeout(scSuggestionDebounceTimer);
+    const box = document.getElementById('sc-suggestions');
+    if (!box) return;
+    const q = String(val || '').trim().toUpperCase();
+    if (q.length < 1) {
+        box.classList.add('d-none');
+        box.innerHTML = '';
+        return;
+    }
+    scSuggestionDebounceTimer = setTimeout(async () => {
+        try {
+            const res = await fetch(`/api/auction/suggest-players?q=${encodeURIComponent(q)}`);
+            const data = await res.json();
+            if (!data.suggestions || data.suggestions.length === 0) {
+                box.innerHTML = `<div class="p-2 text-muted small text-center">No players matching "${q}"</div>`;
+                box.classList.remove('d-none');
+                return;
+            }
+            box.innerHTML = data.suggestions.map(s => `
+                <div class="px-2.5 py-2 border-bottom border-secondary-subtle hover-bg-light cursor-pointer d-flex align-items-center justify-content-between"
+                     onclick="selectSCSuggestion('${s.rule_number || s.name}')" style="cursor: pointer;">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-secondary-subtle text-dark border border-secondary-subtle font-monospace">${s.rule_number || '--'}</span>
+                        <strong class="text-dark font-display">${s.name}</strong>
+                    </div>
+                    <span class="badge ${s.status === 'AVAILABLE' ? 'bg-success-subtle text-success border border-success' : 'bg-secondary-subtle text-dark border border-secondary-subtle'} extra-small">
+                        ${s.status}
+                    </span>
+                </div>
+            `).join('');
+            box.classList.remove('d-none');
+        } catch (e) {
+            console.warn('SC Suggestions error:', e);
+        }
+    }, 150);
+}
+
+function selectSCSuggestion(term) {
+    term = String(term).toUpperCase();
+    const input = document.getElementById('sc-rule-input');
+    if (input) input.value = term;
+    document.getElementById('sc-suggestions')?.classList.add('d-none');
+    searchSecondChancePlayerByRule(term);
+}
+
+// Recent Searches Management (Requirement 9)
+function getSCRecentSearches() {
+    try {
+        return JSON.parse(localStorage.getItem('spl_sc_recent_searches') || '[]');
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveSCRecentSearch(term) {
+    term = String(term || '').trim().toUpperCase();
+    if (!term) return;
+    let list = getSCRecentSearches();
+    list = list.filter(item => item !== term);
+    list.unshift(term);
+    if (list.length > 8) list = list.slice(0, 8);
+    try {
+        localStorage.setItem('spl_sc_recent_searches', JSON.stringify(list));
+    } catch (e) {}
+    renderSCRecentSearches();
+}
+
+function clearSCRecentSearches() {
+    localStorage.removeItem('spl_sc_recent_searches');
+    renderSCRecentSearches();
+}
+
+function renderSCRecentSearches() {
+    const container = document.getElementById('sc-recent-searches-pills');
+    if (!container) return;
+    const list = getSCRecentSearches();
+    if (list.length === 0) {
+        container.innerHTML = '<span class="text-muted extra-small fst-italic">No recent searches yet</span>';
+        return;
+    }
+    container.innerHTML = list.map(item => `
+        <button type="button" class="btn btn-sm btn-outline-secondary font-monospace px-2.5 py-0.5 extra-small"
+                onclick="selectSCSuggestion('${item}')" title="Search ${item}">
+            <i class="fa-solid fa-magnifying-glass me-1 opacity-50"></i>${item}
+        </button>
+    `).join('');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    renderSCRecentSearches();
+
+    // Close suggestions on outside click
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#sc-rule-input') && !e.target.closest('#sc-suggestions')) {
+            document.getElementById('sc-suggestions')?.classList.add('d-none');
+        }
+    });
+
     // 100ms high precision tick
     setInterval(tickScTimer, 100);
     // 1.2s state polling
@@ -449,23 +597,26 @@ function quickSelectSecondChance(ruleNo) {
     searchSecondChancePlayerByRule(ruleNo);
 }
 
-// Requirement 5: Search player by Rule Number for Second Chance Auction
+// Requirement 5: Search player by Rule Number / Player Name for Second Chance Auction
 async function searchSecondChancePlayerByRule(overrideRule = null) {
     const input = document.getElementById('sc-rule-input');
     const errBox = document.getElementById('sc-rule-error');
     const resBox = document.getElementById('sc-player-search-result');
-    const rule = (overrideRule || input.value).trim();
+    const rule = String(overrideRule !== null ? overrideRule : (input ? input.value : '')).trim().toUpperCase();
 
+    if (input) input.value = rule;
     errBox.classList.add('d-none');
     errBox.textContent = '';
     searchedSCPlayerObj = null;
 
     if (!rule) {
         errBox.classList.remove('d-none');
-        errBox.textContent = 'Please enter a Rule Number to search.';
+        errBox.textContent = 'Please enter a Rule Number or Player Name to search.';
         resBox.classList.add('d-none');
         return;
     }
+
+    saveSCRecentSearch(rule);
 
     try {
         const res = await fetch(`/api/auction/search-player?rule=${encodeURIComponent(rule)}&mode=second_chance`);
@@ -473,7 +624,7 @@ async function searchSecondChancePlayerByRule(overrideRule = null) {
 
         if (!data.success || !data.player) {
             errBox.classList.remove('d-none');
-            errBox.textContent = data.message || `No player found with Rule Number '${rule}'.`;
+            errBox.textContent = data.message || `No player found matching '${rule}'.`;
             resBox.classList.add('d-none');
             return;
         }
@@ -491,7 +642,9 @@ async function searchSecondChancePlayerByRule(overrideRule = null) {
 
         document.getElementById('sc-search-res-rule').textContent = `RULE #${p.rule_number || p.roll_number}`;
         document.getElementById('sc-search-res-name').textContent = p.name;
-        document.getElementById('sc-search-res-role').textContent = p.role || 'ALL-ROUNDER';
+        document.getElementById('sc-search-res-role').textContent = p.role || 'BATSMAN';
+        const roleIconEl = document.getElementById('sc-search-res-role-icon');
+        if (roleIconEl) roleIconEl.src = p.role_icon || getCategoryIconSC(p.role);
         document.getElementById('sc-search-res-category').textContent = p.category || 'NORMAL';
         document.getElementById('sc-search-res-branch').textContent = p.branch || '-';
         document.getElementById('sc-search-res-year').textContent = p.year ? `${p.year}` : '-';
@@ -515,7 +668,7 @@ async function searchSecondChancePlayerByRule(overrideRule = null) {
             soldWarn.classList.remove('d-none');
             soldWarn.innerHTML = `<i class="fa-solid fa-ban me-1"></i> Already Sold. This player cannot be auctioned again.`;
         } else {
-            statusBadge.className = 'badge bg-danger text-white fs-7 px-2.5 py-1';
+            statusBadge.className = 'badge bg-danger-subtle text-danger border border-danger fs-7 px-2.5 py-1';
             statusBadge.textContent = p.status || 'UNSOLD';
             soldInfo.classList.add('d-none');
             startWrap.classList.remove('d-none');
@@ -894,10 +1047,11 @@ async function pollScState() {
             document.getElementById('sc-card-rule-number').textContent = `RULE #${state.active_player.rule_number || state.active_player.roll_number}`;
             document.getElementById('sc-card-player-name').textContent = state.active_player.name;
             document.getElementById('sc-card-player-role').textContent = state.active_player.role;
+            const cardRoleIcon = document.getElementById('sc-card-role-icon');
+            if (cardRoleIcon) cardRoleIcon.src = state.active_player.role_icon || getCategoryIconSC(state.active_player.role);
             document.getElementById('sc-card-player-category').textContent = state.active_player.category;
             document.getElementById('sc-card-player-branch').textContent = state.active_player.branch || '-';
             document.getElementById('sc-card-player-year').textContent = state.active_player.year ? `Year ${state.active_player.year}` : '-';
-            document.getElementById('sc-card-player-experience').textContent = state.active_player.experience || 'Fresh Candidate';
             document.getElementById('sc-card-base-price').textContent = `₹ ${Number(state.active_player.base_price || 10000).toLocaleString()}`;
 
             const photoUrl = (state.active_player.photo && !state.active_player.photo.startsWith('http')) ? `/static/uploads/${state.active_player.photo}` : (state.active_player.photo || '/static/uploads/default_player.png');
@@ -920,7 +1074,7 @@ async function pollScState() {
 
         const bidderNameEl = document.getElementById('sc-highest-bidder-name');
         if (state.highest_bidder) {
-            bidderNameEl.className = 'badge bg-danger text-white fs-6 px-3 py-1.5 fw-bold shadow-sm';
+            bidderNameEl.className = 'badge bg-danger-subtle text-danger border border-danger fs-6 px-3 py-1.5 fw-bold shadow-sm';
             bidderNameEl.innerHTML = `<i class="fa-solid fa-crown me-1"></i> ${state.highest_bidder.name} (${state.highest_bidder.short_name})`;
         } else {
             bidderNameEl.className = 'badge bg-secondary fs-6 px-3 py-1.5';

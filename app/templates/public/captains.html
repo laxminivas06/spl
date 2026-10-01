@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Team Captains — Sphoorthy Premier League{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3 max-w-1440">
+    <!-- Header Section -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom border-secondary-subtle gap-3">
+        <div>
+            <div class="d-inline-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-danger fs-7 px-3 py-1 font-display fw-bold text-uppercase">OFFICIAL TEAM LEADERS</span>
+                <span class="badge bg-warning fs-7 px-3 py-1 font-display fw-bold">ALL RETAINED — ₹50,000</span>
+            </div>
+            <h1 class="display-6 fw-black text-dark font-display mb-1 text-uppercase">
+                <i class="fa-solid fa-crown text-danger me-2"></i>CAPTAINS ROSTER
+            </h1>
+            <p class="text-muted font-sans mb-0">Official team captains and retained franchise leaders for Sphoorthy Premier League Season 2026.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{{ url_for('public.captains_projector') }}" target="_blank" class="btn btn-outline-danger fw-bold font-display px-3 py-2 shadow-sm d-flex align-items-center gap-2">
+                <i class="fa-solid fa-tv fs-6"></i>
+                <span>Captain Projector View</span>
+            </a>
+            <a href="{{ url_for('public.public_teams') }}" class="btn btn-outline-primary fw-semibold font-display px-3 py-2">
+                <i class="fa-solid fa-users me-1"></i> Full Squads
+            </a>
+        </div>
+    </div>
+
+    <!-- Team-Wise Captain Cards Grid (Requirement 5) -->
+    <div class="row g-4">
+        {% for cap in captains %}
+        {% set f = cap.franchise %}
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="spl-card h-100 p-3 p-sm-4 bg-white border-2 border-danger shadow-sm position-relative d-flex flex-column justify-content-between">
+                
+                <!-- Retained Badge (Top Right) -->
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary-subtle">
+                    <div class="d-flex align-items-center gap-2">
+                        <img src="{{ url_for('static', filename='uploads/' + f.logo) if f.logo and not f.logo.startswith('http') else (f.logo or url_for('static', filename='uploads/default_logo.png')) }}" 
+                             alt="{{ f.name }}" 
+                             class="rounded-2 border border-secondary-subtle object-fit-contain p-0.5" 
+                             width="36" height="36"
+                             onerror="this.src='/static/uploads/default_logo.png'">
+                        <div>
+                            <h5 class="fw-bold text-dark font-display mb-0 text-uppercase">{{ cap.team_name }}</h5>
+                            <span class="badge bg-secondary font-monospace extra-small">{{ cap.team_short }}</span>
+                        </div>
+                    </div>
+                    <span class="badge bg-danger fw-black font-display px-2.5 py-1 fs-7">
+                        <i class="fa-solid fa-lock me-1"></i> RETAINED
+                    </span>
+                </div>
+
+                <!-- Franchisee Name -->
+                <div class="mb-3 px-2 py-1.5 rounded bg-light border border-secondary-subtle d-flex align-items-center justify-content-between">
+                    <span class="text-muted extra-small font-display fw-bold text-uppercase">Franchisee:</span>
+                    <strong class="text-dark small font-display">{{ cap.franchisee_name }}</strong>
+                </div>
+
+                <!-- Main Captain Profile: Square Photo Frame & Details -->
+                <div class="d-flex flex-column flex-sm-row align-items-center align-items-sm-start gap-3 mb-3">
+                    
+                    <!-- SQUARE CAPTAIN PHOTO FRAME (Requirement 3 & 5: STRICT SQUARE, NEVER CIRCULAR) -->
+                    <div class="spl-square-photo-frame flex-shrink-0 border-2 border-danger shadow-sm rounded-3 overflow-hidden bg-light"
+                         style="width: 120px; height: 120px; position: relative;">
+                        <img src="{{ url_for('static', filename='uploads/' + cap.captain_photo) if cap.captain_photo and not cap.captain_photo.startswith('http') else (cap.captain_photo or url_for('static', filename='uploads/default_player.png')) }}" 
+                             alt="{{ cap.captain_name }}" 
+                             class="w-100 h-100" 
+                             style="object-fit: cover; aspect-ratio: 1/1;" 
+                             onerror="this.onerror=null; this.src='/static/uploads/default_player.png';">
+                        <span class="badge bg-danger position-absolute bottom-0 end-0 m-1 px-1.5 py-0.5 font-display fw-black" style="font-size: 0.7rem;">(C)</span>
+                    </div>
+
+                    <!-- Captain Info -->
+                    <div class="text-center text-sm-start flex-grow-1 overflow-hidden">
+                        <h4 class="fw-black text-dark font-display mb-1 text-uppercase text-truncate" title="{{ cap.captain_display_name }}">
+                            {{ cap.captain_name }} <span class="text-danger fw-bold">(C)</span>
+                        </h4>
+                        
+                        <!-- Role / Category with EXACT category image (Requirement 1) -->
+                        <div class="d-inline-flex align-items-center gap-1.5 px-2.5 py-1 rounded bg-light border border-secondary-subtle mb-2">
+                            <img src="{{ get_category_icon(cap.category) }}" 
+                                 alt="{{ cap.category }}" 
+                                 class="category-icon-img"
+                                 style="width: 20px; height: 20px; object-fit: contain;"
+                                 onerror="this.onerror=null; this.src='{{ get_category_fallback(cap.category) }}';">
+                            <span class="fw-bold font-display small text-dark text-uppercase">{{ cap.category }}</span>
+                        </div>
+
+                        <!-- Year & Department -->
+                        <div class="font-sans small text-dark mb-1">
+                            <span class="text-muted fw-semibold">Year:</span> <strong class="text-dark">{{ cap.year or '4th Year' }}</strong>
+                        </div>
+                        <div class="font-sans small text-dark">
+                            <span class="text-muted fw-semibold">Department:</span> <strong class="text-dark">{{ cap.department or 'CSE' }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Metric: Retained Amount -->
+                <div class="pt-3 border-top border-secondary-subtle d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted extra-small font-display fw-bold d-block text-uppercase">RETAINED AMOUNT</span>
+                        <strong class="text-danger font-monospace fs-5">₹ {{ cap.retained_amount | currency }}</strong>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-success font-display px-2.5 py-1.5 fw-bold">
+                            <i class="fa-solid fa-circle-check me-1"></i> RETAINED CAPTAIN
+                        </span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Quick Navigation Banner -->
+    <div class="spl-card mt-4 p-3 bg-light border border-secondary-subtle rounded-3 text-center">
+        <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3">
+            <div class="text-sm-start">
+                <strong class="text-dark font-display d-block">Projector Slide Mode Available</strong>
+                <small class="text-muted">Broadcast official captain profiles one-by-one with carousel slide controls.</small>
+            </div>
+            <a href="{{ url_for('public.captains_projector') }}" class="btn btn-danger font-display fw-bold px-4 py-2 shadow-sm">
+                <i class="fa-solid fa-expand me-1"></i> Open Projector Slideshow
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

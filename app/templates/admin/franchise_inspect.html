@@ -45,7 +45,7 @@
             {% elif franchise.has_captain %}
                 <span class="badge bg-light text-primary border fs-8 mt-1">{{ 15 - franchise.squad_count }} Slots Remaining</span>
             {% else %}
-                <span class="badge bg-danger text-white fs-8 mt-1">First Member = Team Captain</span>
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle fs-8 mt-1">First Member = Team Captain</span>
             {% endif %}
         </div>
         <div class="col-12 col-md-4 text-md-end">
@@ -129,11 +129,11 @@
         <table class="table table-hover mb-0 align-middle">
             <thead class="bg-light text-dark small text-uppercase">
                 <tr>
-                    <th class="ps-3">Rule No</th>
+                    <th class="ps-3">Roll No</th>
                     <th>Player Name</th>
+                    <th>Year</th>
                     <th>Role</th>
                     <th>Category</th>
-                    <th>Room No</th>
                     <th class="text-end pe-3">Sold Price</th>
                 </tr>
             </thead>
@@ -142,16 +142,16 @@
                     {% for p in players %}
                     {% set is_cap = p.is_captain or (franchise.captain_id and franchise.captain_id == p.id) or (franchise.captain_name and franchise.captain_name.strip().lower() == p.name.strip().lower()) %}
                     <tr>
-                        <td class="ps-3 text-danger fw-bold font-monospace">#{{ p.roll_number }}</td>
+                        <td class="ps-3 text-danger fw-bold font-monospace">{{ p.roll_number }}</td>
                         <td class="fw-semibold text-dark">
                             {{ p.name }}
                             {% if is_cap %}
-                            <span class="badge bg-danger text-white ms-1 extra-small fw-bold font-display"><i class="fa-solid fa-crown me-1"></i>CAPTAIN</span>
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1 extra-small fw-bold font-display"><i class="fa-solid fa-crown me-1"></i>CAPTAIN</span>
                             {% endif %}
                         </td>
-                        <td><span class="badge bg-light text-primary border">{{ p.role }}</span></td>
-                        <td><span class="badge bg-light text-dark border">{{ p.category }}</span></td>
-                        <td class="small font-monospace text-primary">{{ p.room_number or '---' }}</td>
+                        <td class="small font-monospace text-dark">{{ p.year or '---' }}</td>
+                        <td><span class="badge bg-light text-black border">{{ p.role }}</span></td>
+                        <td><span class="badge bg-light text-black border">{{ p.category }}</span></td>
                         <td class="text-end pe-3 font-monospace fw-bold">
                             {% if is_cap or p.sold_price is none or p.sold_price == 0 %}
                             <span class="text-muted fs-6">—</span>
@@ -232,18 +232,21 @@
                             <input type="text" name="captain_department" class="form-control form-control-spl" placeholder="e.g. CSE">
                         </div>
                         <div class="col-6">
-                            <label class="form-label text-muted small fw-semibold">YEAR</label>
-                            <input type="text" name="captain_year" class="form-control form-control-spl" placeholder="e.g. 3rd Year">
+                            <label class="form-label text-muted small fw-semibold">YEAR <span class="text-danger">*</span></label>
+                            <select name="captain_year" class="form-select form-select-spl" required>
+                                <option value="4">4</option>
+                                <option value="3">3</option>
+                                <option value="2">2</option>
+                                <option value="1">1</option>
+                            </select>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label text-muted small fw-semibold">CATEGORY</label>
-                        <select name="captain_category" class="form-select form-select-spl">
-                            <option value="NORMAL">NORMAL</option>
-                            <option value="MARQUEE">MARQUEE</option>
-                            <option value="PREMIUM">PREMIUM</option>
-                            <option value="COMPETITIVE">COMPETITIVE</option>
-                            <option value="EMERGING">EMERGING</option>
+                        <label class="form-label text-muted small fw-semibold">CATEGORY <span class="text-danger">*</span></label>
+                        <select name="captain_category" class="form-select form-select-spl" required>
+                            <option value="Elite" selected>Elite</option>
+                            <option value="Skilled">Skilled</option>
+                            <option value="Rookie">Rookie</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -281,8 +284,9 @@
                         <input type="text" name="name" class="form-control form-control-spl" placeholder="Full Name" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label text-muted small fw-semibold">RULE / ROLL NUMBER</label>
-                        <input type="text" name="rule_number" class="form-control form-control-spl font-monospace" placeholder="e.g. 23N81A0512">
+                        <label class="form-label text-muted small fw-semibold">RULE NUMBER <span class="text-danger">*</span></label>
+                        <input type="text" name="rule_number" class="form-control form-control-spl font-monospace" placeholder="e.g. SPL26A001X" maxlength="10" minlength="10" pattern="^[A-Za-z0-9]{10}$" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase();" required>
+                        <small class="text-muted extra-small">Exactly 10 alphanumeric characters</small>
                     </div>
                     <div class="row g-2 mb-3">
                         <div class="col-6">
@@ -297,11 +301,9 @@
                         <div class="col-6">
                             <label class="form-label text-muted small fw-semibold">CATEGORY</label>
                             <select name="category" class="form-select form-select-spl">
-                                <option value="NORMAL">NORMAL</option>
-                                <option value="MARQUEE">MARQUEE</option>
-                                <option value="PREMIUM">PREMIUM</option>
-                                <option value="COMPETITIVE">COMPETITIVE</option>
-                                <option value="EMERGING">EMERGING</option>
+                                <option value="Elite">Elite</option>
+                                <option value="Skilled">Skilled</option>
+                                <option value="Rookie" selected>Rookie</option>
                             </select>
                         </div>
                     </div>
@@ -312,7 +314,12 @@
                         </div>
                         <div class="col-6">
                             <label class="form-label text-muted small fw-semibold">YEAR</label>
-                            <input type="text" name="year" class="form-control form-control-spl" placeholder="e.g. 2nd Year">
+                            <select name="year" class="form-select form-select-spl">
+                                <option value="4">4</option>
+                                <option value="3">3</option>
+                                <option value="2">2</option>
+                                <option value="1">1</option>
+                            </select>
                         </div>
                     </div>
                     <div class="mb-3">

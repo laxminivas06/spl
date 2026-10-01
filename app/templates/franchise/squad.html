@@ -24,7 +24,7 @@
     <div class="spl-card p-2 mb-4 bg-white shadow-sm border">
         <div class="nav nav-pills gap-1">
             <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.dashboard') }}"><i class="fa-solid fa-chart-pie me-1"></i> Dashboard</a>
-            <a class="nav-link active bg-danger text-white fw-bold px-3 py-1.5" href="{{ url_for('franchise.squad') }}"><i class="fa-solid fa-users me-1"></i> My Squad</a>
+            <a class="nav-link active bg-danger-subtle text-danger border border-danger-subtle fw-bold px-3 py-1.5" href="{{ url_for('franchise.squad') }}"><i class="fa-solid fa-users me-1"></i> My Squad</a>
             <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.purchases') }}"><i class="fa-solid fa-cart-shopping me-1"></i> Purchases</a>
             <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.bids') }}"><i class="fa-solid fa-list-check me-1"></i> Bid History</a>
             <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.activity') }}"><i class="fa-solid fa-timeline me-1"></i> Activity</a>
@@ -53,11 +53,11 @@
                     {{ franchise.squad_count }} / {{ franchise.squad_limit }} Members
                 </h3>
                 {% if franchise.is_full %}
-                    <span class="badge bg-danger fs-7 mt-1">15 / 15 Members — Team Full</span>
+                    <span class="badge bg-danger-subtle text-danger border border-danger fs-7 mt-1">15 / 15 Members — Team Full</span>
                 {% elif franchise.has_captain %}
                     <span class="badge bg-light text-primary border fs-8 mt-1">{{ 15 - franchise.squad_count }} Slots Remaining</span>
                 {% else %}
-                    <span class="badge bg-danger text-white fs-8 mt-1">First Member = Team Captain</span>
+                    <span class="badge bg-danger-subtle text-danger border border-danger fs-8 mt-1">First Member = Team Captain</span>
                 {% endif %}
             </div>
             <div class="col-12 col-md-4 text-md-end">
@@ -212,31 +212,39 @@
         <div class="col-md-6 col-lg-4 col-xl-3">
             <div class="spl-card text-center h-100 position-relative bg-white shadow-sm border {% if is_cap %}border-danger border-2{% endif %} p-3">
                 {% if is_cap %}
-                <span class="badge bg-danger text-white position-absolute top-0 start-50 translate-middle shadow-sm fw-bold font-display">
-                    <i class="fa-solid fa-crown me-1"></i> TEAM CAPTAIN
+                <span class="badge bg-danger-subtle text-danger border border-danger position-absolute top-0 start-50 translate-middle shadow-sm fw-bold font-display">
+                    <i class="fa-solid fa-crown me-1"></i> (C) TEAM CAPTAIN
                 </span>
                 {% endif %}
 
-                <div class="mb-3 mt-1">
-                    {% if p.photo and p.photo.startswith('http') %}
-                        <img src="{{ p.photo }}" alt="{{ p.name }}" class="rounded-circle border border-danger shadow-sm" width="85" height="85" style="object-fit:cover;">
-                    {% elif p.photo %}
-                        <img src="{{ url_for('static', filename='uploads/' + p.photo) }}" alt="{{ p.name }}" class="rounded-circle border border-danger shadow-sm" width="85" height="85" style="object-fit:cover;" onerror="this.src='/static/uploads/default_player.png'">
-                    {% else %}
-                        <img src="/static/uploads/default_player.png" class="rounded-circle border border-danger shadow-sm" width="85" height="85" style="object-fit:cover;">
-                    {% endif %}
+                <div class="mb-3 mt-2">
+                    <!-- Square Photo Frame (STRICT REQUIREMENT: Square, NOT circular) -->
+                    <div class="border border-danger border-2 rounded-3 shadow-sm overflow-hidden bg-white mx-auto" style="width: 90px; height: 90px; aspect-ratio: 1/1;">
+                        {% if p.photo and p.photo.startswith('http') %}
+                            <img src="{{ p.photo }}" alt="{{ p.name }}" class="w-100 h-100 object-fit-cover">
+                        {% elif p.photo %}
+                            <img src="{{ url_for('static', filename='uploads/' + p.photo) }}" alt="{{ p.name }}" class="w-100 h-100 object-fit-cover" onerror="this.src='/static/uploads/default_player.png'">
+                        {% else %}
+                            <img src="/static/uploads/default_player.png" class="w-100 h-100 object-fit-cover" alt="Default Player">
+                        {% endif %}
+                    </div>
                 </div>
-                <h5 class="fw-bold text-dark mb-1 font-display">{{ p.name }}</h5>
-                <div class="text-danger fw-semibold small mb-2 font-monospace">#{{ p.roll_number }}</div>
+                <h5 class="fw-bold text-dark mb-1 font-display">{{ p.name }}{% if is_cap %} (C){% endif %}</h5>
+                <div class="text-danger fw-semibold small mb-2 font-monospace">{{ p.roll_number }}</div>
 
-                <div class="d-flex justify-content-center gap-1 mb-3">
-                    <span class="badge badge-role font-display">{{ p.role }}</span>
-                    <span class="badge badge-category font-display">{{ p.category }}</span>
+                <div class="d-flex justify-content-center gap-1.5 mb-3">
+                    <span class="badge bg-light border border-secondary-subtle text-black extra-small font-display d-inline-flex align-items-center gap-1 py-1 px-2">
+                        <img src="{{ p.role | category_icon }}" class="category-icon-img" style="width: 16px; height: 16px; object-fit: contain;">
+                        {{ p.role }}
+                    </span>
+                    <span class="badge bg-secondary-subtle text-black border border-secondary-subtle font-display">{{ p.category }}</span>
                 </div>
 
                 <div class="p-2 bg-light rounded border mb-2">
                     <small class="text-muted d-block font-display extra-small">PURCHASE PRICE</small>
-                    {% if is_cap or p.sold_price is none or p.sold_price == 0 %}
+                    {% if is_cap %}
+                    <span class="fs-6 fw-bold text-danger font-monospace">₹ 50,000 <small class="text-muted fw-normal">(RETAINED)</small></span>
+                    {% elif p.sold_price is none or p.sold_price == 0 %}
                     <span class="fs-5 fw-bold text-muted font-monospace">—</span>
                     {% else %}
                     <span class="fs-5 fw-bold text-success font-monospace">₹ {{ p.sold_price | currency }}</span>
@@ -256,6 +264,8 @@
         </button>
     </div>
     {% endif %}
+
+    {% include "includes/footer.html" %}
 </div>
 
 <!-- ==================== MODAL: ADD TEAM CAPTAIN (FIRST MEMBER) ==================== -->
@@ -283,8 +293,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label text-muted small fw-semibold">CAPTAIN RULE / ROLL NUMBER</label>
-                        <input type="text" name="captain_rule_number" class="form-control form-control-spl font-monospace" placeholder="e.g. 23N81A0501">
+                        <label class="form-label text-muted small fw-semibold">CAPTAIN ROLL NUMBER <span class="text-danger">*</span></label>
+                        <input type="text" name="captain_rule_number" class="form-control form-control-spl font-monospace" placeholder="e.g. SPL26A001X" maxlength="10" minlength="10" pattern="^[A-Za-z0-9]{10}$" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase();" required>
+                        <small class="text-muted extra-small">Exactly 10 alphanumeric characters</small>
                     </div>
 
                     <div class="row g-2 mb-3">
@@ -293,19 +304,22 @@
                             <input type="text" name="captain_department" class="form-control form-control-spl" placeholder="e.g. CSE">
                         </div>
                         <div class="col-6">
-                            <label class="form-label text-muted small fw-semibold">YEAR</label>
-                            <input type="text" name="captain_year" class="form-control form-control-spl" placeholder="e.g. 3rd Year">
+                            <label class="form-label text-muted small fw-semibold">YEAR <span class="text-danger">*</span></label>
+                            <select name="captain_year" class="form-select form-select-spl" required>
+                                <option value="4">4</option>
+                                <option value="3">3</option>
+                                <option value="2">2</option>
+                                <option value="1">1</option>
+                            </select>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label text-muted small fw-semibold">CATEGORY</label>
-                        <select name="captain_category" class="form-select form-select-spl">
-                            <option value="NORMAL">NORMAL</option>
-                            <option value="MARQUEE">MARQUEE</option>
-                            <option value="PREMIUM">PREMIUM</option>
-                            <option value="COMPETITIVE">COMPETITIVE</option>
-                            <option value="EMERGING">EMERGING</option>
+                        <label class="form-label text-muted small fw-semibold">CATEGORY <span class="text-danger">*</span></label>
+                        <select name="captain_category" class="form-select form-select-spl" required>
+                            <option value="Elite" selected>Elite</option>
+                            <option value="Skilled">Skilled</option>
+                            <option value="Rookie">Rookie</option>
                         </select>
                     </div>
 
@@ -345,8 +359,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label text-muted small fw-semibold">RULE / ROLL NUMBER</label>
-                        <input type="text" name="rule_number" class="form-control form-control-spl font-monospace" placeholder="e.g. 23N81A0512">
+                        <label class="form-label text-muted small fw-semibold">ROLL NUMBER <span class="text-danger">*</span></label>
+                        <input type="text" name="rule_number" class="form-control form-control-spl font-monospace" placeholder="e.g. SPL26A001X" maxlength="10" minlength="10" pattern="^[A-Za-z0-9]{10}$" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase();" required>
+                        <small class="text-muted extra-small">Exactly 10 alphanumeric characters</small>
                     </div>
 
                     <div class="row g-2 mb-3">
@@ -362,11 +377,9 @@
                         <div class="col-6">
                             <label class="form-label text-muted small fw-semibold">CATEGORY</label>
                             <select name="category" class="form-select form-select-spl">
-                                <option value="NORMAL">NORMAL</option>
-                                <option value="MARQUEE">MARQUEE</option>
-                                <option value="PREMIUM">PREMIUM</option>
-                                <option value="COMPETITIVE">COMPETITIVE</option>
-                                <option value="EMERGING">EMERGING</option>
+                                <option value="Elite">Elite</option>
+                                <option value="Skilled">Skilled</option>
+                                <option value="Rookie" selected>Rookie</option>
                             </select>
                         </div>
                     </div>
@@ -378,7 +391,12 @@
                         </div>
                         <div class="col-6">
                             <label class="form-label text-muted small fw-semibold">YEAR</label>
-                            <input type="text" name="year" class="form-control form-control-spl" placeholder="e.g. 2nd Year">
+                            <select name="year" class="form-select form-select-spl">
+                                <option value="4">4</option>
+                                <option value="3">3</option>
+                                <option value="2">2</option>
+                                <option value="1">1</option>
+                            </select>
                         </div>
                     </div>
 

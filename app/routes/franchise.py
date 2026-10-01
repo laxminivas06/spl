@@ -216,7 +216,7 @@ def profile():
     if request.method == 'POST':
         captain_name = request.form.get('captain_name', '').strip()
         captain_rule_number = request.form.get('captain_rule_number', '').strip() or request.form.get('captain_roll_number', '').strip()
-        captain_category = request.form.get('captain_category', '').strip().upper()
+        captain_category = PlayerCategory.normalize(request.form.get('captain_category', 'Elite'))
         captain_department = request.form.get('captain_department', '').strip() or request.form.get('captain_branch', '').strip()
         captain_year = request.form.get('captain_year', '').strip()
 
@@ -274,7 +274,7 @@ def add_captain():
     rule_number = request.form.get('captain_rule_number', '').strip() or request.form.get('captain_roll_number', '').strip()
     department = request.form.get('captain_department', '').strip() or request.form.get('captain_branch', '').strip()
     year = request.form.get('captain_year', '').strip()
-    category = request.form.get('captain_category', 'NORMAL').strip().upper()
+    category = PlayerCategory.normalize(request.form.get('captain_category', 'Elite'))
 
     photo_fname = None
     if 'captain_photo' in request.files:
@@ -312,7 +312,7 @@ def add_member():
     department = request.form.get('branch', '').strip() or request.form.get('department', '').strip()
     year = request.form.get('year', '').strip()
     role = request.form.get('role', 'BATSMAN').strip().upper()
-    category = request.form.get('category', 'NORMAL').strip().upper()
+    category = PlayerCategory.normalize(request.form.get('category', 'Rookie'))
 
     photo_fname = None
     if 'photo' in request.files:

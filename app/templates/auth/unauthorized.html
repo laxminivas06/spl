@@ -7,7 +7,7 @@
     <div class="w-100 text-center" style="max-width: 550px;">
         <div class="spl-card p-4 p-md-5 border-danger shadow-sm bg-white border">
             {% if is_disabled %}
-                <div class="badge bg-danger text-white fs-6 px-4 py-2 mb-3 text-uppercase tracking-wide fw-bold">
+                <div class="badge bg-danger-subtle text-danger border border-danger-subtle fs-6 px-4 py-2 mb-3 text-uppercase tracking-wide fw-bold">
                     <i class="fa-solid fa-ban me-2"></i>FRANCHISE ACCESS DISABLED
                 </div>
                 <h2 class="fw-bold text-dark mb-3">Franchise Account Inactive</h2>
@@ -15,7 +15,7 @@
                     Access for <strong>{{ franchise_name }}</strong> ({{ email }}) is currently deactivated by the administrator.
                 </p>
             {% else %}
-                <div class="badge bg-danger fs-6 px-4 py-2 mb-3 text-uppercase tracking-wide fw-bold">
+                <div class="badge bg-danger-subtle text-danger border border-danger-subtle fs-6 px-4 py-2 mb-3 text-uppercase tracking-wide fw-bold">
                     <i class="fa-solid fa-triangle-exclamation me-2"></i>ACCESS DENIED
                 </div>
                 <h2 class="fw-bold text-dark mb-3">Google Account Not Authorized</h2>

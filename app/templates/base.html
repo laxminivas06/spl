@@ -24,11 +24,11 @@
 
 <body class="font-sans antialiased bg-light">
     {% block content_wrapper %}
-    <div class="container-fluid px-3 px-md-4 py-2 max-w-1440">
+    <div class="container-fluid px-3 px-md-4 py-2 max-w-1440 d-flex flex-column min-vh-100">
         <!-- Top Status Bar (Responsive & Clean Light Theme) -->
         <div class="spl-top-status-bar d-flex flex-wrap justify-content-between align-items-center mb-3">
             <div class="d-flex align-items-center gap-2 text-sm font-display">
-                <span class="badge bg-danger text-white px-2.5 py-1">SPL SEASON 2026</span>
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1 fw-bold">SPL SEASON 2026</span>
                 <span class="d-none d-sm-inline opacity-50 text-muted">|</span>
                 <span class="text-muted extra-small font-display fw-semibold">OFFICIAL CRICKET AUCTION PORTAL</span>
             </div>
@@ -72,14 +72,19 @@
                     class="btn btn-sm btn-outline-primary fw-semibold font-display">
                     <i class="fa-solid fa-users me-1"></i> Teams
                 </a>
+                <a href="{{ url_for('public.public_captains') }}"
+                    class="btn btn-sm btn-outline-danger fw-bold font-display">
+                    <i class="fa-solid fa-crown me-1 text-danger"></i> Captains
+                </a>
                 <a href="{{ url_for('public.public_fixtures') }}"
                     class="btn btn-sm btn-outline-primary fw-semibold font-display">
                     <i class="fa-solid fa-calendar-days me-1"></i> Fixtures
                 </a>
                 <a href="{{ url_for('live.auction_live') }}" target="_blank"
-                    class="btn btn-sm btn-outline-danger fw-semibold font-display">
-                    <i class="fa-solid fa-tv me-1"></i> Projector View
+                    class="btn btn-sm btn-outline-secondary fw-semibold font-display" title="Live Auction Projector">
+                    <i class="fa-solid fa-tv me-1"></i> Projector
                 </a>
+
                 {% if current_user.is_authenticated %}
                 {% if current_user.role == 'ADMIN' %}
                 <a href="{{ url_for('admin.dashboard') }}" class="btn btn-sm btn-danger fw-bold font-display shadow-sm">
@@ -114,19 +119,25 @@
         {% endif %}
         {% endwith %}
 
-        {% if error_title %}
-        <div class="row justify-content-center mt-5">
-            <div class="col-md-6 text-center">
-                <div class="spl-card p-4 p-md-5">
-                    <h1 class="text-danger font-display mb-3">{{ error_title }}</h1>
-                    <p class="text-muted mb-4">{{ error_msg }}</p>
-                    <a href="{{ url_for('auth.login') }}" class="btn btn-spl-primary font-display">Return to Login</a>
+        <div class="flex-grow-1">
+            {% if error_title %}
+            <div class="row justify-content-center mt-5">
+                <div class="col-md-6 text-center">
+                    <div class="spl-card p-4 p-md-5">
+                        <h1 class="text-danger font-display mb-3">{{ error_title }}</h1>
+                        <p class="text-muted mb-4">{{ error_msg }}</p>
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-spl-primary font-display">Return to Login</a>
+                    </div>
                 </div>
             </div>
+            {% else %}
+            {% block content %}{% endblock %}
+            {% endif %}
         </div>
-        {% else %}
-        {% block content %}{% endblock %}
-        {% endif %}
+
+        {% block footer %}
+            {% include "includes/footer.html" %}
+        {% endblock %}
     </div>
     {% endblock %}
 

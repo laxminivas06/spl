@@ -45,6 +45,10 @@
             <a href="{{ url_for('admin.final_squads') }}" class="spl-nav-item {% if active_page == 'final_squads' %}active{% endif %}">
                 <i class="fa-solid fa-people-group"></i> <span>Final Squads</span>
             </a>
+            <a href="{{ url_for('public.public_captains') }}" class="spl-nav-item" target="_blank">
+                <i class="fa-solid fa-crown text-danger"></i> <span>Captains Roster</span>
+            </a>
+
             <a href="{{ url_for('admin.auction_summary') }}" class="spl-nav-item {% if active_page == 'auction_summary' or active_page == 'history' %}active{% endif %}">
                 <i class="fa-solid fa-clock-rotate-left"></i> <span>Auction History</span>
             </a>
@@ -96,7 +100,7 @@
         </header>
 
         <!-- Main Content Area -->
-        <main class="spl-content">
+        <main class="spl-content d-flex flex-column">
             {% with messages = get_flashed_messages(with_categories=true) %}
               {% if messages %}
                 {% for category, message in messages %}
@@ -108,9 +112,13 @@
               {% endif %}
             {% endwith %}
 
-            {% block admin_content %}
-                {% block content %}{% endblock %}
-            {% endblock %}
+            <div class="flex-grow-1">
+                {% block admin_content %}
+                    {% block content %}{% endblock %}
+                {% endblock %}
+            </div>
+
+            {% include "includes/footer.html" %}
         </main>
     </div>
 </div>

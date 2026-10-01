@@ -35,7 +35,7 @@
             <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.purchases') }}"><i class="fa-solid fa-cart-shopping me-1"></i> Purchases</a>
             <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.bids') }}"><i class="fa-solid fa-list-check me-1"></i> Bid History</a>
             <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.activity') }}"><i class="fa-solid fa-timeline me-1"></i> Activity</a>
-            <a class="nav-link active bg-danger text-white fw-bold px-3 py-1.5" href="{{ url_for('franchise.profile') }}"><i class="fa-solid fa-id-card me-1"></i> Profile</a>
+            <a class="nav-link active bg-danger-subtle text-danger border border-danger-subtle fw-bold px-3 py-1.5" href="{{ url_for('franchise.profile') }}"><i class="fa-solid fa-id-card me-1"></i> Profile</a>
         </div>
     </div>
 
@@ -77,24 +77,25 @@
                 </div>
             </div>
 
-            <!-- Current Captain Preview Card -->
+            <!-- Current Captain Preview Card (Strict Square Photo Frame) -->
             <div class="spl-card border-top border-danger border-3 bg-white shadow-sm border p-3">
                 <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                    <h5 class="fw-bold text-danger mb-0"><i class="fa-solid fa-crown me-2"></i>Current Captain</h5>
+                    <h5 class="fw-bold text-danger mb-0"><i class="fa-solid fa-crown me-2"></i>Current Captain (C)</h5>
                     {% if franchise.captain_rule_number %}
-                        <span class="badge bg-danger text-white font-monospace fw-bold">#{{ franchise.captain_rule_number }}</span>
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle font-monospace fw-bold">{{ franchise.captain_rule_number }}</span>
                     {% endif %}
                 </div>
                 <div class="text-center">
                     {% if franchise.captain_photo %}
-                        <img src="{{ url_for('static', filename='uploads/' + franchise.captain_photo) }}" alt="Captain Photo" class="rounded-circle border border-danger border-3 shadow mb-3" style="width: 90px; height: 90px; object-fit: cover;" onerror="this.src='/static/uploads/default_player.png'">
+                        <img src="{{ url_for('static', filename='uploads/' + franchise.captain_photo) }}" alt="Captain Photo" class="rounded-3 border border-secondary-subtle shadow-sm mb-3" style="width: 110px; height: 110px; object-fit: cover;" onerror="this.src='/static/uploads/default_player.png'">
                     {% elif franchise.captain and franchise.captain.photo %}
-                        <img src="{{ url_for('static', filename='uploads/' + franchise.captain.photo) if not franchise.captain.photo.startswith('http') else franchise.captain.photo }}" alt="Captain Photo" class="rounded-circle border border-danger border-3 shadow mb-3" style="width: 90px; height: 90px; object-fit: cover;" onerror="this.src='/static/uploads/default_player.png'">
+                        <img src="{{ url_for('static', filename='uploads/' + franchise.captain.photo) if not franchise.captain.photo.startswith('http') else franchise.captain.photo }}" alt="Captain Photo" class="rounded-3 border border-secondary-subtle shadow-sm mb-3" style="width: 110px; height: 110px; object-fit: cover;" onerror="this.src='/static/uploads/default_player.png'">
                     {% else %}
-                        <img src="{{ url_for('static', filename='uploads/default_player.png') }}" alt="Captain Photo" class="rounded-circle border border-2 mb-3" style="width: 90px; height: 90px; object-fit: cover;">
+                        <img src="{{ url_for('static', filename='uploads/default_player.png') }}" alt="Captain Photo" class="rounded-3 border border-secondary-subtle shadow-sm mb-3" style="width: 110px; height: 110px; object-fit: cover;">
                     {% endif %}
 
-                    <h5 class="fw-bold text-dark mb-1">{{ franchise.captain_name or 'No Captain Set' }}</h5>
+                    <h5 class="fw-bold text-dark mb-1">{{ franchise.captain_name or 'No Captain Set' }} <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1">C</span></h5>
+                    <div class="mb-2"><span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold">RETAINED — ₹50,000</span></div>
                     {% if franchise.captain_category %}
                         <span class="badge bg-light text-dark border mb-2">{{ franchise.captain_category }}</span>
                     {% endif %}
@@ -120,7 +121,7 @@
                     <h5 class="fw-bold text-dark mb-0">
                         <i class="fa-solid fa-pen-to-square text-danger me-2"></i>Update Franchisee Profile & Captain
                     </h5>
-                    <span class="badge bg-primary text-white">TEAM SELF-SERVICE</span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">TEAM SELF-SERVICE</span>
                 </div>
 
                 <form method="POST" action="{{ url_for('franchise.profile') }}" enctype="multipart/form-data">
@@ -140,19 +141,16 @@
 
                             <div class="col-md-6">
                                 <label class="form-label text-muted small fw-semibold">CAPTAIN ROLL NUMBER *</label>
-                                <input type="text" class="form-control form-control-spl font-monospace" name="captain_rule_number" value="{{ franchise.captain_rule_number or '' }}" placeholder="e.g. 21N81A0501" required>
-                                <small class="text-muted extra-small">Roll Number or Rule Number of the team captain</small>
+                                <input type="text" class="form-control form-control-spl font-monospace" name="captain_rule_number" value="{{ franchise.captain_rule_number or '' }}" placeholder="e.g. SPL26A001X" maxlength="10" minlength="10" pattern="^[A-Za-z0-9]{10}$" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase();" required>
+                                <small class="text-muted extra-small">Exactly 10 alphanumeric characters</small>
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label text-muted small fw-semibold">CAPTAIN CATEGORY</label>
-                                <select class="form-select form-control-spl" name="captain_category">
-                                    <option value="BATSMAN" {% if franchise.captain_category == 'BATSMAN' %}selected{% endif %}>BATSMAN</option>
-                                    <option value="BOWLER" {% if franchise.captain_category == 'BOWLER' %}selected{% endif %}>BOWLER</option>
-                                    <option value="ALL-ROUNDER" {% if franchise.captain_category in ['ALL-ROUNDER', 'ALL_ROUNDER'] %}selected{% endif %}>ALL-ROUNDER</option>
-                                    <option value="WICKETKEEPER" {% if franchise.captain_category == 'WICKETKEEPER' %}selected{% endif %}>WICKETKEEPER</option>
-                                    <option value="MARQUEE" {% if franchise.captain_category == 'MARQUEE' %}selected{% endif %}>MARQUEE</option>
-                                    <option value="NORMAL" {% if franchise.captain_category == 'NORMAL' or not franchise.captain_category %}selected{% endif %}>NORMAL</option>
+                                <label class="form-label text-muted small fw-semibold">CAPTAIN CATEGORY *</label>
+                                <select class="form-select form-control-spl" name="captain_category" required>
+                                    <option value="Elite" {% if franchise.captain_category == 'Elite' or not franchise.captain_category %}selected{% endif %}>Elite</option>
+                                    <option value="Skilled" {% if franchise.captain_category == 'Skilled' %}selected{% endif %}>Skilled</option>
+                                    <option value="Rookie" {% if franchise.captain_category == 'Rookie' %}selected{% endif %}>Rookie</option>
                                 </select>
                             </div>
 
@@ -162,8 +160,13 @@
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label text-muted small fw-semibold">CAPTAIN YEAR</label>
-                                <input type="text" class="form-control form-control-spl font-monospace" name="captain_year" value="{{ franchise.captain_year or '' }}" placeholder="e.g. 3 or 4">
+                                <label class="form-label text-muted small fw-semibold">CAPTAIN YEAR *</label>
+                                <select class="form-select form-control-spl font-monospace" name="captain_year" required>
+                                    <option value="4" {% if franchise.captain_year == '4' %}selected{% endif %}>4</option>
+                                    <option value="3" {% if franchise.captain_year == '3' %}selected{% endif %}>3</option>
+                                    <option value="2" {% if franchise.captain_year == '2' %}selected{% endif %}>2</option>
+                                    <option value="1" {% if franchise.captain_year == '1' %}selected{% endif %}>1</option>
+                                </select>
                             </div>
 
                             <div class="col-12">
@@ -213,5 +216,7 @@
             </div>
         </div>
     </div>
+
+    {% include "includes/footer.html" %}
 </div>
 {% endblock %}

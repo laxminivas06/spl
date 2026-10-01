@@ -11,8 +11,8 @@ class Franchise(db.Model):
     authorized_email = db.Column(db.String(120), unique=True, nullable=True, index=True)
     owner_name = db.Column(db.String(100), nullable=True)
     google_auth_enabled = db.Column(db.Boolean, default=True, nullable=False)
-    starting_purse = db.Column(db.Float, nullable=False, default=300000.0)
-    remaining_purse = db.Column(db.Float, nullable=False, default=300000.0)
+    starting_purse = db.Column(db.Float, nullable=False, default=550000.0)
+    remaining_purse = db.Column(db.Float, nullable=False, default=500000.0)
     squad_limit = db.Column(db.Integer, nullable=False, default=15)
     captain_name = db.Column(db.String(100), nullable=True)
     captain_rule_number = db.Column(db.String(30), nullable=True)
@@ -37,14 +37,30 @@ class Franchise(db.Model):
 
     @property
     def spent_purse(self):
-        # Excludes 0-price or unpriced captains; strictly sums real purchase amounts
-        return sum((p.sold_price or 0.0) for p in self.sold_players)
+        spent = sum((p.sold_price or 0.0) for p in self.sold_players)
+        # Ensure captain 50,000 retention is counted
+        if self.has_captain and not any(p.is_captain for p in self.sold_players):
+            spent += 50000.0
+        return spent
 
     def recalculate_purse(self):
-        """Reconcile remaining purse directly from actual purchased players."""
-        spent = sum((p.sold_price or 0.0) for p in self.sold_players)
-        self.remaining_purse = max(0.0, float(self.starting_purse) - spent)
+        """Reconcile remaining purse accounting for 50,000 captain retention and purchased players."""
+        spent = 0.0
+        captain_counted = False
+        for p in self.sold_players:
+            if p.is_captain or (self.captain_id and p.id == self.captain_id):
+                if p.sold_price != 50000.0:
+                    p.sold_price = 50000.0
+                p.status = 'RETAINED'
+                spent += 50000.0
+                captain_counted = True
+            else:
+                spent += float(p.sold_price or 0.0)
+        if self.has_captain and not captain_counted:
+            spent += 50000.0
+        self.remaining_purse = max(0.0, float(self.starting_purse or 550000.0) - spent)
         return self.remaining_purse
+
 
     @property
     def captain_player(self):
@@ -138,15 +154,20 @@ class Franchise(db.Model):
             'is_eligible_for_bidding': self.is_eligible_for_bidding,
             'is_full': self.is_full,
             'bidding_eligibility_status': 'TEAM ELIGIBLE FOR BIDDING' if self.is_eligible_for_bidding else 'NOT ELIGIBLE FOR BIDDING',
-            'captain_status': '✓ Captain Added' if self.has_captain else '✗ Team Captain Required',
+            'captain_status': 'RETAINED — ₹50,000' if self.has_captain else '✗ Team Captain Required',
+            'franchisee_name': self.owner_name or self.name,
             'captain_name': self.captain_name or (self.captain.name if self.captain else None),
+            'captain_display_name': f"{self.captain_name} (C)" if self.captain_name else (f"{self.captain.name} (C)" if self.captain else None),
+            'captain_is_retained': True if self.has_captain else False,
+            'captain_retained_amount': 50000.0 if self.has_captain else 0.0,
             'captain_rule_number': self.captain_rule_number or (self.captain.roll_number if self.captain else None),
             'captain_department': self.captain_department or (self.captain.branch if self.captain else None),
             'captain_year': self.captain_year or (self.captain.year if self.captain else None),
-            'captain_category': self.captain_category or (self.captain.category if self.captain else None),
-            'captain_photo': self.captain_photo or (self.captain.photo if self.captain else None),
+            'captain_category': self.captain_category or (self.captain.category if self.captain else 'ALL_ROUNDER'),
+            'captain_photo': self.captain_photo or (self.captain.photo if self.captain else 'default_player.png'),
             'is_active': self.is_active
         }
+
 
     def __repr__(self):
         return f'<Franchise {self.short_name} - {self.name} ({self.authorized_email})>'

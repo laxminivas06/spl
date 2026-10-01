@@ -1,67 +1,154 @@
 {% extends "base.html" %}
 
-{% block title %}Sign in with Google — {{ event_name }} Identity{% endblock %}
+{% block title %}Sign In — {{ event_name or 'SPL' }} Account Selector{% endblock %}
 
 {% block content %}
-<div class="d-flex align-items-center justify-content-center py-5">
-    <div class="w-100" style="max-width: 480px;">
-        <div class="spl-card p-4 p-md-5 border-primary shadow-sm text-center bg-white border">
-            <!-- Google Header -->
-            <div class="mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 48 48" class="mb-2">
+<div class="d-flex align-items-center justify-content-center py-4 px-3">
+    <div class="w-100" style="max-width: 520px;">
+
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center p-3 rounded-circle mb-3"
+                 style="background: linear-gradient(135deg, #fee2e2 0%, #fef3c7 100%); width: 72px; height: 72px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 48 48">
                     <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
                     <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
                     <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.28-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
                     <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
                 </svg>
-                <h4 class="fw-bold text-dark mb-1">Sign in with Google</h4>
-                <p class="text-muted small mb-0">Choose an authorized Franchise Owner account to log in to SPL</p>
             </div>
+            <h1 class="fw-black text-dark font-display mb-1 fs-3">Choose Account</h1>
+            <p class="text-secondary small font-sans mb-0">Select your authorized SPL account to sign in</p>
+        </div>
 
-            <!-- Notice for Development Mode -->
-            <div class="alert alert-light border text-dark text-start small mb-4">
-                <i class="fa-solid fa-circle-info text-primary me-1"></i>
-                <strong>OAuth Account Selector:</strong> Select an authorized Google email below. (In production with <code>GOOGLE_CLIENT_ID</code> configured in <code>.env</code>, this redirects directly to Google's sign-in screen).
+        <!-- Dev Mode Notice -->
+        <div class="alert border d-flex align-items-start gap-2 small mb-4 py-2"
+             style="background:#fffbeb; border-color:#fcd34d !important; color:#92400e;">
+            <i class="fa-solid fa-triangle-exclamation mt-1 flex-shrink-0" style="color:#f59e0b;"></i>
+            <div>
+                <strong>Development Mode:</strong> Google OAuth is not yet configured.
+                Select an account below to sign in directly.
+                To enable real Google Sign-In, add <code>GOOGLE_CLIENT_ID</code> to <code>spl/.env</code>.
             </div>
+        </div>
 
-            <!-- Authorized Franchise Account Chooser List -->
-            <div class="d-flex flex-column gap-2 mb-4 text-start">
-                {% for f in franchises %}
-                    {% if f.authorized_email %}
-                    <a href="{{ url_for('auth.google_callback', mock_email=f.authorized_email) }}" class="d-flex align-items-center gap-3 p-2.5 rounded border bg-light text-decoration-none">
-                        <img src="{{ url_for('static', filename='uploads/' + (f.logo or 'default_logo.png')) }}" alt="{{ f.name }}" class="rounded bg-white border p-1" style="width: 40px; height: 40px; object-fit: contain;">
-                        <div class="flex-grow-1 overflow-hidden">
-                            <div class="fw-bold text-dark small">{{ f.name }} <span class="badge bg-primary fs-8 text-uppercase">{{ f.short_name }}</span></div>
-                            <div class="text-primary font-monospace small text-truncate">{{ f.authorized_email }}</div>
-                        </div>
-                        <i class="fa-solid fa-angle-right text-muted"></i>
-                    </a>
-                    {% endif %}
-                {% endfor %}
-            </div>
+        <div class="spl-card p-0 overflow-hidden">
 
-            <div class="my-3 text-center position-relative">
-                <hr class="my-0">
-                <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted fs-8 fw-semibold">OR ENTER ANOTHER GOOGLE EMAIL</span>
-            </div>
-
-            <!-- Custom Email Form -->
-            <form method="GET" action="{{ url_for('auth.google_callback') }}" class="mb-3">
-                <div class="input-group mb-2">
-                    <span class="input-group-text bg-light border text-danger"><i class="fa-brands fa-google"></i></span>
-                    <input type="email" name="mock_email" class="form-control form-control-spl" placeholder="owner@gmail.com or test@domain.com" required>
+            <!-- ADMINISTRATOR SECTION -->
+            <div class="px-4 py-3 border-bottom" style="background:#f8fafc;">
+                <div class="mb-2" style="font-size:0.7rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:#64748b;">
+                    <i class="fa-solid fa-shield-halved me-1 text-danger"></i>System Administrator
                 </div>
-                <button type="submit" class="btn btn-spl-primary w-100 py-2 btn-sm fw-bold">
-                    <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Authenticate Google Account
-                </button>
-            </form>
-
-            <div class="pt-3 border-top">
-                <a href="{{ url_for('auth.login') }}" class="text-muted small text-decoration-none">
-                    <i class="fa-solid fa-arrow-left me-1"></i> Back to Login Options
+                <a href="{{ url_for('auth.google_callback', mock_email=admin_email) }}"
+                   class="d-flex align-items-center gap-3 p-3 rounded-3 border text-decoration-none bg-white"
+                   style="border-color:#fca5a5 !important; transition:all 0.18s ease;"
+                   onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'; this.style.borderColor='#f87171 !important';"
+                   onmouseout="this.style.boxShadow=''; this.style.borderColor='#fca5a5 !important';">
+                    <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                         style="width:44px; height:44px; background:#fee2e2; border:1px solid #fca5a5;">
+                        <i class="fa-solid fa-user-shield text-danger fs-5"></i>
+                    </div>
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="fw-bold text-dark" style="font-size:0.875rem;">System Administrator</div>
+                        <div class="font-monospace text-truncate" style="font-size:0.72rem; color:#dc2626;">{{ admin_email }}</div>
+                    </div>
+                    <span class="badge flex-shrink-0 ms-auto"
+                          style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5;">ADMIN</span>
+                    <i class="fa-solid fa-angle-right text-muted flex-shrink-0 ms-1"></i>
                 </a>
+
+                {% if admin_emails %}
+                    {% for email in admin_emails %}
+                        {% if email != admin_email and email %}
+                        <a href="{{ url_for('auth.google_callback', mock_email=email) }}"
+                           class="d-flex align-items-center gap-3 p-2 rounded-3 border text-decoration-none bg-white mt-2"
+                           style="border-color:#e2e8f0 !important; transition:all 0.18s ease;">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                                 style="width:36px; height:36px; background:#f1f5f9; border:1px solid #e2e8f0;">
+                                <i class="fa-solid fa-user" style="color:#64748b; font-size:0.85rem;"></i>
+                            </div>
+                            <div class="flex-grow-1 overflow-hidden">
+                                <div class="font-monospace text-truncate text-dark" style="font-size:0.72rem;">{{ email }}</div>
+                            </div>
+                            <span class="badge flex-shrink-0"
+                                  style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1;">ADMIN</span>
+                            <i class="fa-solid fa-angle-right text-muted flex-shrink-0 ms-1 small"></i>
+                        </a>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
             </div>
+
+            <!-- FRANCHISE SECTION -->
+            {% if franchises %}
+            <div class="px-4 py-3 border-bottom">
+                <div class="mb-2" style="font-size:0.7rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:#64748b;">
+                    <i class="fa-solid fa-users me-1" style="color:#2563eb;"></i>Franchise Representatives
+                </div>
+                <div class="d-flex flex-column gap-2">
+                    {% for f in franchises %}
+                        {% if f.authorized_email %}
+                        <a href="{{ url_for('auth.google_callback', mock_email=f.authorized_email) }}"
+                           class="d-flex align-items-center gap-3 p-2 rounded-3 border text-decoration-none"
+                           style="background:#f8fafc; border-color:#e2e8f0 !important; transition:all 0.18s ease;"
+                           onmouseover="this.style.background='#f0f7ff'; this.style.borderColor='#93c5fd !important';"
+                           onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0 !important';">
+                            <img src="{{ url_for('static', filename='uploads/' + (f.logo or 'default_logo.png')) }}"
+                                 alt="{{ f.name }}"
+                                 class="rounded border p-1 flex-shrink-0"
+                                 style="width:40px; height:40px; object-fit:contain; background:#fff;"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="d-none align-items-center justify-content-center rounded border flex-shrink-0"
+                                 style="width:40px; height:40px; background:#dbeafe; border-color:#93c5fd !important; font-size:0.8rem; font-weight:700; color:#1e40af;">
+                                {{ f.short_name[:2] if f.short_name else f.name[:2] }}
+                            </div>
+                            <div class="flex-grow-1 overflow-hidden">
+                                <div class="fw-bold text-dark" style="font-size:0.875rem;">{{ f.name }}</div>
+                                <div class="font-monospace text-truncate" style="font-size:0.72rem; color:#2563eb;">{{ f.authorized_email }}</div>
+                            </div>
+                            <span class="badge flex-shrink-0"
+                                  style="background:#dbeafe; color:#1e40af; border:1px solid #93c5fd;">{{ f.short_name }}</span>
+                            <i class="fa-solid fa-angle-right text-muted flex-shrink-0 ms-1 small"></i>
+                        </a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- CUSTOM EMAIL FORM -->
+            <div class="px-4 pb-4 pt-3">
+                <div class="mb-2" style="font-size:0.7rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:#64748b;">
+                    <i class="fa-solid fa-envelope me-1 text-muted"></i>Or Enter Another Authorized Email
+                </div>
+                <form method="GET" action="{{ url_for('auth.google_callback') }}" class="d-flex gap-2">
+                    <div class="flex-grow-1">
+                        <input type="email" name="mock_email"
+                               id="custom-email-input"
+                               class="form-control form-control-sm"
+                               placeholder="authorized@gmail.com"
+                               required
+                               style="border-color:#cbd5e1;">
+                    </div>
+                    <button type="submit" class="btn btn-spl-primary btn-sm px-3 fw-bold flex-shrink-0">
+                        <i class="fa-solid fa-arrow-right-to-bracket me-1"></i>Sign In
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Back link -->
+        <div class="text-center mt-3">
+            <a href="{{ url_for('auth.login') }}" class="text-muted small text-decoration-none font-display">
+                <i class="fa-solid fa-arrow-left me-1"></i>Back to Login
+            </a>
+        </div>
+
+        <!-- Global Footer -->
+        <div class="w-100 mt-4">
+            {% include "includes/footer.html" %}
         </div>
     </div>
 </div>
 {% endblock %}
+

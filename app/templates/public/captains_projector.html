@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block title %}Captain Projector View — {{ event_name or 'SPL' }}{% endblock %}
+
+{% block content_wrapper %}
+<!-- Projector Floating Control Toolbar -->
+<div class="projector-toolbar d-flex align-items-center gap-2">
+    <a href="{{ url_for('public.public_captains') }}" class="btn btn-outline-secondary btn-sm font-display fw-bold" title="Return to Captains List">
+        <i class="fa-solid fa-list me-1"></i> LIST VIEW
+    </a>
+    <button type="button" id="btn-fullscreen-toggle" class="btn btn-outline-primary btn-sm font-display fw-bold px-2.5 py-1.5 d-inline-flex align-items-center justify-content-center" onclick="toggleFullscreen()" title="Fullscreen" aria-label="Fullscreen">
+        <i class="fa-solid fa-expand fs-6"></i>
+    </button>
+</div>
+
+<div class="container-fluid px-2 px-md-4 py-3 max-w-1440 min-vh-100 d-flex flex-column justify-content-between" id="captain-projector-stage">
+    
+    <!-- Top Projector Status Header -->
+    <div class="d-flex justify-content-between align-items-center mb-2 px-2 font-display">
+        <div class="d-flex align-items-center gap-2 text-sm">
+            <span class="badge bg-danger fs-7 px-3 py-1 font-display fw-bold">OFFICIAL SPHOORTHY PREMIER LEAGUE 2026</span>
+            <span class="d-none d-sm-inline opacity-50 text-dark">|</span>
+            <span class="text-dark fw-bold small text-uppercase">CAPTAIN PRESENTATION STAGE</span>
+        </div>
+        <div class="spl-live-pulse-badge">
+            <span class="spl-pulse-dot bg-danger"></span>
+            <span class="spl-pulse-text font-display text-danger fw-black">PROJECTOR LIVE</span>
+        </div>
+    </div>
+
+    <!-- Main Projector Slide Container: ← Previous | Captain Details | Next → -->
+    <div class="bg-white rounded-4 shadow-sm p-3 p-md-4 p-lg-5 border-2 border-danger position-relative my-auto overflow-hidden">
+        
+        <!-- Header Branding & Slide Counter -->
+        <div class="text-center mb-4 pb-3 border-bottom border-secondary-subtle position-relative">
+            <h1 class="display-6 fw-black text-dark font-display mb-1 tracking-wide text-uppercase">
+                {{ event_name or 'SPHOORTHY PREMIER LEAGUE' }}
+            </h1>
+            <div class="text-danger font-display text-uppercase fw-bold letter-spacing-2 small mb-2">
+                OFFICIAL TEAM CAPTAINS — RETAINED SQUAD LEADERS
+            </div>
+            
+            <!-- Quick Team Selector Pills -->
+            <div class="d-flex flex-wrap justify-content-center gap-1.5 mt-2" id="captain-nav-pills">
+                {% for cap in captains %}
+                <button type="button" 
+                        class="btn btn-sm btn-outline-danger font-display fw-bold captain-pill-btn {% if loop.first %}active{% endif %}" 
+                        onclick="goToCaptain('{{ loop.index0 }}')"
+                        data-index="{{ loop.index0 }}">
+                    {{ cap.team_short }}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Slideshow Area -->
+        <div class="row align-items-center justify-content-between g-3 g-md-4">
+            
+            <!-- ← PREVIOUS BUTTON (Large Projector Touch/Click Target) -->
+            <div class="col-auto">
+                <button type="button" 
+                        id="btn-prev-captain" 
+                        class="btn btn-outline-danger btn-lg p-3 p-md-4 rounded-4 shadow-sm font-display fw-black d-flex flex-column align-items-center justify-content-center spl-proj-nav-btn"
+                        onclick="prevCaptain()"
+                        title="Previous Captain (Left Arrow)"
+                        aria-label="Previous Captain">
+                    <i class="fa-solid fa-arrow-left fa-2x mb-1"></i>
+                    <span class="small text-uppercase">Prev</span>
+                </button>
+            </div>
+
+            <!-- CENTER: ACTIVE CAPTAIN CARD (Requirement 3: Optimized for Projector) -->
+            <div class="col flex-grow-1" style="max-width: 900px; margin: 0 auto;">
+                
+                {% for cap in captains %}
+                {% set f = cap.franchise %}
+                <div class="captain-slide-item {% if not loop.first %}d-none{% endif %}" id="captain-slide-{{ loop.index0 }}" data-index="{{ loop.index0 }}">
+                    
+                    <div class="spl-card p-4 p-md-5 bg-white border-2 border-danger shadow rounded-4 text-center">
+                        
+                        <!-- 1. Team Name (Top, Large Display) -->
+                        <div class="d-inline-flex align-items-center justify-content-center gap-2 mb-1">
+                            <img src="{{ url_for('static', filename='uploads/' + f.logo) if f.logo and not f.logo.startswith('http') else (f.logo or url_for('static', filename='uploads/default_logo.png')) }}" 
+                                 alt="{{ f.name }}" 
+                                 class="rounded-2 border border-secondary-subtle object-fit-contain p-1" 
+                                 width="48" height="48"
+                                 onerror="this.src='/static/uploads/default_logo.png'">
+                            <h2 class="display-5 fw-black text-danger font-display mb-0 text-uppercase tracking-wide">
+                                {{ cap.team_name }}
+                            </h2>
+                        </div>
+
+                        <!-- 2. Franchisee Name -->
+                        <div class="text-dark fs-5 fw-bold font-display text-uppercase mb-4">
+                            Franchisee: <span class="text-dark fw-black">{{ cap.franchisee_name }}</span>
+                        </div>
+
+                        <!-- 3. SQUARE PHOTO FRAME (Strict Requirement 3: SQUARE FRAME, NO CIRCLE) -->
+                        <div class="d-flex justify-content-center mb-4">
+                            <div class="spl-projector-square-frame border-3 border-danger shadow rounded-3 overflow-hidden bg-light position-relative"
+                                 style="width: 240px; height: 240px; max-width: 100%; aspect-ratio: 1/1;">
+                                <img src="{{ url_for('static', filename='uploads/' + cap.captain_photo) if cap.captain_photo and not cap.captain_photo.startswith('http') else (cap.captain_photo or url_for('static', filename='uploads/default_player.png')) }}" 
+                                     alt="{{ cap.captain_name }}" 
+                                     class="w-100 h-100 object-fit-cover"
+                                     style="aspect-ratio: 1/1;"
+                                     onerror="this.onerror=null; this.src='/static/uploads/default_player.png';">
+                                <span class="badge bg-danger position-absolute bottom-0 end-0 m-2 px-2.5 py-1 font-display fw-black fs-6 shadow-sm">
+                                    C
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- 4. Captain Name (C) (Requirement 2 & 3) -->
+                        <h1 class="display-4 fw-black text-dark font-display mb-2 text-uppercase tracking-wide">
+                            {{ cap.captain_name }} <span class="text-danger fw-bold">(C)</span>
+                        </h1>
+
+                        <!-- 5. Captain Category with EXACT Category Icon (Requirement 1) -->
+                        <div class="d-inline-flex align-items-center justify-content-center gap-2 px-4 py-2 rounded-pill bg-light border border-secondary-subtle mb-3 shadow-sm">
+                            <img src="{{ get_category_icon(cap.category) }}" 
+                                 alt="{{ cap.category }}" 
+                                 class="category-icon-img" 
+                                 style="width: 28px; height: 28px; object-fit: contain;"
+                                 onerror="this.onerror=null; this.src='{{ get_category_fallback(cap.category) }}';">
+                            <span class="fs-5 fw-black text-dark font-display text-uppercase">{{ cap.category }}</span>
+                        </div>
+
+                        <!-- 6 & 7. Year & Department -->
+                        <div class="row justify-content-center g-3 mb-4">
+                            <div class="col-auto">
+                                <div class="px-3 py-1.5 rounded bg-light border border-secondary-subtle text-dark font-sans fs-6">
+                                    <span class="text-muted fw-bold">Year:</span> <strong class="text-dark">{{ cap.year or '4th Year' }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="px-3 py-1.5 rounded bg-light border border-secondary-subtle text-dark font-sans fs-6">
+                                    <span class="text-muted fw-bold">Department:</span> <strong class="text-dark">{{ cap.department or 'CSE' }}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 8. Retained Status & Amount (Requirement 2 & 3) -->
+                        <div class="d-inline-block">
+                            <div class="badge bg-danger fs-4 px-4 py-2.5 rounded-3 text-uppercase font-display fw-black shadow-sm">
+                                <i class="fa-solid fa-lock me-2"></i>RETAINED — ₹ {{ cap.retained_amount | currency }}
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+                {% endfor %}
+
+            </div>
+
+            <!-- NEXT BUTTON → (Large Projector Touch/Click Target) -->
+            <div class="col-auto">
+                <button type="button" 
+                        id="btn-next-captain" 
+                        class="btn btn-outline-danger btn-lg p-3 p-md-4 rounded-4 shadow-sm font-display fw-black d-flex flex-column align-items-center justify-content-center spl-proj-nav-btn"
+                        onclick="nextCaptain()"
+                        title="Next Captain (Right Arrow)"
+                        aria-label="Next Captain">
+                    <i class="fa-solid fa-arrow-right fa-2x mb-1"></i>
+                    <span class="small text-uppercase">Next</span>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Keyboard Shortcut Helper for Operator -->
+        <div class="text-center mt-4 pt-2 text-muted font-sans extra-small">
+            <span class="badge bg-light text-dark border px-2 py-1 me-1"><i class="fa-solid fa-arrow-left"></i> Left Arrow</span> Previous Captain
+            <span class="mx-2 opacity-50">|</span>
+            <span class="badge bg-light text-dark border px-2 py-1 me-1"><i class="fa-solid fa-arrow-right"></i> Right Arrow / Space</span> Next Captain
+            <span class="mx-2 opacity-50">|</span>
+            <span id="captain-slide-indicator" class="fw-bold text-dark font-monospace">1 / {{ captains | length }}</span>
+        </div>
+
+    </div>
+
+    <!-- Projector Footer -->
+    <div class="text-center mt-3 text-dark small font-sans">
+        {{ event_name or 'SPL' }} Live Presentation Console &bull; Sphoorthy Engineering College
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.spl-projector-square-frame {
+    border-width: 4px !important;
+    border-color: #dc2626 !important;
+    background-color: #ffffff;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.spl-projector-square-frame:hover {
+    transform: scale(1.02);
+}
+.spl-proj-nav-btn {
+    min-width: 80px;
+    min-height: 120px;
+    border-width: 2px !important;
+    transition: all 0.2s ease;
+}
+.spl-proj-nav-btn:hover {
+    background-color: #fee2e2 !important;
+    color: #7f1d1d !important;
+    border-color: #b91c1c !important;
+    transform: scale(1.05);
+}
+:fullscreen #btn-fullscreen-toggle,
+:-webkit-full-screen #btn-fullscreen-toggle,
+:-moz-full-screen #btn-fullscreen-toggle,
+:-ms-fullscreen #btn-fullscreen-toggle {
+    display: none !important;
+}
+body.is-fullscreen #btn-fullscreen-toggle {
+    display: none !important;
+}
+@media (max-width: 768px) {
+    .spl-proj-nav-btn {
+        min-width: 48px;
+        min-height: 64px;
+        padding: 0.5rem !important;
+    }
+}
+@media (max-width: 576px) {
+    .spl-projector-square-frame {
+        width: 170px !important;
+        height: 170px !important;
+    }
+    .spl-proj-nav-btn {
+        min-width: 40px;
+        min-height: 52px;
+        padding: 0.35rem !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentCaptainIndex = 0;
+const totalCaptains = parseInt('{{ captains | length }}', 10) || 0;
+
+function updateFullscreenUi() {
+    const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+    const fsBtn = document.getElementById('btn-fullscreen-toggle');
+    if (fsBtn) {
+        if (isFs) {
+            fsBtn.classList.add('d-none');
+        } else {
+            fsBtn.classList.remove('d-none');
+        }
+    }
+    if (isFs) {
+        document.body.classList.add('is-fullscreen');
+    } else {
+        document.body.classList.remove('is-fullscreen');
+    }
+}
+
+['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
+    document.addEventListener(evt, updateFullscreenUi);
+});
+
+function updateCaptainSlide(index) {
+    if (totalCaptains <= 0) return;
+    
+    // Bounds wrap-around
+    if (index >= totalCaptains) index = 0;
+    if (index < 0) index = totalCaptains - 1;
+    currentCaptainIndex = index;
+
+    // Show active slide, hide others
+    for (let i = 0; i < totalCaptains; i++) {
+        const slide = document.getElementById(`captain-slide-${i}`);
+        if (slide) {
+            if (i === currentCaptainIndex) {
+                slide.classList.remove('d-none');
+            } else {
+                slide.classList.add('d-none');
+            }
+        }
+    }
+
+    // Update nav pills
+    const pills = document.querySelectorAll('.captain-pill-btn');
+    pills.forEach((p, idx) => {
+        if (idx === currentCaptainIndex) {
+            p.classList.add('active');
+            p.classList.add('bg-danger-subtle');
+        } else {
+            p.classList.remove('active');
+            p.classList.remove('bg-danger-subtle');
+        }
+    });
+
+    // Update indicator
+    const ind = document.getElementById('captain-slide-indicator');
+    if (ind) ind.textContent = `${currentCaptainIndex + 1} / ${totalCaptains}`;
+}
+
+function nextCaptain() {
+    updateCaptainSlide(currentCaptainIndex + 1);
+}
+
+function prevCaptain() {
+    updateCaptainSlide(currentCaptainIndex - 1);
+}
+
+function goToCaptain(index) {
+    updateCaptainSlide(index);
+}
+
+// Keyboard Navigation (Left / Right Arrow & Esc return)
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        nextCaptain();
+    } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevCaptain();
+    } else if (e.key === 'Escape') {
+        if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+        }
+    }
+});
+
+// Fullscreen toggle helper
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().then(updateFullscreenUi).catch(err => {
+            console.warn(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen().then(updateFullscreenUi).catch(() => {});
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    updateCaptainSlide(0);
+    updateFullscreenUi();
+});
+</script>
+{% endblock %}

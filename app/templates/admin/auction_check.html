@@ -18,7 +18,7 @@
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
         <div class="d-flex align-items-center gap-3">
             {% if is_passed %}
-            <div class="bg-success text-white rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 55px; height: 55px;">
+            <div class="bg-success-subtle text-success border border-success rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 55px; height: 55px;">
                 <i class="fa-solid fa-check fs-2"></i>
             </div>
             <div>
@@ -26,7 +26,7 @@
                 <p class="text-muted small mb-0">Database transactions, purse calculations, and squad rules are 100% consistent.</p>
             </div>
             {% else %}
-            <div class="bg-danger text-white rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 55px; height: 55px;">
+            <div class="bg-danger-subtle text-danger border border-danger rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 55px; height: 55px;">
                 <i class="fa-solid fa-circle-exclamation fs-2"></i>
             </div>
             <div>
@@ -119,7 +119,7 @@
                         {% if check.status == 'VALID' %}
                             <span class="badge bg-success">VALID ({{ check.count }}/15)</span>
                         {% elif check.status == 'INCOMPLETE' %}
-                            <span class="badge bg-danger text-white">INCOMPLETE ({{ check.count }}/14)</span>
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">INCOMPLETE ({{ check.count }}/14)</span>
                         {% else %}
                             <span class="badge bg-danger">EXCEEDED CAPACITY</span>
                         {% endif %}

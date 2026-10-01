@@ -222,9 +222,22 @@ def get_state():
 @admin_required
 def api_find_player():
     data = request.get_json() or request.form
-    roll_number = data.get('roll_number')
+    search_term = (data.get('roll_number') or data.get('query') or data.get('rule_number') or data.get('name') or '').strip().upper()
     try:
-        player = find_player_by_roll(roll_number)
+        player = Player.query.filter(Player.roll_number.ilike(search_term)).first()
+        if not player:
+            player = Player.query.filter(Player.name.ilike(search_term)).first()
+        if not player:
+            player = Player.query.filter((Player.roll_number.ilike(f"%{search_term}%")) | (Player.name.ilike(f"%{search_term}%"))).first()
+        if not player:
+            return jsonify({'success': False, 'message': f"PLAYER NOT FOUND. Please verify rule number or player name '{search_term}'."}), 404
+
+        if player.is_captain or str(player.status).upper() == 'RETAINED':
+            raise ValueError(f"Captain Retained: Player '{player.name} (C)' is a Team Captain and already RETAINED for ₹ 50,000. Captains cannot enter the auction bidding pool.")
+
+        if player.is_sold or str(player.status).upper() == 'SOLD' or player.sold_to is not None:
+            raise ValueError(f"Already Sold: Player '{player.name}' has already been sold. This player cannot be auctioned again.")
+
         return jsonify({'success': True, 'player': player.to_dict()})
     except ValueError as e:
         return jsonify({'success': False, 'message': str(e)}), 400
@@ -425,34 +438,93 @@ def api_clear_sold():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
+@api_bp.route('/auction/suggest-players', methods=['GET'])
+@login_required
+def api_suggest_players():
+    """
+    Autocomplete endpoint for live typing suggestions (Requirement 8).
+    Supports partial match on Rule Number or Player Name, formatted uppercase.
+    """
+    query = (request.args.get('q') or request.args.get('query') or '').strip().upper()
+    if not query or len(query) < 1:
+        return jsonify({'suggestions': []})
+
+    # Find matching players (by rule number or name)
+    all_players = Player.query.all()
+    matches = []
+    for p in all_players:
+        roll = (p.roll_number or '').upper()
+        pname = (p.name or '').upper()
+        if query in roll or query in pname:
+            is_cap = p.is_captain or str(p.status).upper() == 'RETAINED'
+            status_text = 'RETAINED (C)' if is_cap else p.status
+            matches.append({
+                'id': p.id,
+                'rule_number': roll,
+                'name': pname,
+                'display': f"{roll} — {pname}" if roll else pname,
+                'is_captain': is_cap,
+                'status': status_text,
+                'role': p.role,
+                'category': p.category,
+                'base_price': p.base_price
+            })
+            if len(matches) >= 12:
+                break
+
+    return jsonify({'suggestions': matches})
+
 @api_bp.route('/auction/search-player', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def api_search_player():
     """
-    Search player by rule number for Primary or Second Chance auction (Requirements 3 & 5).
-    Strictly checks and reports sold status (Requirements 2 & 6).
+    Search player by Rule Number OR Player Name for Primary or Second Chance auction (Requirements 6, 7, 8).
+    Strictly checks and reports sold status and captain retention (Requirement 2).
     """
     if request.method == 'POST':
         data = request.get_json() or request.form
-        rule_number = (data.get('rule') or data.get('rule_number') or data.get('roll_number') or '').strip()
+        search_term = (data.get('query') or data.get('rule') or data.get('rule_number') or data.get('roll_number') or data.get('name') or '').strip().upper()
         mode = (data.get('mode') or 'PRIMARY').strip().upper()
     else:
-        rule_number = (request.args.get('rule') or request.args.get('rule_number') or request.args.get('roll_number') or '').strip()
+        search_term = (request.args.get('query') or request.args.get('rule') or request.args.get('rule_number') or request.args.get('roll_number') or request.args.get('name') or '').strip().upper()
         mode = (request.args.get('mode') or 'PRIMARY').strip().upper()
 
-    if not rule_number:
-        return jsonify({'success': False, 'message': 'Please enter a Rule Number.'}), 400
+    if not search_term:
+        return jsonify({'success': False, 'message': 'Please enter a Rule Number or Player Name.'}), 400
 
-    player = Player.query.filter(Player.roll_number.ilike(rule_number)).first()
+    # 1. Exact match on rule number
+    player = Player.query.filter(Player.roll_number.ilike(search_term)).first()
+
+    # 2. Exact match on name
     if not player:
-        return jsonify({'success': False, 'message': f"Player with Rule Number '{rule_number}' not found."}), 404
+        player = Player.query.filter(Player.name.ilike(search_term)).first()
+
+    # 3. Partial match if exact match not found
+    if not player:
+        player = Player.query.filter((Player.roll_number.ilike(f"%{search_term}%")) | (Player.name.ilike(f"%{search_term}%"))).first()
+
+    if not player:
+        return jsonify({'success': False, 'message': f"Player with Rule Number or Name '{search_term}' not found."}), 404
+
+    # Captain Protection: Captains cannot enter bidding pool (Requirement 2)
+    if player.is_captain or str(player.status).upper() == 'RETAINED':
+        winning_f = Franchise.query.get(player.sold_to) if player.sold_to else player.franchise
+        f_name = winning_f.name if winning_f else 'a team'
+        return jsonify({
+            'success': True,
+            'is_sold': True,
+            'is_captain': True,
+            'can_auction': False,
+            'error_message': f"RETAINED CAPTAIN: Player '{player.name} (C)' is already RETAINED by {f_name} for ₹ 50,000. Captains cannot enter the normal auction bidding pool.",
+            'player': player.to_dict()
+        })
 
     # Strict sold check (Requirements 2 & 6)
     if player.is_sold or str(player.status).upper() == 'SOLD' or player.sold_to is not None:
         winning_f = Franchise.query.get(player.sold_to) if player.sold_to else None
         f_name = winning_f.name if winning_f else 'another team'
-        sold_price_fmt = f"Rs. {player.sold_price:,.0f}" if player.sold_price else "N/A"
+        sold_price_fmt = f"₹ {player.sold_price:,.0f}" if player.sold_price else "N/A"
         return jsonify({
             'success': True,
             'is_sold': True,
@@ -495,6 +567,7 @@ def api_search_player():
         'can_auction': True,
         'player': player.to_dict()
     })
+
 
 @api_bp.route('/auction/update-rule-number', methods=['POST'])
 @login_required

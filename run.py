@@ -21,7 +21,7 @@ with app.app_context():
     seed_database()
 
 if __name__ == '__main__':
-    requested_port = int(os.environ.get('PORT', 5000))
+    requested_port = int(os.environ.get('PORT', 5002))
 
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
         import socket

@@ -163,9 +163,9 @@
                         {% elif cat == 'AUCTION' %}
                             <span class="badge bg-danger-subtle text-danger border border-danger extra-small">AUCTION</span>
                         {% elif cat == 'PURSE' or cat == 'SQUAD' %}
-                            <span class="badge bg-primary text-white extra-small">{{ cat }}</span>
+                            <span class="badge bg-primary-subtle text-primary border border-primary extra-small">{{ cat }}</span>
                         {% elif cat == 'SECURITY' %}
-                            <span class="badge bg-danger text-white extra-small">SECURITY</span>
+                            <span class="badge bg-danger-subtle text-danger border border-danger extra-small">SECURITY</span>
                         {% else %}
                             <span class="badge bg-secondary extra-small">{{ cat }}</span>
                         {% endif %}
@@ -237,7 +237,7 @@
                 </li>
                 {% for p in range(1, total_pages + 1) %}
                     {% if p == page %}
-                    <li class="page-item active"><span class="page-link bg-danger text-white border-danger fw-bold">{{ p }}</span></li>
+                    <li class="page-item active"><span class="page-link bg-danger-subtle text-danger border-danger fw-bold">{{ p }}</span></li>
                     {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
                     <li class="page-item">
                         <a class="page-link bg-white text-dark border-secondary-subtle" href="{{ url_for('admin.audit_logs', page=p, search=search, category=selected_category, action=selected_action, status=selected_status, franchise_id=selected_franchise, date_from=date_from, date_to=date_to) }}">{{ p }}</a>

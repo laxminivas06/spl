@@ -74,15 +74,15 @@ def preview_players_csv(csv_content):
             if raw_k in header_map:
                 canonical_row[header_map[raw_k]] = (val.strip() if val else '')
 
-        rule_no = canonical_row.get('rule_number', '').strip()
+        rule_no = canonical_row.get('rule_number', '').strip().upper()
         name = canonical_row.get('name', '').strip()
         photo = canonical_row.get('photo', '').strip()
         role = canonical_row.get('role', 'BATSMAN').strip().upper()
         branch = canonical_row.get('branch', '').strip()
         year = canonical_row.get('year', '').strip()
         exp = canonical_row.get('experience', '').strip()
-        cat = canonical_row.get('category', 'NORMAL').strip().upper()
-        price_str = canonical_row.get('base_price', '10000').strip()
+        cat = PlayerCategory.normalize(canonical_row.get('category'))
+        price_str = '10000'
 
         row_status = 'VALID'
         status_msg = 'Ready to import'
@@ -91,13 +91,14 @@ def preview_players_csv(csv_content):
             row_status = 'ERROR'
             status_msg = 'Missing Rule Number or Name'
             result['error_count'] += 1
+        elif len(rule_no) != 10 or not re.match(r'^[A-Z0-9]{10}$', rule_no):
+            row_status = 'ERROR'
+            status_msg = f"Rule number '{rule_no}' must be exactly 10 alphanumeric characters"
+            result['error_count'] += 1
         elif role not in PlayerRole.CHOICES:
             row_status = 'ERROR'
             status_msg = f"Invalid role '{role}'. Allowed: {', '.join(PlayerRole.CHOICES)}"
             result['error_count'] += 1
-        elif cat not in PlayerCategory.CHOICES:
-            row_status = 'ERROR'
-            status_msg = f"Invalid category '{cat}'. Allowed: {', '.join(PlayerCategory.CHOICES)}"
             result['error_count'] += 1
         elif rule_no.lower() in batch_rule_numbers:
             row_status = 'DUPLICATE'
@@ -169,8 +170,8 @@ def parse_and_import_players_csv(csv_content):
                 branch=r['branch'],
                 year=r['year'],
                 experience=r['experience'],
-                category=r['category'] if r['category'] in PlayerCategory.CHOICES else PlayerCategory.NORMAL,
-                base_price=base_price,
+                category=PlayerCategory.normalize(r.get('category')),
+                base_price=10000.0,
                 status=PlayerStatus.AVAILABLE,
                 auction_type='PRIMARY'
             )

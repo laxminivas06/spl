@@ -27,7 +27,7 @@
             <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.squad') }}"><i class="fa-solid fa-users me-1"></i> My Squad</a>
             <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.purchases') }}"><i class="fa-solid fa-cart-shopping me-1"></i> Purchases</a>
             <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.bids') }}"><i class="fa-solid fa-list-check me-1"></i> Bid History</a>
-            <a class="nav-link active bg-danger text-white fw-bold px-3 py-1.5" href="{{ url_for('franchise.activity') }}"><i class="fa-solid fa-timeline me-1"></i> Activity</a>
+            <a class="nav-link active bg-danger-subtle text-danger border border-danger-subtle fw-bold px-3 py-1.5" href="{{ url_for('franchise.activity') }}"><i class="fa-solid fa-timeline me-1"></i> Activity</a>
             <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.profile') }}"><i class="fa-solid fa-id-card me-1"></i> Profile</a>
         </div>
     </div>
@@ -64,5 +64,7 @@
         </div>
         {% endif %}
     </div>
+
+    {% include "includes/footer.html" %}
 </div>
 {% endblock %}

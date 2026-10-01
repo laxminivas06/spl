@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="text-center mb-5">
-    <span class="badge bg-primary text-white px-3 py-2 fs-6 fw-bold mb-2">TOURNAMENT SCHEDULE</span>
+    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fs-6 fw-bold mb-2">TOURNAMENT SCHEDULE</span>
     <h1 class="fw-extrabold text-primary display-5 mb-2">MATCH FIXTURES & SCHEDULE</h1>
     <p class="text-muted">Official match schedule for the Sphoorthy Premier League.</p>
 </div>
@@ -45,9 +45,9 @@
 
             <div class="mt-3 pt-2 border-top">
                 {% if match.status == 'UPCOMING' %}
-                    <span class="badge bg-primary text-white px-3 py-1">UPCOMING</span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1">UPCOMING</span>
                 {% elif match.status == 'LIVE' %}
-                    <span class="badge bg-danger px-3 py-1 animate-pulse">LIVE NOW 🔴</span>
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1 animate-pulse">LIVE NOW 🔴</span>
                 {% else %}
                     <span class="badge bg-light text-dark border px-3 py-1">COMPLETED</span>
                 {% endif %}

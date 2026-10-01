@@ -3,7 +3,7 @@ from app.extensions import db
 from app.models import Franchise, Player, PlayerRole, PlayerCategory, PlayerStatus
 from app.services.audit_service import log_audit
 
-def add_team_captain(franchise, name, rule_number=None, department=None, year=None, category='NORMAL', photo=None, actor_id=None):
+def add_team_captain(franchise, name, rule_number=None, department=None, year=None, category='Elite', photo=None, actor_id=None):
     """
     Add or assign the Team Captain (First Member of the team).
     Enforces that team becomes eligible for bidding once captain exists.
@@ -12,10 +12,10 @@ def add_team_captain(franchise, name, rule_number=None, department=None, year=No
         raise ValueError("Team Captain Name is required.")
 
     name = str(name).strip()
-    rule_number = str(rule_number).strip() if rule_number else None
+    rule_number = str(rule_number).strip().upper() if rule_number else None
     department = str(department).strip() if department else None
     year = str(year).strip() if year else None
-    category = str(category).strip().upper() if category else 'NORMAL'
+    category = PlayerCategory.normalize(category) if category else PlayerCategory.ELITE
 
     # Check 15-member cap
     if franchise.squad_count >= franchise.squad_limit:
@@ -39,11 +39,11 @@ def add_team_captain(franchise, name, rule_number=None, department=None, year=No
         player = Player.query.get(franchise.captain_id)
 
     if player:
-        # Link existing player
+        # Link existing player as retained Captain
         player.sold_to = franchise.id
-        player.status = PlayerStatus.SOLD
-        if player.sold_price is None:
-            player.sold_price = 0.0
+        player.status = 'RETAINED'
+        player.sold_price = 50000.0
+        player.category = category
         if department and not player.branch:
             player.branch = department
         if year and not player.year:
@@ -52,7 +52,7 @@ def add_team_captain(franchise, name, rule_number=None, department=None, year=No
             player.photo = photo
         franchise.captain_id = player.id
     else:
-        # Create Player record for Captain so they are officially Member 1 in the squad
+        # Create Player record for Captain so they are officially Member 1 in the squad (Retained for 50,000)
         c_roll = rule_number or f"CAP-{franchise.short_name}"
         existing_p = Player.query.filter_by(roll_number=c_roll).first()
         if existing_p:
@@ -67,9 +67,9 @@ def add_team_captain(franchise, name, rule_number=None, department=None, year=No
             year=year,
             category=category,
             base_price=10000.0,
-            status=PlayerStatus.SOLD,
+            status='RETAINED',
             sold_to=franchise.id,
-            sold_price=0.0
+            sold_price=50000.0
         )
         db.session.add(new_player)
         db.session.flush()
@@ -80,7 +80,7 @@ def add_team_captain(franchise, name, rule_number=None, department=None, year=No
     log_audit(actor_id, 'TEAM_CAPTAIN_ADDED', 'Franchise', franchise.id, None, f"Team Captain '{name}' added to {franchise.name}. Team now eligible for bidding.", franchise_id=franchise.id)
     return franchise
 
-def add_team_member(franchise, name, rule_number=None, department=None, year=None, role=PlayerRole.BATSMAN, category='NORMAL', photo=None, actor_id=None):
+def add_team_member(franchise, name, rule_number=None, department=None, year=None, role=PlayerRole.BATSMAN, category='Rookie', photo=None, actor_id=None):
     """
     Add an additional member to the team (Members 2 to 15).
     Strictly blocked if captain does not exist, or if squad_count >= 15.
@@ -97,11 +97,11 @@ def add_team_member(franchise, name, rule_number=None, department=None, year=Non
         raise ValueError("Member Name is required.")
 
     name = str(name).strip()
-    rule_number = str(rule_number).strip() if rule_number else None
+    rule_number = str(rule_number).strip().upper() if rule_number else None
     department = str(department).strip() if department else None
     year = str(year).strip() if year else None
     role = str(role).strip().upper() if role in PlayerRole.CHOICES else PlayerRole.BATSMAN
-    category = str(category).strip().upper() if category in PlayerCategory.CHOICES else 'NORMAL'
+    category = PlayerCategory.normalize(category) if category else PlayerCategory.ROOKIE
 
     # Check if player exists by rule_number
     player = None
@@ -115,6 +115,7 @@ def add_team_member(franchise, name, rule_number=None, department=None, year=Non
         player.status = PlayerStatus.SOLD
         if player.sold_price is None:
             player.sold_price = 0.0
+        player.category = category
         if department and not player.branch:
             player.branch = department
         if year and not player.year:

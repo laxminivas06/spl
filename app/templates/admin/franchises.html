@@ -71,7 +71,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
                         <span class="text-primary small fw-bold"><i class="fa-solid fa-crown text-danger me-1"></i>Team Captain</span>
                         {% if f.captain_rule_number %}
-                            <span class="badge bg-light text-dark border font-monospace">Rule #{{ f.captain_rule_number }}</span>
+                            <span class="badge bg-light text-black border font-monospace">Roll {{ f.captain_rule_number }}</span>
                         {% else %}
                             <span class="badge bg-light text-muted border">Unassigned</span>
                         {% endif %}
@@ -81,7 +81,7 @@
                         <div class="text-muted extra-small">
                             Dept: <span class="text-dark">{{ f.captain_department or (f.captain.branch if f.captain else 'N/A') }}</span> | 
                             Year: <span class="text-dark">{{ f.captain_year or (f.captain.year if f.captain else 'N/A') }}</span> | 
-                            Category: <span class="badge bg-light text-dark border extra-small">{{ f.captain_category or (f.captain.category if f.captain else 'NORMAL') }}</span>
+                            Category: <span class="badge bg-light text-black border extra-small">{{ f.captain_category or (f.captain.category if f.captain else 'Elite') }}</span>
                         </div>
                     </div>
                 </div>
@@ -150,21 +150,14 @@
                                 <label class="form-label text-muted small fw-semibold">REGISTERED GMAIL (FOR LOGIN) *</label>
                                 <input type="email" class="form-control form-control-spl" name="authorized_email" value="{{ f.authorized_email or '' }}" placeholder="owner@gmail.com">
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label text-muted small fw-semibold">PURSE AMOUNT (₹)</label>
-                                <input type="number" class="form-control form-control-spl" name="starting_purse" value="{{ f.starting_purse }}">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label text-muted small fw-semibold">SQUAD LIMIT</label>
-                                <input type="number" class="form-control form-control-spl" name="squad_limit" value="{{ f.squad_limit }}">
-                            </div>
+
 
                             <!-- Captain Assignment Details -->
                             <div class="col-12 mt-2 pt-2 border-top">
                                 <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-crown text-danger me-2"></i>Captain Details & Player Validation</h6>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label text-muted small fw-semibold">CAPTAIN RULE NUMBER</label>
+                                <label class="form-label text-muted small fw-semibold">CAPTAIN ROLL NUMBER</label>
                                 <div class="input-group input-group-sm">
                                     <input type="text" class="form-control form-control-spl" id="cap_rule_{{ f.id }}" name="captain_rule_number" value="{{ f.captain_rule_number or '' }}" placeholder="e.g. 24">
                                     <button type="button" class="btn btn-outline-primary" onclick="validateCaptainRule('{{ f.id }}')" title="Auto-fill from Player database">
@@ -231,32 +224,24 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label text-muted small fw-semibold">FRANCHISEE NAME *</label>
+                            <label class="form-label text-muted small fw-semibold">FRANCHISE NAME *</label>
                             <input type="text" class="form-control form-control-spl" name="name" placeholder="Cyber Vipers" required>
                         </div>
                         <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">EMAIL (FOR LOGIN) *</label>
+                            <input type="email" class="form-control form-control-spl" name="authorized_email" placeholder="owner@gmail.com" required>
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label text-muted small fw-semibold">SHORT CODE *</label>
-                            <input type="text" class="form-control form-control-spl" name="short_name" placeholder="CV" required>
+                            <input type="text" class="form-control form-control-spl font-monospace" name="short_name" placeholder="CV" style="text-transform: uppercase;" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label text-muted small fw-semibold">OWNER NAME</label>
                             <input type="text" class="form-control form-control-spl" name="owner_name" placeholder="John Smith">
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted small fw-semibold">REGISTERED GMAIL (FOR LOGIN) *</label>
-                            <input type="email" class="form-control form-control-spl" name="authorized_email" placeholder="owner@gmail.com" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted small fw-semibold">PURSE AMOUNT (₹) *</label>
-                            <input type="number" class="form-control form-control-spl font-monospace" name="starting_purse" value="300000" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted small fw-semibold">SQUAD LIMIT *</label>
-                            <input type="number" class="form-control form-control-spl font-monospace" name="squad_limit" value="15" required>
-                        </div>
                     </div>
                     <div class="alert alert-light border mt-3 mb-0 small text-muted">
-                        <i class="fa-solid fa-info-circle text-primary me-1"></i> Captain profile, logo, and photo can be updated by the Franchisee upon Gmail login.
+                        <i class="fa-solid fa-info-circle text-primary me-1"></i> Starting purse and squad limit are automatically applied from global System Settings.
                     </div>
                 </div>
                 <div class="modal-footer border-top">
@@ -278,7 +263,7 @@ function validateCaptainRule(idSuffix) {
 
     if (!val) {
         msg.className = 'extra-small mt-1 text-danger';
-        msg.textContent = 'Enter a rule number to validate';
+        msg.textContent = 'Enter a roll number to validate';
         return;
     }
 

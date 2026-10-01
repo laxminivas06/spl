@@ -1,0 +1,98 @@
+[
+  {
+    "id": 1,
+    "key": "event_name",
+    "value": "SPL",
+    "updated_at": "2026-10-01T19:07:33.814609"
+  },
+  {
+    "id": 2,
+    "key": "event_subtitle",
+    "value": "Sphoorthy Premier League",
+    "updated_at": "2026-10-01T19:07:33.814593"
+  },
+  {
+    "id": 3,
+    "key": "starting_purse",
+    "value": "550000",
+    "updated_at": "2026-10-01T19:07:33.814616"
+  },
+  {
+    "id": 4,
+    "key": "squad_limit",
+    "value": "15",
+    "updated_at": "2026-10-01T19:07:33.814619"
+  },
+  {
+    "id": 5,
+    "key": "base_price",
+    "value": "10000",
+    "updated_at": "2026-10-01T19:07:33.814629"
+  },
+  {
+    "id": 6,
+    "key": "timer_seconds",
+    "value": "30",
+    "updated_at": "2026-10-01T19:07:33.814637"
+  },
+  {
+    "id": 7,
+    "key": "bid_increment_step",
+    "value": "5000",
+    "updated_at": "2026-10-01T19:07:33.814642"
+  },
+  {
+    "id": 8,
+    "key": "theme_default",
+    "value": "light",
+    "updated_at": "2026-10-01T19:07:33.814647"
+  },
+  {
+    "id": 9,
+    "key": "SHOW_PURCHASE_PRICE_PUBLICLY",
+    "value": "true",
+    "updated_at": "2026-10-01T19:07:33.814649"
+  },
+  {
+    "id": 10,
+    "key": "audit_logging_enabled",
+    "value": "true",
+    "updated_at": "2026-10-01T19:07:33.814635"
+  },
+  {
+    "id": 11,
+    "key": "audit_retention_days",
+    "value": "90",
+    "updated_at": "2026-10-01T19:07:33.814602"
+  },
+  {
+    "id": 12,
+    "key": "audit_log_level",
+    "value": "ALL",
+    "updated_at": "2026-10-01T19:07:33.814605"
+  },
+  {
+    "id": 13,
+    "key": "audit_track_ip",
+    "value": "true",
+    "updated_at": "2026-10-01T19:07:33.814613"
+  },
+  {
+    "id": 14,
+    "key": "second_chance_active",
+    "value": "false",
+    "updated_at": "2026-10-01T19:07:33.814632"
+  },
+  {
+    "id": 15,
+    "key": "event_state",
+    "value": "SETUP",
+    "updated_at": "2026-10-01T19:07:33.814640"
+  },
+  {
+    "id": 16,
+    "key": "squads_locked",
+    "value": "false",
+    "updated_at": "2026-10-01T19:07:33.814645"
+  }
+]

@@ -134,29 +134,29 @@ def players():
 @login_required
 @admin_required
 def add_player():
-    roll_number = request.form.get('roll_number', '').strip()
-    name = request.form.get('name', '').strip()
-    role = request.form.get('role', '').strip().upper()
-    branch = request.form.get('branch', '').strip()
+    import re
     year = request.form.get('year', '').strip()
-    experience = request.form.get('experience', '').strip()
-    category = request.form.get('category', '').strip().upper()
-    base_price_str = request.form.get('base_price', '10000').strip()
-    status = request.form.get('status', PlayerStatus.AVAILABLE).strip().upper()
-    room_number = request.form.get('room_number', '').strip()
+    roll_number = request.form.get('roll_number', '').strip().upper()
+    name = request.form.get('name', '').strip()
+    role = request.form.get('role', PlayerRole.BATSMAN).strip().upper()
+    category = PlayerCategory.normalize(request.form.get('category'))
+    base_price = 10000.0  # Fixed globally at ₹10,000
 
-    if not roll_number or not name:
-        flash('Rule Number and Name are required.', 'danger')
+    if year not in ['1', '2', '3', '4']:
+        flash('Year must be selected from 4, 3, 2, or 1.', 'danger')
+        return redirect(url_for('admin.players'))
+
+    if not roll_number or len(roll_number) != 10 or not re.match(r'^[A-Z0-9]{10}$', roll_number):
+        flash('Rule Number must be exactly 10 alphanumeric characters (e.g. SPL26A001X).', 'danger')
+        return redirect(url_for('admin.players'))
+
+    if not name:
+        flash('Full Name is required.', 'danger')
         return redirect(url_for('admin.players'))
 
     if Player.query.filter((Player.roll_number == roll_number) | (Player.rule_number == roll_number)).first():
         flash(f'Player with Rule Number "{roll_number}" already exists.', 'danger')
         return redirect(url_for('admin.players'))
-
-    try:
-        base_price = float(base_price_str)
-    except ValueError:
-        base_price = 10000.0
 
     photo_filename = 'default_player.png'
     file = request.files.get('photo_file')
@@ -164,22 +164,20 @@ def add_player():
         filename = secure_filename(f"{roll_number}_{file.filename}")
         file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
         photo_filename = filename
-    elif request.form.get('photo_url'):
-        photo_filename = request.form.get('photo_url').strip()
 
     player = Player(
         roll_number=roll_number,
         name=name,
         photo=photo_filename,
         role=role if role in PlayerRole.CHOICES else PlayerRole.BATSMAN,
-        branch=branch,
+        branch=None,
         year=year,
-        experience=experience,
-        category=category if category in PlayerCategory.CHOICES else PlayerCategory.NORMAL,
+        experience=None,
+        category=category,
         base_price=base_price,
-        status=status if status in PlayerStatus.CHOICES else PlayerStatus.AVAILABLE,
+        status=PlayerStatus.AVAILABLE,
         auction_type='PRIMARY',
-        room_number=room_number
+        room_number=None
     )
 
     db.session.add(player)
@@ -193,38 +191,45 @@ def add_player():
 @login_required
 @admin_required
 def edit_player(id):
+    import re
     player = Player.query.get_or_404(id)
     old_data = player.to_dict()
 
-    new_rule = (request.form.get('roll_number') or request.form.get('rule_number') or player.roll_number or '').strip()
-    if new_rule != player.roll_number:
-        existing = Player.query.filter((Player.roll_number == new_rule) | (Player.rule_number == new_rule)).first()
-        if existing and existing.id != player.id:
-            flash(f'Rule Number "{new_rule}" already belongs to another player.', 'danger')
+    new_rule = (request.form.get('roll_number') or request.form.get('rule_number') or player.roll_number or '').strip().upper()
+    if new_rule:
+        if len(new_rule) != 10 or not re.match(r'^[A-Z0-9]{10}$', new_rule):
+            flash('Rule Number must be exactly 10 alphanumeric characters (e.g. SPL26A001X).', 'danger')
             return redirect(url_for('admin.players'))
-        player.roll_number = new_rule
+        if new_rule != player.roll_number:
+            existing = Player.query.filter((Player.roll_number == new_rule) | (Player.rule_number == new_rule)).first()
+            if existing and existing.id != player.id:
+                flash(f'Rule Number "{new_rule}" already belongs to another player.', 'danger')
+                return redirect(url_for('admin.players'))
+            player.roll_number = new_rule
 
-    player.name = (request.form.get('name') or player.name or '').strip()
-    player.role = (request.form.get('role') or player.role or '').strip().upper()
-    player.branch = (request.form.get('branch') or player.branch or '').strip()
-    player.year = (request.form.get('year') or player.year or '').strip()
-    player.experience = (request.form.get('experience') or player.experience or '').strip()
-    player.category = (request.form.get('category') or player.category or '').strip().upper()
-    player.status = (request.form.get('status') or player.status or '').strip().upper()
-    player.room_number = (request.form.get('room_number') or '').strip()
+    new_year = request.form.get('year', '').strip()
+    if new_year and new_year in ['1', '2', '3', '4']:
+        player.year = new_year
 
-    try:
-        player.base_price = float(request.form.get('base_price', player.base_price))
-    except ValueError:
-        pass
+    new_name = request.form.get('name', '').strip()
+    if new_name:
+        player.name = new_name
+
+    new_role = request.form.get('role', '').strip().upper()
+    if new_role and new_role in PlayerRole.CHOICES:
+        player.role = new_role
+
+    new_cat = request.form.get('category')
+    if new_cat:
+        player.category = PlayerCategory.normalize(new_cat)
+
+    player.base_price = 10000.0
 
     file = request.files.get('photo_file')
     if file and file.filename and allowed_file(file.filename):
         filename = secure_filename(f"{player.roll_number}_{file.filename}")
         file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
         player.photo = filename
-    elif request.form.get('photo_url'):
-        player.photo = request.form.get('photo_url').strip()
 
     db.session.commit()
     log_audit(current_user.id, 'EDIT_PLAYER', 'Player', player.id, old_data, player.to_dict())
@@ -310,7 +315,8 @@ def add_franchise():
     short_name = request.form.get('short_name', '').strip().upper()
     authorized_email = request.form.get('authorized_email', '').strip().lower() or request.form.get('gmail', '').strip().lower() or request.form.get('email', '').strip().lower()
     owner_name = request.form.get('owner_name', '').strip()
-    google_auth_enabled = 'google_auth_enabled' in request.form or request.form.get('google_auth_enabled') == 'true'
+    # Default to True — franchises should always allow Google OAuth unless explicitly disabled
+    google_auth_enabled = request.form.get('google_auth_enabled') != 'false'
 
     captain_rule_number = request.form.get('captain_rule_number', '').strip()
     captain_name = request.form.get('captain_name', '').strip()
@@ -350,10 +356,13 @@ def add_franchise():
             flash(f"Note: Captain rule number '{captain_rule_number}' was not found in registered player database.", 'warning')
 
     try:
-        starting_purse = float(request.form.get('starting_purse', request.form.get('purse_amount', request.form.get('purse', 300000))))
-        squad_limit = int(request.form.get('squad_limit', 15))
-    except ValueError:
+        starting_purse = float(SystemSettings.get_setting('starting_purse', '300000'))
+    except (ValueError, TypeError):
         starting_purse = 300000.0
+
+    try:
+        squad_limit = int(SystemSettings.get_setting('squad_limit', '15'))
+    except (ValueError, TypeError):
         squad_limit = 15
 
     logo_filename = 'default_logo.png'
@@ -465,7 +474,8 @@ def edit_franchise(id):
     franchise.captain_year = captain_year or None
     franchise.captain_category = captain_category or None
     franchise.captain_id = captain_id
-    franchise.google_auth_enabled = 'google_auth_enabled' in request.form or request.form.get('google_auth_enabled') == 'true'
+    # Default to True — preserve existing unless explicitly set to false
+    franchise.google_auth_enabled = request.form.get('google_auth_enabled') != 'false'
     franchise.is_active = 'is_active' in request.form or request.form.get('is_active') == 'true'
 
     try:
@@ -1290,34 +1300,44 @@ def users_management():
 def create_user():
     username = request.form.get('username', '').strip().lower()
     email = request.form.get('email', '').strip().lower()
-    password = request.form.get('password', '')
+    password = request.form.get('password', '').strip()
     role = request.form.get('role', 'FRANCHISE').strip().upper()
     franchise_id = request.form.get('franchise_id')
 
-    if not username or not password:
-        flash('Username and password are required.', 'danger')
+    if not username:
+        flash('Username is required.', 'danger')
+        return redirect(url_for('admin.users_management'))
+
+    if not email:
+        flash('Email address is required.', 'danger')
         return redirect(url_for('admin.users_management'))
 
     if User.query.filter_by(username=username).first():
         flash(f"Username '{username}' already exists.", 'danger')
         return redirect(url_for('admin.users_management'))
 
+    if User.query.filter(User.email.ilike(email)).first():
+        flash(f"Email '{email}' is already registered.", 'danger')
+        return redirect(url_for('admin.users_management'))
+
     f_id = int(franchise_id) if franchise_id and franchise_id.isdigit() else None
     display_name = username.title()
     if f_id:
-        f_obj = Franchise.query.get(f_id)
+        f_obj = db.session.get(Franchise, f_id)
         if f_obj:
             display_name = f_obj.name
 
     user = User(
         username=username,
-        email=email or f"{username}@spl.com",
+        email=email,
         display_name=display_name,
         role=role,
         franchise_id=f_id,
         is_active=True
     )
-    user.set_password(password)
+    if password and len(password) >= 6:
+        user.set_password(password)
+
     db.session.add(user)
     db.session.commit()
 
@@ -1325,20 +1345,110 @@ def create_user():
     flash(f"User account '{username}' created successfully.", 'success')
     return redirect(url_for('admin.users_management'))
 
-@admin_bp.route('/users/<int:id>/reset-password', methods=['POST'])
+@admin_bp.route('/users/<int:id>/edit', methods=['POST'])
 @login_required
 @admin_required
-def reset_user_password(id):
-    user = User.query.get_or_404(id)
-    new_password = request.form.get('new_password', '')
-    if not new_password or len(new_password) < 6:
-        flash('Password must be at least 6 characters long.', 'danger')
+def edit_user(id):
+    """Edit a user account atomically — syncs Franchise.authorized_email when email changes."""
+    user = db.session.get(User, id)
+    if not user:
+        flash('User not found.', 'danger')
         return redirect(url_for('admin.users_management'))
 
-    user.set_password(new_password)
-    db.session.commit()
-    log_audit(current_user.id, 'USER_PASSWORD_RESET', 'User', user.id, None, f"Password reset for {user.username}")
-    flash(f"Password for user '{user.username}' reset successfully.", 'success')
+    old_email = (user.email or '').strip().lower()
+    old_data = {
+        'email': user.email,
+        'display_name': user.display_name,
+        'role': user.role,
+        'franchise_id': user.franchise_id,
+    }
+
+    new_email       = (request.form.get('email') or '').strip().lower()
+    new_display_name = (request.form.get('display_name') or '').strip()
+    new_role        = (request.form.get('role') or user.role).strip().upper()
+    franchise_id_raw = request.form.get('franchise_id', '')
+    new_franchise_id = int(franchise_id_raw) if franchise_id_raw and franchise_id_raw.isdigit() else None
+
+    # ── Validation ────────────────────────────────────────────────────────────
+    if not new_email:
+        flash('Email address cannot be empty.', 'danger')
+        return redirect(url_for('admin.users_management'))
+
+    # Uniqueness check — ignore this user's current email
+    conflict = User.query.filter(
+        User.email.ilike(new_email),
+        User.id != user.id
+    ).first()
+    if conflict:
+        flash(
+            f"Email '{new_email}' is already registered to account "
+            f"'{conflict.username}'. Please use a different email.",
+            'danger'
+        )
+        return redirect(url_for('admin.users_management'))
+
+    # ── Atomic update (all changes in one transaction) ────────────────────────
+    try:
+        email_changed = (new_email != old_email)
+
+        # 1. Update the User record
+        user.email = new_email
+        if new_display_name:
+            user.display_name = new_display_name
+        user.role = new_role
+        user.franchise_id = new_franchise_id
+
+        # 2. Sync Franchise.authorized_email when the email actually changed
+        #    — update the franchise this user is currently assigned to
+        if email_changed and new_franchise_id:
+            franchise = db.session.get(Franchise, new_franchise_id)
+            if franchise and (franchise.authorized_email or '').strip().lower() == old_email:
+                franchise.authorized_email = new_email
+                log_audit(
+                    current_user.id, 'FRANCHISE_EMAIL_SYNCED', 'Franchise',
+                    franchise.id, {'authorized_email': old_email},
+                    {'authorized_email': new_email}
+                )
+
+        # 3. If the old email was the authorized email of a *different* franchise
+        #    (e.g., user is being re-assigned), also update that franchise
+        if email_changed and old_email:
+            old_franchise = Franchise.query.filter(
+                Franchise.authorized_email.ilike(old_email)
+            ).first()
+            if old_franchise and (new_franchise_id is None or old_franchise.id != new_franchise_id):
+                old_franchise.authorized_email = new_email
+                log_audit(
+                    current_user.id, 'FRANCHISE_EMAIL_SYNCED', 'Franchise',
+                    old_franchise.id, {'authorized_email': old_email},
+                    {'authorized_email': new_email}
+                )
+
+        db.session.commit()
+
+        log_audit(
+            current_user.id, 'USER_EDITED', 'User', user.id, old_data,
+            {
+                'email': user.email,
+                'display_name': user.display_name,
+                'role': user.role,
+                'franchise_id': user.franchise_id,
+            }
+        )
+        flash(
+            f"Account '{user.username}' updated successfully."
+            + (" Email synced across franchise records." if email_changed else ""),
+            'success'
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        log_audit(
+            current_user.id, 'USER_EDIT_FAILED', 'User', user.id, old_data,
+            {'error': str(e)}, status='FAILED'
+        )
+        flash(f"Failed to update account: {e}", 'danger')
+
     return redirect(url_for('admin.users_management'))
 
 @admin_bp.route('/users/<int:id>/toggle-status', methods=['POST'])

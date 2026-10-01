@@ -26,7 +26,7 @@
             <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.dashboard') }}"><i class="fa-solid fa-chart-pie me-1"></i> Dashboard</a>
             <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.squad') }}"><i class="fa-solid fa-users me-1"></i> My Squad</a>
             <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.purchases') }}"><i class="fa-solid fa-cart-shopping me-1"></i> Purchases</a>
-            <a class="nav-link active bg-danger text-white fw-bold px-3 py-1.5" href="{{ url_for('franchise.bids') }}"><i class="fa-solid fa-list-check me-1"></i> Bid History</a>
+            <a class="nav-link active bg-danger-subtle text-danger border border-danger-subtle fw-bold px-3 py-1.5" href="{{ url_for('franchise.bids') }}"><i class="fa-solid fa-list-check me-1"></i> Bid History</a>
             <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.activity') }}"><i class="fa-solid fa-timeline me-1"></i> Activity</a>
             <a class="nav-link text-dark px-3 py-1.5" href="{{ url_for('franchise.profile') }}"><i class="fa-solid fa-id-card me-1"></i> Profile</a>
         </div>
@@ -40,7 +40,7 @@
                     <tr>
                         <th class="ps-3 py-2">Time</th>
                         <th class="py-2">Player Name</th>
-                        <th class="py-2">Rule / Roll No</th>
+                        <th class="py-2">Roll No</th>
                         <th class="py-2">Submitted Bid</th>
                         <th class="text-end pe-3 py-2">Result Status</th>
                     </tr>
@@ -51,17 +51,17 @@
                         <tr>
                             <td class="ps-3 text-muted small py-2">{{ b.created_at.strftime('%H:%M:%S (%Y-%m-%d)') }}</td>
                             <td class="fw-semibold text-dark py-2">{{ b.player.name if b.player else 'N/A' }}</td>
-                            <td class="text-danger font-monospace fw-bold py-2">#{{ b.player.rule_number or b.player.roll_number if b.player else 'N/A' }}</td>
+                            <td class="text-danger font-monospace fw-bold py-2">{{ b.player.rule_number or b.player.roll_number if b.player else 'N/A' }}</td>
                             <td class="text-danger font-monospace fw-bold py-2">₹ {{ b.amount | currency }}</td>
                             <td class="text-end pe-3 py-2">
                                 {% if b.status == 'WINNING' %}
-                                    <span class="badge bg-success px-3 py-1.5"><i class="fa-solid fa-trophy me-1"></i> WINNING</span>
+                                    <span class="badge bg-success-subtle text-black border border-success-subtle px-3 py-1.5"><i class="fa-solid fa-trophy me-1"></i> WINNING</span>
                                 {% elif b.status == 'SOLD' %}
-                                    <span class="badge bg-primary px-3 py-1.5"><i class="fa-solid fa-circle-check me-1"></i> WON</span>
+                                    <span class="badge bg-primary-subtle text-black border border-primary-subtle px-3 py-1.5"><i class="fa-solid fa-circle-check me-1"></i> WON</span>
                                 {% elif b.status == 'UNSOLD' %}
-                                    <span class="badge bg-light text-dark border px-3 py-1.5">UNSOLD</span>
+                                    <span class="badge bg-light text-black border px-3 py-1.5">UNSOLD</span>
                                 {% else %}
-                                    <span class="badge bg-danger text-white px-3 py-1.5"><i class="fa-solid fa-arrow-up me-1"></i> OUTBID</span>
+                                    <span class="badge bg-danger-subtle text-black border border-danger-subtle px-3 py-1.5"><i class="fa-solid fa-arrow-up me-1"></i> OUTBID</span>
                                 {% endif %}
                             </td>
                         </tr>
@@ -79,5 +79,7 @@
             </table>
         </div>
     </div>
+
+    {% include "includes/footer.html" %}
 </div>
 {% endblock %}

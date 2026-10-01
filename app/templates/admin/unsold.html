@@ -62,7 +62,7 @@
             <thead class="bg-light text-dark small text-uppercase">
                 <tr>
                     <th class="ps-3 py-2">Photo</th>
-                    <th class="py-2">Roll #</th>
+                    <th class="py-2">Roll No</th>
                     <th class="py-2">Player Name</th>
                     <th class="py-2">Role</th>
                     <th class="py-2">Category</th>
@@ -79,15 +79,15 @@
                         <img src="{{ url_for('static', filename='uploads/' + player.photo) if player.photo and not player.photo.startswith('http') else (player.photo or url_for('static', filename='uploads/default_player.png')) }}" 
                              alt="{{ player.name }}" class="rounded-circle object-fit-cover border" width="40" height="40">
                     </td>
-                    <td class="py-2"><span class="badge bg-light text-dark border">#{{ player.roll_number }}</span></td>
+                    <td class="py-2"><span class="badge bg-light text-black border">{{ player.roll_number }}</span></td>
                     <td class="py-2 fw-bold text-dark">{{ player.name }}</td>
-                    <td class="py-2"><span class="badge bg-light text-primary border">{{ player.role }}</span></td>
-                    <td class="py-2"><span class="badge bg-light text-dark border">{{ player.category }}</span></td>
-                    <td class="py-2 font-monospace">Rs. {{ player.base_price | currency }}</td>
-                    <td class="py-2"><span class="badge bg-danger">UNSOLD</span></td>
+                    <td class="py-2"><span class="badge bg-light text-black border">{{ player.role }}</span></td>
+                    <td class="py-2"><span class="badge bg-light text-black border">{{ player.category }}</span></td>
+                    <td class="py-2 font-monospace">₹ {{ player.base_price | currency }}</td>
+                    <td class="py-2"><span class="badge bg-danger-subtle text-black border border-danger-subtle">UNSOLD</span></td>
                     <td class="py-2">
                         {% if player.is_second_chance_eligible %}
-                            <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i>ELIGIBLE</span>
+                            <span class="badge bg-success-subtle text-black border border-success-subtle"><i class="fa-solid fa-check me-1"></i>ELIGIBLE</span>
                         {% else %}
                             <span class="badge bg-light text-muted border"><i class="fa-solid fa-ban me-1"></i>INELIGIBLE</span>
                         {% endif %}

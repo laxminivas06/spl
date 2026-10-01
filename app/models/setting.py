@@ -12,7 +12,7 @@ class SystemSettings(db.Model):
     DEFAULTS = {
         'event_name': 'SPL',
         'event_subtitle': 'Sphoorthy Premier League',
-        'starting_purse': '300000',
+        'starting_purse': '550000',
         'squad_limit': '15',
         'base_price': '10000',
         'timer_seconds': '10',

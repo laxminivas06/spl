@@ -2,78 +2,367 @@
 
 {% block title %}Sign In — {{ event_name or 'SPL' }} Portal{% endblock %}
 
-{% block content_wrapper %}
-<div class="spl-login-wrapper d-flex flex-column justify-content-center align-items-center py-4 px-3">
-    
-    <!-- Flash Messages (if any, cleanly displayed without extra buttons) -->
-    <div class="w-100 mb-3" style="max-width: 460px;">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="alert alert-{{ category }} shadow-sm rounded-3 border-0 py-2.5 px-3 font-sans d-flex align-items-center" role="alert">
-                <i class="fa-solid fa-circle-info me-2"></i>
-                <span>{{ message }}</span>
-              </div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-    </div>
+{% block extra_css %}
+<style>
+    /* ── Login page layout ────────────────────────────────────── */
+    .spl-login-outer {
+        min-height: calc(100vh - 120px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: clamp(1rem, 4vw, 3rem) clamp(0.75rem, 4vw, 1.5rem);
+    }
 
-    <!-- Centered Login Container (Responsive for Mobile, Tablet & Desktop) -->
-    <div class="w-100" style="max-width: 460px;">
-        
-        <!-- Header Branding (Emblem with Clean Glass Effect, No Ash Grey Background) -->
-        <div class="text-center mb-4">
-            <div class="d-inline-flex align-items-center justify-content-center p-3 rounded-circle spl-login-emblem mb-3">
-                <svg viewBox="0 0 100 100" style="width: 54px; height: 54px;" fill="currentColor">
-                    <path d="M48 6 C35 7 24 13 16 23 C9 32 6 42 7 53 C9 67 18 78 30 86 C40 92 51 94 62 92 C74 88 85 79 91 67 C97 55 96 40 89 29 C82 17 71 9 58 6 C55 5 50 5 48 6 Z" fill="#38bdf8" opacity="0.2" />
-                    <path d="M45 20 C48 20 50 18 50 15 C50 12 48 10 45 10 C42 10 40 12 40 15 C40 18 42 20 45 20 Z" fill="#e11d48"/>
-                    <path d="M38 27 L49 22 L55 35 L48 38 L43 29 L38 48 L32 45 L38 27 Z" fill="#38bdf8"/>
-                    <path d="M55 35 L70 48 L65 52 L52 38 Z" fill="#f59e0b"/>
-                    <path d="M48 38 L58 72 L50 74 L42 45 Z" fill="#60a5fa"/>
+    /* ── Card ─────────────────────────────────────────────────── */
+    .spl-login-card {
+        width: 100%;
+        max-width: 440px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07), 0 1px 4px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+
+    /* ── Header stripe ────────────────────────────────────────── */
+    .spl-login-header-stripe {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #dc2626 100%);
+        padding: clamp(1.5rem, 4vw, 2.25rem) clamp(1.25rem, 4vw, 2rem);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .spl-login-header-stripe::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.07) 0%, transparent 60%);
+        pointer-events: none;
+    }
+
+    .spl-login-emblem {
+        width: clamp(64px, 14vw, 88px);
+        height: clamp(64px, 14vw, 88px);
+        background: rgba(255, 255, 255, 0.12);
+        border: 2px solid rgba(255, 255, 255, 0.25);
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        backdrop-filter: blur(4px);
+    }
+
+    .spl-event-name {
+        font-size: clamp(1.1rem, 4vw, 1.5rem);
+        font-weight: 900;
+        color: #ffffff;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        line-height: 1.2;
+        margin-bottom: 0.25rem;
+    }
+
+    .spl-event-sub {
+        font-size: clamp(0.65rem, 2.5vw, 0.75rem);
+        color: rgba(255, 255, 255, 0.75);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-weight: 600;
+    }
+
+    /* ── Body ─────────────────────────────────────────────────── */
+    .spl-login-body {
+        padding: clamp(1.5rem, 4vw, 2rem) clamp(1.25rem, 4vw, 2rem);
+    }
+
+    /* ── Google button ────────────────────────────────────────── */
+    .btn-google-oauth {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        width: 100%;
+        padding: clamp(0.75rem, 2.5vw, 0.9rem) 1.25rem;
+        background: #ffffff;
+        color: #1f2937 !important;
+        border: 1.5px solid #d1d5db;
+        border-radius: 12px;
+        font-family: var(--spl-font-display, 'Montserrat', sans-serif);
+        font-size: clamp(0.875rem, 2.5vw, 1rem);
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        position: relative;
+        overflow: hidden;
+        min-height: 52px;
+    }
+
+    .btn-google-oauth:hover {
+        border-color: #4285F4;
+        box-shadow: 0 4px 16px rgba(66, 133, 244, 0.18);
+        transform: translateY(-1px);
+        color: #1f2937 !important;
+        background: #f8faff;
+    }
+
+    .btn-google-oauth:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 4px rgba(66, 133, 244, 0.2);
+    }
+
+    .btn-google-oauth.loading {
+        pointer-events: none;
+        opacity: 0.8;
+    }
+
+    .btn-google-oauth svg.google-logo {
+        flex-shrink: 0;
+        transition: transform 0.2s ease;
+    }
+
+    .btn-google-oauth:hover svg.google-logo {
+        transform: scale(1.05);
+    }
+
+    /* Spinner inside button */
+    .btn-google-oauth .spinner-border {
+        width: 1.1rem;
+        height: 1.1rem;
+        border-width: 2px;
+        color: #4285F4 !important;
+    }
+
+    /* ── Error alert ──────────────────────────────────────────── */
+    .spl-auth-error {
+        background: #fef2f2;
+        border: 1px solid #fca5a5;
+        border-radius: 10px;
+        color: #991b1b !important;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .spl-auth-error i {
+        flex-shrink: 0;
+        margin-top: 2px;
+        color: #dc2626 !important;
+    }
+
+    /* ── Info alert ───────────────────────────────────────────── */
+    .spl-auth-info {
+        background: #eff6ff;
+        border: 1px solid #93c5fd;
+        border-radius: 10px;
+        color: #1e3a8a !important;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .spl-auth-info i {
+        flex-shrink: 0;
+        margin-top: 2px;
+        color: #2563eb !important;
+    }
+
+    /* ── Divider ──────────────────────────────────────────────── */
+    .spl-login-divider {
+        height: 1px;
+        background: #f1f5f9;
+        margin: 1.25rem 0;
+    }
+
+    /* ── Access notice ────────────────────────────────────────── */
+    .spl-access-notice {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.7rem 0.9rem;
+        font-size: 0.78rem;
+        color: #475569 !important;
+        line-height: 1.5;
+    }
+
+    .spl-access-notice i {
+        flex-shrink: 0;
+        margin-top: 2px;
+        color: #dc2626 !important;
+    }
+
+    /* ── Responsive tweaks ────────────────────────────────────── */
+    @media (max-width: 480px) {
+        .spl-login-card {
+            border-radius: 16px;
+        }
+
+        .spl-login-outer {
+            padding: 0.75rem;
+        }
+    }
+
+    @media (min-width: 992px) {
+        .spl-login-card {
+            max-width: 460px;
+        }
+    }
+
+    @media (min-width: 1400px) {
+        .spl-login-card {
+            max-width: 480px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content_wrapper %}
+<div class="spl-login-outer">
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div style="width:100%; max-width:460px; margin-bottom:0.75rem;">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} shadow-sm rounded-3 border-0 py-2 px-3 d-flex align-items-center gap-2 small"
+            role="alert">
+            <i class="fa-solid fa-circle-info flex-shrink-0"></i>
+            <span class="text-dark">{{ message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Login Card -->
+    <div class="spl-login-card">
+
+        <!-- Header Stripe -->
+        <div class="spl-login-header-stripe">
+            <div class="spl-login-emblem">
+                <svg viewBox="0 0 100 100" fill="none"
+                    style="width: clamp(36px,8vw,52px); height: clamp(36px,8vw,52px);">
+                    <path
+                        d="M48 6 C35 7 24 13 16 23 C9 32 6 42 7 53 C9 67 18 78 30 86 C40 92 51 94 62 92 C74 88 85 79 91 67 C97 55 96 40 89 29 C82 17 71 9 58 6 C55 5 50 5 48 6 Z"
+                        fill="rgba(255,255,255,0.15)" />
+                    <circle cx="45" cy="15" r="5" fill="#fca5a5" />
+                    <path d="M38 27 L49 22 L55 35 L48 38 L43 29 L38 48 L32 45 L38 27 Z" fill="#ffffff" />
+                    <path d="M55 35 L70 48 L65 52 L52 38 Z" fill="#fbbf24" />
+                    <path d="M48 38 L58 72 L50 74 L42 45 Z" fill="rgba(255,255,255,0.85)" />
                 </svg>
             </div>
-            <h1 class="fw-black tracking-wide text-white font-display mb-1 fs-3 text-uppercase">
-                {{ event_name or 'SPHOORTHY PREMIER LEAGUE' }}
-            </h1>
-            <div class="text-danger font-display extra-small fw-bold text-uppercase tracking-wider">
-                {{ event_subtitle or 'Official Player Auction System 2026' }}
-            </div>
+            <div class="spl-event-name">{{ event_name or 'Sphoorthy Premier League' }}</div>
+            <div class="spl-event-sub">{{ event_subtitle or 'Official Player Auction System 2026' }}</div>
         </div>
 
-        <!-- Login Card (Sleek Glassmorphic Surface, No Ash Grey Background) -->
-        <div class="spl-login-card p-4 p-sm-5 text-center">
-            <h2 class="fw-bold text-white font-display mb-2 fs-4">Sign In</h2>
-            <p class="text-white-50 small mb-4 font-sans">
-                Sign in using your authorized Google account to access your auction dashboard
-            </p>
+        <!-- Body -->
+        <div class="spl-login-body">
 
-            <!-- The ONLY interactive button on this entire page: Google Sign In -->
-            <div class="my-3">
-                <a href="{{ url_for('auth.google_login') }}" 
-                   id="btn-google-signin"
-                   class="btn btn-google-signin-clean w-100 py-3 d-flex align-items-center justify-content-center gap-3 fs-6 font-display">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 48 48">
-                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.28-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                    </svg>
-                    <span>Sign In with Google</span>
-                </a>
+            <!-- Auth Error (from OAuth callback) -->
+            {% if auth_error %}
+            <div class="spl-auth-error">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>{{ auth_error }}</span>
+            </div>
+            {% endif %}
+
+            <!-- Sign-in heading -->
+            <div class="text-center mb-4">
+                <h2 class="fw-bold text-dark font-display mb-1" style="font-size: clamp(1.1rem, 3.5vw, 1.35rem);">
+                    Sign in to your account
+                </h2>
+                <p class="text-secondary mb-0" style="font-size: clamp(0.78rem, 2.5vw, 0.875rem);">
+                    Use your authorized Google account to access the SPL portal
+                </p>
             </div>
 
-            <div class="mt-4 pt-3 border-top border-white-10 text-center font-display">
-                <small class="text-white-50 d-block extra-small">
-                    <i class="fa-solid fa-shield-halved me-1 text-danger"></i>
-                    Role-based access for Authorized Administrators & Franchise Representatives
-                </small>
-            </div>
-        </div>
+            <!-- ── Google Sign-In Button ── -->
+            <a href="{{ url_for('auth.google_login') }}" id="btn-google-signin" class="btn-google-oauth font-display"
+                role="button" aria-label="Sign in with Google">
+                <!-- Google logo SVG -->
+                <svg class="google-logo" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 48 48"
+                    aria-hidden="true">
+                    <path fill="#EA4335"
+                        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                    <path fill="#4285F4"
+                        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                    <path fill="#FBBC05"
+                        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.28-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                    <path fill="#34A853"
+                        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                </svg>
+                <span id="btn-google-text">Continue with Google</span>
+                <!-- Loading spinner (hidden by default) -->
+                <span id="btn-google-spinner" class="spinner-border d-none" role="status" aria-hidden="true"></span>
+            </a>
 
-        <div class="text-center mt-4 font-display">
-            <small class="text-white-50 extra-small">&copy; 2026 Sphoorthy Engineering College. All rights reserved.</small>
-        </div>
+            <div class="spl-login-divider"></div>
+
+
+
+        </div><!-- /body -->
+    </div><!-- /card -->
+
+    <!-- Copyright -->
+    <div class="text-center mt-3">
+        <small class="text-muted" style="font-size:0.72rem;">
+            &copy; 2026 Sphoorthy Engineering College. All rights reserved.
+        </small>
     </div>
+
+    <!-- Global Footer -->
+    <div class="w-100 mt-3" style="max-width: 900px;">
+        {% include "includes/footer.html" %}
+    </div>
+
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        var btn = document.getElementById('btn-google-signin');
+        var btnText = document.getElementById('btn-google-text');
+        var btnSpinner = document.getElementById('btn-google-spinner');
+        var activated = false;
+
+        if (!btn) return;
+
+        btn.addEventListener('click', function (e) {
+            if (activated) { e.preventDefault(); return; }
+            activated = true;
+
+            // Show loading state
+            btn.classList.add('loading');
+            if (btnText) btnText.textContent = 'Connecting to Google…';
+            if (btnSpinner) btnSpinner.classList.remove('d-none');
+
+            // Safety reset in case the redirect is slow or fails
+            setTimeout(function () {
+                if (activated) {
+                    activated = false;
+                    btn.classList.remove('loading');
+                    if (btnText) btnText.textContent = 'Continue with Google';
+                    if (btnSpinner) btnSpinner.classList.add('d-none');
+                }
+            }, 12000);
+        });
+    })();
+</script>
 {% endblock %}

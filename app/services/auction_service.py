@@ -21,6 +21,10 @@ def find_player_by_roll(roll_number):
     if not player:
         raise ValueError(f"PLAYER NOT FOUND. Please verify the announced roll number '{roll_number}'.")
 
+    # Captain Protection: Captains cannot enter bidding pool
+    if player.is_captain or str(player.status).upper() == 'RETAINED':
+        raise ValueError(f"Captain Retained: Player '{player.name} (C)' (#{player.roll_number}) is a Team Captain and already RETAINED for ₹ 50,000. Captains cannot enter the auction bidding pool.")
+
     # Requirement 2: Strict Sold Player Check
     if player.is_sold or str(player.status).upper() == 'SOLD' or player.sold_to is not None:
         raise ValueError(f"Already Sold: Player '{player.name}' (#{player.roll_number}) has already been sold. This player cannot be auctioned again.")
@@ -42,6 +46,10 @@ def activate_player(player_id, admin_id=None):
     player = Player.query.get(player_id)
     if not player:
         raise ValueError("Player not found.")
+
+    # Captain Protection: Captains cannot enter bidding pool
+    if player.is_captain or str(player.status).upper() == 'RETAINED':
+        raise ValueError(f"Captain Retained: Player '{player.name} (C)' (#{player.roll_number}) is a Team Captain and already RETAINED. Captains cannot be auctioned.")
 
     # Requirement 2 & 6: Strict Sold Check
     if player.is_sold or str(player.status).upper() == 'SOLD' or player.sold_to is not None:

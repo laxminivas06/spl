@@ -5,9 +5,9 @@
 {% block content %}
 <div class="text-center mb-4">
     <div class="d-inline-flex align-items-center gap-2 mb-2">
-        <span class="badge bg-danger text-white px-3 py-1.5 fs-7 font-display fw-bold uppercase shadow-sm">SPL TOURNAMENT ROSTERS 2026</span>
-        <a href="{{ url_for('public.live_ui') }}" class="badge bg-primary text-white px-3 py-1.5 fs-7 font-display fw-bold text-decoration-none shadow-sm">
-            <i class="fa-solid fa-bolt me-1 text-white"></i> Open Live Auction UI
+        <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-1.5 fs-7 font-display fw-bold uppercase shadow-sm">SPL TOURNAMENT ROSTERS 2026</span>
+        <a href="{{ url_for('public.live_ui') }}" class="badge bg-primary-subtle text-primary border border-primary px-3 py-1.5 fs-7 font-display fw-bold text-decoration-none shadow-sm">
+            <i class="fa-solid fa-bolt me-1 text-primary"></i> Open Live Auction UI
         </a>
     </div>
     <h1 class="fw-black text-dark font-display display-5 mb-1 text-uppercase">OFFICIAL FRANCHISE TEAMS</h1>
@@ -24,14 +24,14 @@
             <div class="d-flex align-items-center justify-content-between pb-3 border-bottom border-secondary-subtle mb-4">
                 <div class="d-flex align-items-center gap-3">
                     <img src="{{ url_for('static', filename='uploads/' + f.logo) if f.logo and not f.logo.startswith('http') else (f.logo or url_for('static', filename='uploads/default_logo.png')) }}" 
-                         alt="{{ f.name }}" class="rounded-circle object-fit-cover border border-secondary-subtle shadow-sm" width="60" height="60">
+                         alt="{{ f.name }}" class="rounded-3 object-fit-cover border border-secondary-subtle shadow-sm" width="60" height="60">
                     <div>
                         <h3 class="fw-bold text-dark mb-0">{{ f.name }}</h3>
-                        <span class="badge bg-secondary fs-6 font-monospace">{{ f.short_name }}</span>
+                        <span class="badge bg-secondary-subtle text-dark border border-secondary-subtle fs-6 font-monospace">{{ f.short_name }}</span>
                     </div>
                 </div>
                 <div class="text-end">
-                    <span class="badge bg-success fs-6 px-3 py-2"><i class="fa-solid fa-users me-1"></i>{{ team.players|length }} / {{ f.squad_limit }} PLAYERS</span>
+                    <span class="badge bg-success-subtle text-success border border-success fs-6 px-3 py-2"><i class="fa-solid fa-users me-1"></i>{{ team.players|length }} / {{ f.squad_limit }} PLAYERS</span>
                 </div>
             </div>
 
@@ -39,7 +39,7 @@
             <div class="row g-2 mb-3 bg-light p-2 rounded border border-secondary-subtle text-center">
                 <div class="col-6">
                     <span class="text-muted extra-small text-uppercase d-block fw-bold">Captain</span>
-                    <strong class="text-danger small">{{ f.captain.name if f.captain else 'TBD' }}</strong>
+                    <strong class="text-danger small">{{ f.captain.name if f.captain else (f.captain_name or 'TBD') }} (C)</strong>
                 </div>
                 <div class="col-6">
                     <span class="text-muted extra-small text-uppercase d-block fw-bold">Vice-Captain</span>
@@ -109,19 +109,24 @@
                     </thead>
                     <tbody class="bg-white">
                         {% for player in team.players %}
+                        {% set is_cap = player.is_captain or (f.captain_id and f.captain_id == player.id) or (f.captain_name and f.captain_name.strip().lower() == player.name.strip().lower()) %}
                         <tr>
                             <td class="text-muted small font-monospace">{{ loop.index }}</td>
                             <td class="fw-bold text-dark">
-                                {{ player.name }}
-                                {% if player.is_captain or (f.captain_id and f.captain_id == player.id) or (f.captain_name and f.captain_name.strip().lower() == player.name.strip().lower()) %}
-                                <span class="badge bg-danger text-white extra-small ms-1 fw-bold font-display"><i class="fa-solid fa-crown me-1"></i>CAPTAIN</span>
-                                {% endif %}
+                                {{ player.name }}{% if is_cap %} (C) <span class="badge bg-danger-subtle text-danger border border-danger extra-small ms-1 fw-bold font-display">RETAINED</span>{% endif %}
                             </td>
-                            <td><span class="badge bg-light border border-primary text-primary extra-small font-display">{{ player.role }}</span></td>
+                            <td>
+                                <span class="badge bg-light border border-secondary-subtle text-dark extra-small font-display d-inline-flex align-items-center gap-1.5 py-1 px-2">
+                                    <img src="{{ player.role | category_icon }}" class="category-icon-img" style="width: 16px; height: 16px; object-fit: contain;">
+                                    {{ player.role }}
+                                </span>
+                            </td>
                             <td><span class="extra-small text-dark font-display">{{ player.category }}</span></td>
                             {% if show_prices %}
                             <td class="text-end fw-bold small font-monospace">
-                                {% if player.is_captain or (f.captain_id and f.captain_id == player.id) or player.sold_price is none or player.sold_price == 0 %}
+                                {% if is_cap %}
+                                <span class="text-danger">₹ 50,000 <small class="text-muted fw-normal">(RETAINED)</small></span>
+                                {% elif player.sold_price is none or player.sold_price == 0 %}
                                 <span class="text-muted fs-6">—</span>
                                 {% else %}
                                 <span class="text-success">₹ {{ player.sold_price | currency }}</span>
