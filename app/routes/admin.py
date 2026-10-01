@@ -5,7 +5,7 @@ import re
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app, Response, make_response
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app, Response, make_response, abort
 from flask_login import login_required, current_user
 from app.extensions import db
 from app.models import User, Player, PlayerRole, PlayerCategory, PlayerStatus, Franchise, AuctionState, AuctionStatus, SystemSettings, AuditLog, Transaction, Bid, Fixture, FixtureStage, FixtureStatus
@@ -18,6 +18,15 @@ from app.services.backup_service import create_database_backup, list_backups, re
 from app.services.health_service import run_deep_auction_check
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+
+@admin_bp.before_request
+def require_admin_for_admin_bp():
+    """Ensure unauthorized users cannot access any admin pages or endpoints directly by URL."""
+    if not current_user.is_authenticated:
+        flash('Please sign in with your authorized administrator Google account to access this page.', 'warning')
+        return redirect(url_for('auth.login'))
+    if not current_user.is_admin:
+        abort(403)
 
 def allowed_file(filename):
     return '.' in filename and \

@@ -14,6 +14,15 @@ def allowed_file(filename):
 
 franchise_bp = Blueprint('franchise', __name__, url_prefix='/franchise')
 
+@franchise_bp.before_request
+def require_franchise_or_admin_for_bp():
+    """Ensure unauthorized users cannot access any franchise portal pages or endpoints directly by URL."""
+    if not current_user.is_authenticated:
+        flash('Please sign in with your authorized franchise Google account to access this page.', 'warning')
+        return redirect(url_for('auth.login'))
+    if not (current_user.is_franchise or current_user.is_admin):
+        abort(403)
+
 def get_current_franchise():
     """Strictly retrieve authenticated user's assigned franchise from DB."""
     if not current_user.is_authenticated or not current_user.franchise_id:

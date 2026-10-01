@@ -140,24 +140,57 @@
         color: #4285F4 !important;
     }
 
-    /* ── Error alert ──────────────────────────────────────────── */
-    .spl-auth-error {
+    /* ── Error card ──────────────────────────────────────────── */
+    .spl-auth-error-card {
         background: #fef2f2;
-        border: 1px solid #fca5a5;
-        border-radius: 10px;
-        color: #991b1b !important;
-        padding: 0.75rem 1rem;
-        font-size: 0.875rem;
-        display: flex;
-        align-items: flex-start;
-        gap: 0.6rem;
+        border: 1.5px solid #fca5a5;
+        border-radius: 14px;
+        padding: 1rem 1.15rem;
         margin-bottom: 1.25rem;
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.08);
+        text-align: left;
     }
 
-    .spl-auth-error i {
-        flex-shrink: 0;
-        margin-top: 2px;
-        color: #dc2626 !important;
+    .spl-auth-error-title {
+        color: #991b1b;
+        font-weight: 800;
+        font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+        font-family: var(--spl-font-display, 'Montserrat', sans-serif);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .spl-auth-error-desc {
+        color: #7f1d1d;
+        font-size: clamp(0.78rem, 2.2vw, 0.85rem);
+        line-height: 1.5;
+    }
+
+    .spl-auth-account-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: #ffffff;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        padding: 0.3rem 0.65rem;
+        font-size: clamp(0.72rem, 2vw, 0.8rem);
+        color: #991b1b;
+        margin-top: 0.6rem;
+        word-break: break-all;
+        font-family: var(--spl-font-mono, monospace);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+
+    .spl-auth-error-hint {
+        margin-top: 0.65rem;
+        padding-top: 0.6rem;
+        border-top: 1px solid #fecaca;
+        font-size: clamp(0.7rem, 2vw, 0.76rem);
+        color: #991b1b;
+        opacity: 0.9;
     }
 
     /* ── Info alert ───────────────────────────────────────────── */
@@ -191,14 +224,15 @@
     .spl-access-notice {
         display: flex;
         align-items: flex-start;
-        gap: 0.5rem;
+        gap: 0.6rem;
         background: #f8fafc;
         border: 1px solid #e2e8f0;
         border-radius: 10px;
-        padding: 0.7rem 0.9rem;
-        font-size: 0.78rem;
+        padding: 0.75rem 0.95rem;
+        font-size: clamp(0.72rem, 2vw, 0.78rem);
         color: #475569 !important;
         line-height: 1.5;
+        text-align: left;
     }
 
     .spl-access-notice i {
@@ -214,7 +248,8 @@
         }
 
         .spl-login-outer {
-            padding: 0.75rem;
+            padding: 0.75rem 0.5rem;
+            min-height: calc(100vh - 40px);
         }
     }
 
@@ -274,11 +309,25 @@
         <!-- Body -->
         <div class="spl-login-body">
 
-            <!-- Auth Error (from OAuth callback) -->
+            <!-- Auth Error Card (Clean, Professional, Specific) -->
             {% if auth_error %}
-            <div class="spl-auth-error">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                <span>{{ auth_error }}</span>
+            <div class="spl-auth-error-card" role="alert">
+                <div class="spl-auth-error-title">
+                    <i class="fa-solid fa-triangle-exclamation text-danger fs-6"></i>
+                    <span>{{ auth_error_title or 'Authentication Notice' }}</span>
+                </div>
+                <div class="spl-auth-error-desc">
+                    {{ auth_error|safe }}
+                </div>
+                {% if auth_email %}
+                <div class="spl-auth-account-badge">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span>{{ auth_email }}</span>
+                </div>
+                {% endif %}
+                <div class="spl-auth-error-hint">
+                    <i class="fa-solid fa-circle-question me-1"></i>Please verify you are selecting your authorized Google account below.
+                </div>
             </div>
             {% endif %}
 
@@ -314,7 +363,13 @@
 
             <div class="spl-login-divider"></div>
 
-
+            <!-- Access Notice -->
+            <div class="spl-access-notice">
+                <i class="fa-solid fa-shield-halved"></i>
+                <div>
+                    <strong>Protected System:</strong> Only registered Administrators and Franchise Representatives with authorized Google credentials may sign in.
+                </div>
+            </div>
 
         </div><!-- /body -->
     </div><!-- /card -->

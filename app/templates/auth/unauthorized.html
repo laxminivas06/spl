@@ -1,37 +1,86 @@
 {% extends "base.html" %}
 
-{% block title %}Access Denied — {{ event_name }}{% endblock %}
+{% block title %}Access Denied — {{ event_name or 'SPL' }}{% endblock %}
 
-{% block content %}
-<div class="d-flex align-items-center justify-content-center py-5">
-    <div class="w-100 text-center" style="max-width: 550px;">
-        <div class="spl-card p-4 p-md-5 border-danger shadow-sm bg-white border">
+{% block extra_css %}
+<style>
+    .spl-unauth-outer {
+        min-height: calc(100vh - 80px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: clamp(1rem, 4vw, 3rem) clamp(0.75rem, 4vw, 1.5rem);
+    }
+
+    .spl-unauth-card {
+        width: 100%;
+        max-width: 480px;
+        background: #ffffff;
+        border: 1px solid #fca5a5;
+        border-radius: 20px;
+        box-shadow: 0 4px 24px rgba(220, 38, 38, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+
+    .spl-unauth-stripe {
+        background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
+        padding: clamp(1.5rem, 4vw, 2rem) 1.5rem;
+        text-align: center;
+        color: #ffffff;
+    }
+
+    .spl-unauth-body {
+        padding: clamp(1.5rem, 4vw, 2rem) clamp(1.25rem, 4vw, 2rem);
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content_wrapper %}
+<div class="spl-unauth-outer">
+    <div class="spl-unauth-card">
+        <div class="spl-unauth-stripe">
+            <div class="mb-2">
+                <i class="fa-solid fa-triangle-exclamation fs-1 text-white opacity-90"></i>
+            </div>
+            <h1 class="fs-4 fw-black font-display uppercase tracking-wide mb-1 text-white">Access Denied</h1>
+            <div class="extra-small font-display uppercase tracking-wider text-white-50">{{ event_name or 'Sphoorthy Premier League' }}</div>
+        </div>
+
+        <div class="spl-unauth-body">
             {% if is_disabled %}
-                <div class="badge bg-danger-subtle text-danger border border-danger-subtle fs-6 px-4 py-2 mb-3 text-uppercase tracking-wide fw-bold">
-                    <i class="fa-solid fa-ban me-2"></i>FRANCHISE ACCESS DISABLED
+                <div class="badge bg-danger-subtle text-danger border border-danger-subtle fs-7 px-3 py-1.5 mb-3 text-uppercase tracking-wide fw-bold">
+                    <i class="fa-solid fa-ban me-1.5"></i>ACCOUNT INACTIVE
                 </div>
-                <h2 class="fw-bold text-dark mb-3">Franchise Account Inactive</h2>
-                <p class="text-muted mb-4">
-                    Access for <strong>{{ franchise_name }}</strong> ({{ email }}) is currently deactivated by the administrator.
+                <h3 class="fw-bold text-dark font-display fs-5 mb-2">Franchise Access Disabled</h3>
+                <p class="text-secondary small mb-3">
+                    Access for <strong>{{ franchise_name or 'Franchise' }}</strong> (<code>{{ email }}</code>) is currently deactivated by the administrator.
                 </p>
             {% else %}
-                <div class="badge bg-danger-subtle text-danger border border-danger-subtle fs-6 px-4 py-2 mb-3 text-uppercase tracking-wide fw-bold">
-                    <i class="fa-solid fa-triangle-exclamation me-2"></i>ACCESS DENIED
+                <div class="badge bg-danger-subtle text-danger border border-danger-subtle fs-7 px-3 py-1.5 mb-3 text-uppercase tracking-wide fw-bold">
+                    <i class="fa-solid fa-lock me-1.5"></i>NOT AUTHORIZED
                 </div>
-                <h2 class="fw-bold text-dark mb-3">Google Account Not Authorized</h2>
-                <p class="text-muted mb-4">
-                    Your Google account (<strong>{{ email }}</strong>) is not currently authorized for any SPL franchise.
+                <h3 class="fw-bold text-dark font-display fs-5 mb-2">Google Account Not Assigned</h3>
+                <p class="text-secondary small mb-3">
+                    Your Google account (<code>{{ email }}</code>) is not assigned to any franchise or administrative role.
                 </p>
             {% endif %}
 
-            <p class="text-muted small mb-4 border-top pt-3">
-                If you believe this is an error, please contact the SPL Event Administrator to update your authorized email address.
-            </p>
+            <div class="alert alert-light border small text-muted text-start mb-4 py-2.5 px-3 rounded-3" style="font-size:0.8rem;">
+                <i class="fa-solid fa-circle-info text-primary me-1.5"></i>
+                If you are a registered Franchise Representative or Administrator, please contact the SPL Event Administrator to assign your Google account.
+            </div>
 
-            <a href="{{ url_for('auth.login') }}" class="btn btn-spl-primary w-100 py-2.5 fw-bold shadow-sm">
-                <i class="fa-solid fa-arrow-left me-2"></i>BACK TO LOGIN
+            <a href="{{ url_for('auth.login') }}" class="btn btn-danger w-100 py-2.5 fw-bold font-display shadow-sm rounded-3">
+                <i class="fa-solid fa-arrow-left me-2"></i>Return to Sign In
             </a>
         </div>
+    </div>
+
+    <!-- Global Footer -->
+    <div class="w-100 mt-3" style="max-width: 900px;">
+        {% include "includes/footer.html" %}
     </div>
 </div>
 {% endblock %}

@@ -26,7 +26,18 @@ def _is_oauth_unconfigured():
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('admin.dashboard') if current_user.is_admin else url_for('franchise.dashboard'))
-    return render_template('auth/login.html', is_oauth_unconfigured=_is_oauth_unconfigured())
+
+    auth_error = request.args.get('auth_error') or request.args.get('error')
+    auth_error_title = request.args.get('auth_error_title')
+    auth_email = request.args.get('auth_email') or request.args.get('email')
+
+    return render_template(
+        'auth/login.html',
+        is_oauth_unconfigured=_is_oauth_unconfigured(),
+        auth_error=auth_error,
+        auth_error_title=auth_error_title,
+        auth_email=auth_email
+    )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -66,16 +77,13 @@ def google_login():
     if mock_email and (current_app.debug or current_app.config.get('TESTING') or _is_oauth_unconfigured()):
         return redirect(url_for('auth.google_callback', mock_email=mock_email))
 
-    # Unconfigured → show dev account selector
+    # Unconfigured → do not expose application data; show clean error on login page
     if _is_oauth_unconfigured():
-        franchises = Franchise.query.filter_by(is_active=True).all()
-        admin_email = current_app.config.get('ADMIN_EMAIL', '')
-        admin_emails = current_app.config.get('ADMIN_EMAILS', [admin_email])
         return render_template(
-            'auth/google_auth_prompt.html',
-            franchises=franchises,
-            admin_email=admin_email,
-            admin_emails=admin_emails
+            'auth/login.html',
+            is_oauth_unconfigured=True,
+            auth_error="Google Sign-In is currently being configured on this server. Please contact your administrator.",
+            auth_error_title="Configuration Notice"
         )
 
     # Real OAuth
@@ -88,9 +96,12 @@ def google_login():
     except Exception as e:
         log_audit(None, 'GOOGLE_LOGIN_FAILED', 'User', None, None,
                   f"OAuth initiation error: {e}", status='FAILED')
-        return render_template('auth/login.html',
-                               is_oauth_unconfigured=False,
-                               auth_error=f"Could not connect to Google Sign-In. Please try again.")
+        return render_template(
+            'auth/login.html',
+            is_oauth_unconfigured=False,
+            auth_error="Could not connect to Google Sign-In service. Please verify your internet connection and try again.",
+            auth_error_title="Connection Error"
+        )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -106,14 +117,20 @@ def google_callback():
     if error:
         error_desc = request.args.get('error_description', '')
         if error == 'access_denied':
-            return render_template('auth/login.html',
-                                   is_oauth_unconfigured=_is_oauth_unconfigured(),
-                                   auth_error="Sign-in was cancelled. Please try again.")
+            return render_template(
+                'auth/login.html',
+                is_oauth_unconfigured=_is_oauth_unconfigured(),
+                auth_error="Google sign-in was cancelled. Please try signing in again with your authorized Google account.",
+                auth_error_title="Sign-In Cancelled"
+            )
         log_audit(None, 'GOOGLE_LOGIN_FAILED', 'User', None, None,
                   f"OAuth error: {error} — {error_desc}", status='FAILED')
-        return render_template('auth/login.html',
-                               is_oauth_unconfigured=_is_oauth_unconfigured(),
-                               auth_error=f"Google authentication failed: {error_desc or error}. Please try again.")
+        return render_template(
+            'auth/login.html',
+            is_oauth_unconfigured=_is_oauth_unconfigured(),
+            auth_error=f"Google authentication failed: {error_desc or error}. Please try again.",
+            auth_error_title="Authentication Failed"
+        )
 
     mock_email = request.args.get('mock_email')
     google_email = None
@@ -141,29 +158,41 @@ def google_callback():
             if not google_email:
                 log_audit(None, 'GOOGLE_LOGIN_FAILED', 'User', None, None,
                           'Google returned no email address', status='FAILED')
-                return render_template('auth/login.html',
-                                       is_oauth_unconfigured=False,
-                                       auth_error="Google did not return your email address. Please ensure your Google account has a verified email.")
+                return render_template(
+                    'auth/login.html',
+                    is_oauth_unconfigured=False,
+                    auth_error="Google did not return an email address. Please ensure your Google account has a verified primary email.",
+                    auth_error_title="Authentication Incomplete"
+                )
 
             if not email_verified:
                 log_audit(None, 'GOOGLE_LOGIN_FAILED', 'User', None, None,
                           f"Email not verified: {google_email}", status='FAILED')
-                return render_template('auth/login.html',
-                                       is_oauth_unconfigured=False,
-                                       auth_error="Your Google email address is not verified. Please verify it in your Google account settings.")
+                return render_template(
+                    'auth/login.html',
+                    is_oauth_unconfigured=False,
+                    auth_error=f"The Google account email ({google_email}) is not verified. Please verify it in your Google account settings.",
+                    auth_error_title="Email Not Verified",
+                    auth_email=google_email
+                )
 
         except Exception as e:
             err_str = str(e)
             log_audit(None, 'GOOGLE_LOGIN_FAILED', 'User', None, None,
                       f"OAuth token error: {err_str}", status='FAILED')
-            # State mismatch usually means the user refreshed or the session expired
             if 'state' in err_str.lower() or 'csrf' in err_str.lower() or 'mismatching' in err_str.lower():
-                return render_template('auth/login.html',
-                                       is_oauth_unconfigured=False,
-                                       auth_error="Session expired or security check failed. Please try signing in again.")
-            return render_template('auth/login.html',
-                                   is_oauth_unconfigured=False,
-                                   auth_error="Google authentication failed. Please try again.")
+                return render_template(
+                    'auth/login.html',
+                    is_oauth_unconfigured=False,
+                    auth_error="Your sign-in session expired or the security check failed. Please click Continue with Google to try again.",
+                    auth_error_title="Session Expired"
+                )
+            return render_template(
+                'auth/login.html',
+                is_oauth_unconfigured=False,
+                auth_error="Google authentication could not be completed. Please try again.",
+                auth_error_title="Authentication Error"
+            )
 
     # ── Normalize email & look up user / franchise ───────────────────────────
     norm_email = google_email.strip().lower()
@@ -196,7 +225,7 @@ def google_callback():
     # Strategy 3: find by Franchise.authorized_email
     franchise = Franchise.query.filter(Franchise.authorized_email.ilike(norm_email)).first()
 
-    # ── Admin auto-provisioning ───────────────────────────────────────────────
+    # ── Admin auto-provisioning / assignment ──────────────────────────────────
     if norm_email in admin_emails_cfg or norm_email in hardcoded_admins:
         if not user:
             user = User(
@@ -216,11 +245,20 @@ def google_callback():
     if not franchise and user and getattr(user, 'franchise_id', None):
         franchise = db.session.get(Franchise, user.franchise_id)
 
-    # ── Unauthorized ─────────────────────────────────────────────────────────
+    # ── Unauthorized / Unassigned Google account ─────────────────────────────
+    # If the user is neither an admin, nor has an assigned franchise, nor is an existing active user:
     if not franchise and not (user and user.is_admin):
-        log_audit(None, 'GOOGLE_ACCOUNT_UNAUTHORIZED', 'User', None, None,
-                  f"Unauthorized Google account: {norm_email}", status='DENIED')
-        return render_template('auth/unauthorized.html', email=norm_email, is_disabled=False)
+        # Also check if existing user has another valid role
+        if not (user and user.is_active and user.role):
+            log_audit(None, 'GOOGLE_ACCOUNT_UNAUTHORIZED', 'User', None, None,
+                      f"Unauthorized Google account: {norm_email}", status='DENIED')
+            return render_template(
+                'auth/login.html',
+                is_oauth_unconfigured=_is_oauth_unconfigured(),
+                auth_error=f"Access Denied: The Google account <strong>{norm_email}</strong> is not assigned to any franchise or role. Please contact the SPL Administrator to request access.",
+                auth_error_title="Access Denied: Account Not Assigned",
+                auth_email=norm_email
+            )
 
     # ── Franchise inactive / Google auth disabled ─────────────────────────────
     # NOTE: Admin users bypass this check — only pure franchise accounts are gated
@@ -229,8 +267,13 @@ def google_callback():
                   franchise.id, None,
                   f"Franchise '{franchise.name}' inactive or Google auth disabled",
                   status='DENIED', franchise_id=franchise.id)
-        return render_template('auth/unauthorized.html',
-                               email=norm_email, franchise_name=franchise.name, is_disabled=True)
+        return render_template(
+            'auth/login.html',
+            is_oauth_unconfigured=_is_oauth_unconfigured(),
+            auth_error=f"Access Denied: Franchise account for '<strong>{franchise.name}</strong>' ({norm_email}) is currently deactivated or Google Sign-In is disabled by the administrator.",
+            auth_error_title="Franchise Account Inactive",
+            auth_email=norm_email
+        )
 
     # ── Auto-provision franchise user ─────────────────────────────────────────
     if not user and franchise:
@@ -250,16 +293,25 @@ def google_callback():
     if not user:
         log_audit(None, 'GOOGLE_ACCOUNT_UNAUTHORIZED', 'User', None, None,
                   f"No user record for: {norm_email}", status='DENIED')
-        return render_template('auth/unauthorized.html', email=norm_email, is_disabled=False)
+        return render_template(
+            'auth/login.html',
+            is_oauth_unconfigured=_is_oauth_unconfigured(),
+            auth_error=f"Access Denied: No active user profile found for Google account <strong>{norm_email}</strong>. Please contact the administrator.",
+            auth_error_title="Account Not Found",
+            auth_email=norm_email
+        )
 
     if not user.is_active:
         log_audit(user.id, 'GOOGLE_LOGIN_FAILED', 'User', user.id, None,
                   'User account deactivated', status='DENIED',
                   franchise_id=franchise.id if franchise else None)
-        return render_template('auth/unauthorized.html',
-                               email=norm_email,
-                               franchise_name=franchise.name if franchise else 'SPL Account',
-                               is_disabled=True)
+        return render_template(
+            'auth/login.html',
+            is_oauth_unconfigured=_is_oauth_unconfigured(),
+            auth_error=f"Access Denied: Your account (<strong>{norm_email}</strong>) has been deactivated by the administrator.",
+            auth_error_title="Account Deactivated",
+            auth_email=norm_email
+        )
 
     # ── Successful login ──────────────────────────────────────────────────────
     user.last_login_at = datetime.utcnow()
@@ -274,19 +326,34 @@ def google_callback():
               f"Signed in via Google OAuth ({norm_email})",
               status='SUCCESS', franchise_id=user.franchise_id)
 
-    return redirect(url_for('admin.dashboard') if user.is_admin else url_for('franchise.dashboard'))
+    # Verify role and redirect to correct authorized dashboard
+    if user.is_admin or user.role == 'ADMIN':
+        return redirect(url_for('admin.dashboard'))
+    elif user.is_franchise or user.role == 'FRANCHISE':
+        return redirect(url_for('franchise.dashboard'))
+    elif user.role in ['OFFICIAL', 'AUCTIONEER']:
+        return redirect(url_for('admin.dashboard'))
+    else:
+        # Other configured roles: redirect to franchise dashboard if assigned or public teams
+        return redirect(url_for('franchise.dashboard') if user.franchise_id else url_for('public.public_teams'))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# /logout
+# /logout  — Terminate authenticated session and return to login screen
 # ─────────────────────────────────────────────────────────────────────────────
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 @auth_bp.route('/auth/logout', methods=['GET', 'POST'])
-@login_required
 def logout():
     user_id = current_user.id if current_user.is_authenticated else None
-    log_audit(user_id, 'LOGOUT', 'User', user_id, None, 'User signed out', status='SUCCESS')
+    if user_id:
+        log_audit(user_id, 'LOGOUT', 'User', user_id, None, 'User signed out', status='SUCCESS')
     logout_user()
-    return redirect(url_for('auth.login'))
+    session.clear()
+    flash('You have been logged out successfully.', 'info')
+    response = redirect(url_for('auth.login'))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 

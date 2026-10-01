@@ -12,7 +12,17 @@ from app.services.auction_service import (
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
+@api_bp.before_request
+def require_api_auth():
+    """Ensure unauthorized users cannot access any protected API endpoints directly."""
+    if not current_user.is_authenticated:
+        return jsonify({
+            'error': 'Unauthorized',
+            'message': 'Authentication required. Please sign in with your authorized Google account to access auction API endpoints.'
+        }), 401
+
 @api_bp.route('/auction/state', methods=['GET'])
+@login_required
 def get_state():
     """
     Role-customized live polling endpoint.

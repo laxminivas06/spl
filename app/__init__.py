@@ -1,5 +1,6 @@
 import os
-from flask import Flask, redirect, url_for, render_template
+from flask import Flask, redirect, url_for, render_template, request, jsonify, flash
+from flask_login import current_user
 from config import config_by_name
 from app.extensions import db, login_manager, csrf
 from app.services.oauth_service import init_oauth
@@ -28,6 +29,17 @@ def create_app(config_name=None):
     login_manager.init_app(app)
     csrf.init_app(app)
     init_oauth(app)
+
+    # Unauthorized handler for Flask-Login
+    @login_manager.unauthorized_handler
+    def unauthorized_callback():
+        if request.path.startswith('/api/') or request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({
+                'error': 'Unauthorized',
+                'message': 'Authentication required. Please sign in with your authorized Google account.'
+            }), 401
+        flash('Please sign in with your authorized Google account to access this page.', 'warning')
+        return redirect(url_for('auth.login'))
 
     # User loader callback for Flask-Login
     @login_manager.user_loader
@@ -143,14 +155,59 @@ def create_app(config_name=None):
     app.register_blueprint(api_bp)
     app.register_blueprint(public_bp)
 
+    # Enforce global authentication across the application
+    @app.before_request
+    def enforce_global_authentication():
+        # Static assets are freely accessible
+        if request.path.startswith('/static/'):
+            return None
+
+        # Only login/OAuth endpoints and aliases are public
+        public_endpoints = {
+            'static',
+            'auth.login',
+            'auth.login_post',
+            'auth.google_login',
+            'auth.google_callback',
+            'auth.logout',
+            'login_alias',
+            'logout_alias',
+            'index'
+        }
+
+        if request.endpoint in public_endpoints:
+            return None
+
+        if not current_user.is_authenticated:
+            if request.path.startswith('/api/') or request.is_json or request.headers.get('Accept') == 'application/json':
+                return jsonify({
+                    'error': 'Unauthorized',
+                    'message': 'Authentication required. Please sign in with your authorized Google account.'
+                }), 401
+            flash('Please sign in with your authorized Google account to access this page.', 'warning')
+            return redirect(url_for('auth.login'))
+
+    # Security & Cache-Control: prevent back-button caching of protected pages
+    @app.after_request
+    def set_security_headers(response):
+        if not request.path.startswith('/static/'):
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+        return response
+
     # Root & Auth aliases
     @app.route('/')
     def index():
+        if current_user.is_authenticated:
+            return redirect(url_for('admin.dashboard') if current_user.is_admin else url_for('franchise.dashboard'))
         return redirect(url_for('auth.login'))
 
     @app.route('/login', methods=['GET', 'POST'])
     def login_alias():
-        from app.routes.auth import login
+        from app.routes.auth import login, login_post
+        if request.method == 'POST':
+            return login_post()
         return login()
 
     @app.route('/logout', methods=['GET', 'POST'])
@@ -165,10 +222,15 @@ def create_app(config_name=None):
 
     @app.errorhandler(401)
     def unauthorized_error(error):
-        return render_template('errors/401.html'), 401
+        if request.path.startswith('/api/') or request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({'error': 'Unauthorized', 'message': 'Authentication required.'}), 401
+        flash('Please sign in with your authorized Google account to access this page.', 'warning')
+        return redirect(url_for('auth.login'))
 
     @app.errorhandler(403)
     def forbidden_error(error):
+        if request.path.startswith('/api/') or request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({'error': 'Forbidden', 'message': 'Access forbidden. You do not have permission for this resource.'}), 403
         return render_template('errors/403.html'), 403
 
     @app.errorhandler(404)

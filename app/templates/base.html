@@ -25,7 +25,8 @@
 <body class="font-sans antialiased bg-light">
     {% block content_wrapper %}
     <div class="container-fluid px-3 px-md-4 py-2 max-w-1440 d-flex flex-column min-vh-100">
-        <!-- Top Status Bar (Responsive & Clean Light Theme) -->
+        {% if current_user.is_authenticated %}
+        <!-- Top Status Bar (Only for Authenticated Users) -->
         <div class="spl-top-status-bar d-flex flex-wrap justify-content-between align-items-center mb-3">
             <div class="d-flex align-items-center gap-2 text-sm font-display">
                 <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1 fw-bold">SPL SEASON 2026</span>
@@ -41,10 +42,11 @@
             </div>
         </div>
 
-        <!-- Global Header with Brand & Navigation -->
+        <!-- Global Header with Brand & Navigation (Only for Authenticated Users) -->
         <header
             class="spl-global-header d-flex flex-wrap justify-content-between align-items-center mb-4 p-3 rounded-3 shadow-sm border bg-white">
-            <a href="{{ url_for('public.public_teams') }}"
+            {% set brand_url = url_for('admin.dashboard') if current_user.is_admin else url_for('franchise.dashboard') %}
+            <a href="{{ brand_url }}"
                 class="text-decoration-none d-flex align-items-center gap-2.5">
                 <div class="spl-logo-icon">
                     <svg viewBox="0 0 100 100" class="w-10 h-10" fill="currentColor">
@@ -66,7 +68,7 @@
                 </div>
             </a>
 
-            <!-- Header Quick Nav Links -->
+            <!-- Header Quick Nav Links (Role-Aware) -->
             <nav class="d-flex align-items-center flex-wrap gap-2 mt-2 mt-md-0">
                 <a href="{{ url_for('public.public_teams') }}"
                     class="btn btn-sm btn-outline-primary fw-semibold font-display">
@@ -85,27 +87,29 @@
                     <i class="fa-solid fa-tv me-1"></i> Projector
                 </a>
 
-                {% if current_user.is_authenticated %}
-                {% if current_user.role == 'ADMIN' %}
+                {% if current_user.is_admin %}
                 <a href="{{ url_for('admin.dashboard') }}" class="btn btn-sm btn-danger fw-bold font-display shadow-sm">
                     <i class="fa-solid fa-sliders me-1"></i> Admin Panel
                 </a>
-                {% elif current_user.role == 'FRANCHISE' %}
+                {% elif current_user.is_franchise %}
                 <a href="{{ url_for('franchise.dashboard') }}" class="btn btn-sm btn-danger fw-bold font-display shadow-sm">
                     <i class="fa-solid fa-shield-halved me-1"></i> My Franchise
                 </a>
                 {% endif %}
-                <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-secondary font-display"
-                    title="Logout">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </a>
-                {% else %}
-                <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-danger fw-bold font-display shadow-sm">
-                    <i class="fa-solid fa-right-to-bracket me-1"></i> Sign In
-                </a>
-                {% endif %}
+
+                <!-- User profile badge & logout -->
+                <div class="d-flex align-items-center gap-1.5 ms-md-1">
+                    <span class="badge bg-light text-dark border extra-small font-display d-none d-sm-inline-block">
+                        <i class="fa-solid fa-user-circle me-1 text-danger"></i>{{ current_user.display_name or current_user.username }}
+                    </span>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger font-display"
+                        title="Logout">
+                        <i class="fa-solid fa-right-from-bracket me-1"></i><span class="d-none d-sm-inline">Logout</span>
+                    </a>
+                </div>
             </nav>
         </header>
+        {% endif %}
 
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -144,6 +148,14 @@
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>
+        // Prevent cached private pages from remaining visible after logout via browser back button
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 

@@ -13,3 +13,7 @@ __pycache__/
 # OS artifacts
 .DS_Store
 Thumbs.db
+
+# Test and instance data
+instance/
+

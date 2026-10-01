@@ -1,9 +1,18 @@
-from flask import Blueprint, render_template, current_app
+from flask import Blueprint, render_template, current_app, redirect, url_for, flash
+from flask_login import login_required, current_user
 from app.models import Franchise, Player, PlayerRole, SystemSettings, Fixture, FixtureStatus
 
 public_bp = Blueprint('public', __name__)
 
+@public_bp.before_request
+def require_auth_for_public():
+    """Ensure unauthorized users cannot access public data routes directly by URL."""
+    if not current_user.is_authenticated:
+        flash('Please sign in with your authorized Google account to access this page.', 'warning')
+        return redirect(url_for('auth.login'))
+
 @public_bp.route('/teams')
+@login_required
 def public_teams():
     franchises = Franchise.query.order_by(Franchise.id.asc()).all()
     show_prices = SystemSettings.get_setting('SHOW_PURCHASE_PRICE_PUBLICLY', 'true').lower() == 'true'
@@ -42,6 +51,7 @@ def public_teams():
     )
 
 @public_bp.route('/fixtures')
+@login_required
 def public_fixtures():
     fixtures = Fixture.query.filter_by(is_published=True).order_by(Fixture.match_number.asc()).all()
     return render_template(
@@ -50,6 +60,7 @@ def public_fixtures():
     )
 
 @public_bp.route('/ui')
+@login_required
 def live_ui():
     franchises = Franchise.query.order_by(Franchise.id.asc()).all()
     return render_template('ui.html', franchises=franchises)
@@ -87,12 +98,14 @@ def get_captains_data():
     return captains_list
 
 @public_bp.route('/captains')
+@login_required
 def public_captains():
     captains = get_captains_data()
     return render_template('public/captains.html', captains=captains)
 
 @public_bp.route('/captains/projector')
 @public_bp.route('/live/captains')
+@login_required
 def captains_projector():
     captains = get_captains_data()
     return render_template('public/captains_projector.html', captains=captains)
