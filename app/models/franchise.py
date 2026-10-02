@@ -36,6 +36,55 @@ def get_available_branches():
         pass
     return list(DEFAULT_BRANCHES)
 
+
+class TeamCaptain:
+    """Independent captain entity decoupled from the Player database."""
+    def __init__(self, franchise):
+        self.franchise_id = franchise.id
+        self.franchise = franchise
+        self.id = f"cap_{franchise.id}"
+        self.captain_id = self.id
+        self.roll_number = franchise.captain_rule_number or ''
+        self.rule_number = franchise.captain_rule_number or ''
+        self.name = franchise.captain_name or f"{franchise.name} Captain"
+        self.photo = franchise.captain_photo or 'default_player.png'
+        self.branch = franchise.captain_department or 'CSE'
+        self.department = franchise.captain_department or 'CSE'
+        self.year = franchise.captain_year or '4'
+        self.category = franchise.captain_category or 'Elite'
+        self.role = 'ALL_ROUNDER'
+        self.is_captain = True
+        self.status = 'RETAINED'
+        self.sold_price = 50000.0
+        self.base_price = 0.0
+        self.sold_to = franchise.id
+        self.is_sold = True
+        self.is_second_chance_eligible = False
+        self.auction_type = 'RETAINED'
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'roll_number': self.roll_number,
+            'rule_number': self.rule_number,
+            'name': self.name,
+            'photo': self.photo,
+            'branch': self.branch,
+            'department': self.department,
+            'year': self.year,
+            'category': self.category,
+            'role': self.role,
+            'is_captain': True,
+            'status': self.status,
+            'sold_price': self.sold_price,
+            'sold_to': self.franchise_id,
+            'is_sold': True
+        }
+
+    def __repr__(self):
+        return f"<TeamCaptain {self.name} ({self.roll_number}) - Franchise {self.franchise_id}>"
+
+
 class Franchise(db.Model):
     __tablename__ = 'franchises'
 
@@ -81,54 +130,32 @@ class Franchise(db.Model):
 
     def recalculate_purse(self):
         """Reconcile remaining purse accounting for 50,000 captain retention and purchased players."""
-        spent = 0.0
-        captain_counted = False
-        for p in self.sold_players:
-            if p.is_captain or (self.captain_id and p.id == self.captain_id):
-                if p.sold_price != 50000.0:
-                    p.sold_price = 50000.0
-                p.status = 'RETAINED'
-                spent += 50000.0
-                captain_counted = True
-            else:
-                spent += float(p.sold_price or 0.0)
-        if self.has_captain and not captain_counted:
+        spent = sum(float(p.sold_price or 0.0) for p in self.sold_players)
+        if self.has_captain:
             spent += 50000.0
         self.remaining_purse = max(0.0, float(self.starting_purse or 550000.0) - spent)
         return self.remaining_purse
 
-
     @property
     def captain_player(self):
-        from app.models.player import Player
-        if self.captain_id:
-            cap = Player.query.get(self.captain_id)
-            if cap:
-                return cap
-        if self.captain_rule_number:
-            cap = Player.query.filter(Player.roll_number.ilike(self.captain_rule_number.strip())).first()
-            if cap:
-                return cap
-        if self.captain_name:
-            cap = Player.query.filter(Player.name.ilike(self.captain_name.strip()), Player.sold_to == self.id).first()
-            if cap:
-                return cap
+        """Returns the independent TeamCaptain object. Does NOT search or query the Player database."""
+        if self.has_captain:
+            return TeamCaptain(self)
         return None
 
     @property
     def squad_players(self):
         """Returns all players in squad, guaranteed with Team Captain placed first."""
         players = list(self.sold_players.all())
-        cap = self.captain_player
-        if cap and cap not in players:
-            players.insert(0, cap)
-        else:
-            players.sort(key=lambda p: (0 if (cap and p.id == cap.id) or p.is_captain else 1, p.name or ''))
+        if self.has_captain:
+            cap = self.captain_player
+            if cap:
+                players.insert(0, cap)
         return players
 
     @property
     def has_captain(self):
-        return bool(self.captain_id or (self.captain_name and str(self.captain_name).strip()))
+        return bool(self.captain_name and str(self.captain_name).strip())
 
     @property
     def is_eligible_for_bidding(self):
@@ -142,14 +169,7 @@ class Franchise(db.Model):
     def squad_count(self):
         count = self.sold_players.count()
         if self.has_captain:
-            from app.models.player import Player
-            captain_in_squad = False
-            if self.captain_id:
-                captain_in_squad = self.sold_players.filter_by(id=self.captain_id).first() is not None
-            elif self.captain_rule_number:
-                captain_in_squad = self.sold_players.filter(Player.roll_number.ilike(self.captain_rule_number)).first() is not None
-            if not captain_in_squad:
-                count += 1
+            count += 1
         return count
 
     @property
