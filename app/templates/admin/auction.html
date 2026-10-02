@@ -519,7 +519,7 @@
                     <!-- Squad Count & Elite Quota -->
                     <div class="extra-small text-muted mb-2 d-flex justify-content-between align-items-center">
                         <span>Squad: <strong class="text-dark" id="team-squad-{{ f.id }}">{{ f.squad_count }}</strong>/{{ f.squad_limit }}</span>
-                        <span>Elite: <strong class="{% if f.auction_elite_count >= f.max_auction_elite_allowed %}text-primary{% elif f.auction_elite_count >= f.min_auction_elite_required %}text-success{% else %}text-danger{% endif %}" id="team-elite-{{ f.id }}" title="Captain (1) + Auction ({{ f.auction_elite_count }}/{{ f.max_auction_elite_allowed }})">{{ f.elite_count }}/{{ f.max_elite_allowed }}</strong></span>
+                        <span>Auction Elites: <strong class="{% if f.auction_elite_count >= f.max_auction_elite_allowed %}text-primary{% elif f.auction_elite_count >= f.min_auction_elite_required %}text-success{% else %}text-danger{% endif %}" id="team-elite-{{ f.id }}" title="Auction Slots: {{ f.auction_elite_count }}/{{ f.max_auction_elite_allowed }} (Req: 1–3) | Captain: 1 Retained (Total: {{ f.elite_count }}/{{ f.max_elite_allowed }})">{{ f.auction_elite_count }}/{{ f.max_auction_elite_allowed }} <span class="extra-small font-normal text-muted">(Req: 1–3)</span></strong></span>
                     </div>
 
                     <!-- Action Button (Click to Bid) -->
@@ -1203,8 +1203,16 @@
 
                 document.getElementById('card-rule-number').textContent = `RULE #${state.active_player.rule_number || state.active_player.roll_number}`;
                 document.getElementById('card-player-name').textContent = state.active_player.name;
-                document.getElementById('card-player-role').textContent = state.active_player.role;
-                document.getElementById('card-player-category').textContent = state.active_player.category;
+                const catBadge = document.getElementById('card-player-category');
+                if (catBadge) {
+                    if (state.active_player.category === 'Elite') {
+                        catBadge.className = 'badge bg-warning text-dark border border-warning-subtle fs-7 fw-bold shadow-xs';
+                        catBadge.innerHTML = '<i class="fa-solid fa-star me-1 text-dark"></i>ELITE';
+                    } else {
+                        catBadge.className = 'badge bg-secondary fs-7';
+                        catBadge.textContent = state.active_player.category;
+                    }
+                }
                 document.getElementById('card-player-branch').textContent = state.active_player.branch || '-';
                 document.getElementById('card-player-year').textContent = state.active_player.year ? `Year ${state.active_player.year}` : '-';
                 document.getElementById('card-base-price').textContent = `₹ ${Number(state.active_player.base_price || 10000).toLocaleString()}`;
@@ -1318,9 +1326,10 @@
                     }
 
                     const eliteEl = document.getElementById(`team-elite-${f.id}`);
-                    if (eliteEl && f.elite_count !== undefined) {
-                        eliteEl.textContent = `${f.elite_count}/${f.max_elite_allowed || 3}`;
-                        eliteEl.className = (f.auction_elite_count >= (f.max_auction_elite_allowed || 2)) ? 'text-primary' : (f.auction_elite_count >= (f.min_auction_elite_required || 1) ? 'text-success' : 'text-danger');
+                    if (eliteEl && f.auction_elite_count !== undefined) {
+                        eliteEl.innerHTML = `${f.auction_elite_count}/${f.max_auction_elite_allowed || 3} <span class="extra-small font-normal text-muted">(Req: 1–3)</span>`;
+                        eliteEl.className = (f.auction_elite_count >= (f.max_auction_elite_allowed || 3)) ? 'text-primary' : (f.auction_elite_count >= (f.min_auction_elite_required || 1) ? 'text-success' : 'text-danger');
+                        eliteEl.title = `Auction Slots: ${f.auction_elite_count}/${f.max_auction_elite_allowed || 3} (Req: 1–3) | Captain: 1 Retained (Total: ${f.elite_count || (f.auction_elite_count + 1)}/4)`;
                     }
 
                     if (card && btn) {

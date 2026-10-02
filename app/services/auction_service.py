@@ -189,22 +189,23 @@ def place_bid(franchise_id, bid_amount):
     if franchise.squad_count >= franchise.squad_limit:
         raise ValueError(f"Squad limit reached: {franchise.squad_count}/{franchise.squad_limit} players (Team Full).")
 
-    # 1b. Elite Player Quota Validation (Max 3 total / 2 from auction, Min 1 from auction)
+    # 1b. Elite Player Quota Validation (1–3 from auction, Captain retained not counted in auction slots)
     enforce_elite = SystemSettings.get_setting('enforce_elite_limits', 'true') == 'true'
     if enforce_elite:
         p_cat = (player.category or '').strip().lower()
         if p_cat == 'elite':
             if not franchise.can_add_elite:
                 raise ValueError(
-                    f"Elite limit reached: Team '{franchise.name}' already has {franchise.elite_count} Elite member(s) "
-                    f"({franchise.auction_elite_count} from auction, max {franchise.max_auction_elite_allowed} auction / {franchise.max_elite_allowed} total)."
+                    f"Auction Elite limit reached: Team '{franchise.name}' has already purchased {franchise.auction_elite_count} "
+                    f"of {franchise.max_auction_elite_allowed} available auction Elite player slots (Requirement: 1–3 from auction). "
+                    f"Captain is retained separately."
                 )
         else:
             # Non-elite player: ensure enough remaining slots to fulfill mandatory minimum Elite quota
             if franchise.needs_mandatory_elite and franchise.remaining_slots <= franchise.required_elite_slots_needed:
                 raise ValueError(
-                    f"Cannot bid on non-Elite player: Team '{franchise.name}' must reserve remaining slot(s) "
-                    f"to fulfill mandatory Elite quota (Minimum {franchise.min_auction_elite_required} Elite from auction required)."
+                    f"Cannot bid on non-Elite player: Team '{franchise.name}' has 0 auction Elite players and must reserve "
+                    f"remaining slot to purchase mandatory minimum 1 Elite player (Requirement: 1–3 Elite players from auction)."
                 )
 
     # 2. Purse Validation
@@ -283,9 +284,9 @@ def finalize_sold(admin_id=None):
     if enforce_elite:
         p_cat = (player.category or '').strip().lower()
         if p_cat == 'elite' and not winning_franchise.can_add_elite:
-            raise ValueError(f"Winning franchise '{winning_franchise.name}' has already reached maximum Elite player limit ({winning_franchise.elite_count}/{winning_franchise.max_elite_allowed}).")
+            raise ValueError(f"Winning franchise '{winning_franchise.name}' has filled all available auction Elite slots ({winning_franchise.auction_elite_count}/{winning_franchise.max_auction_elite_allowed} auction Elites). Captain is retained separately.")
         elif p_cat != 'elite' and winning_franchise.needs_mandatory_elite and winning_franchise.remaining_slots <= winning_franchise.required_elite_slots_needed:
-            raise ValueError(f"Winning franchise '{winning_franchise.name}' must reserve remaining slot(s) for mandatory Elite player.")
+            raise ValueError(f"Winning franchise '{winning_franchise.name}' has 0 auction Elite players and must reserve remaining slot for mandatory 1–3 auction Elite requirement.")
 
     if winning_franchise.remaining_purse < state.current_bid:
         raise ValueError(f"Winning franchise has insufficient purse (Rs. {winning_franchise.remaining_purse:,.0f}) for final bid Rs. {state.current_bid:,.0f}.")
@@ -543,15 +544,15 @@ def validate_squads_integrity():
         if f.squad_count > f.squad_limit:
             errors.append(f"Validation Error: Franchise '{f.name}' exceeds squad limit ({f.squad_count}/{f.squad_limit}).")
 
-        # Elite Quota Check (Max 3 total / 2 auction, Min 1 auction)
+        # Elite Quota Check (1–3 auction Elite players, Captain retained separately)
         enforce_elite = SystemSettings.get_setting('enforce_elite_limits', 'true') == 'true'
         if enforce_elite:
-            if f.elite_count > f.max_elite_allowed:
-                errors.append(f"Validation Error: Franchise '{f.name}' exceeds maximum Elite member limit ({f.elite_count}/{f.max_elite_allowed}).")
             if f.auction_elite_count > f.max_auction_elite_allowed:
-                errors.append(f"Validation Error: Franchise '{f.name}' exceeds maximum auction Elite limit ({f.auction_elite_count}/{f.max_auction_elite_allowed}).")
+                errors.append(f"Validation Error: Franchise '{f.name}' exceeds maximum auction Elite limit ({f.auction_elite_count}/{f.max_auction_elite_allowed} auction slots).")
+            if f.elite_count > f.max_elite_allowed:
+                errors.append(f"Validation Error: Franchise '{f.name}' exceeds maximum Elite member limit ({f.elite_count}/{f.max_elite_allowed} including Captain).")
             if f.is_full and f.needs_mandatory_elite:
-                errors.append(f"Validation Error: Franchise '{f.name}' completed squad without acquiring minimum required Elite player ({f.auction_elite_count}/{f.min_auction_elite_required} from auction).")
+                errors.append(f"Validation Error: Franchise '{f.name}' completed auction with 0 auction Elite players. Mandatory requirement is 1–3 Elite players from auction ({f.auction_elite_count}/{f.min_auction_elite_required} purchased).")
 
         # 6. Purse non-negative
         if f.remaining_purse < 0:

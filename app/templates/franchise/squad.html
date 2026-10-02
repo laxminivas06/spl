@@ -106,38 +106,44 @@
 
     <!-- Elite Quota Status Card -->
     <div class="card border border-warning-subtle bg-warning-subtle bg-opacity-10 shadow-sm p-3 mb-4 rounded-3">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
             <div>
                 <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
-                    <span class="badge bg-warning text-dark fw-bold font-display px-2 py-1"><i class="fa-solid fa-star me-1"></i>ELITE QUOTA</span>
-                    <span class="fw-bold text-dark fs-5 font-monospace">{{ franchise.elite_count }} / {{ franchise.max_elite_allowed }} Players</span>
-                    {% if franchise.auction_elite_count >= franchise.min_auction_elite_required and franchise.auction_elite_count <= franchise.max_auction_elite_allowed %}
-                        <span class="badge bg-success-subtle text-success border border-success extra-small fw-semibold"><i class="fa-solid fa-check me-1"></i>Condition Satisfied</span>
-                    {% elif franchise.needs_mandatory_elite %}
-                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning extra-small fw-semibold"><i class="fa-solid fa-triangle-exclamation me-1"></i>Need {{ franchise.required_elite_slots_needed }} More Elite</span>
+                    <span class="badge bg-warning text-dark fw-bold font-display px-2 py-1"><i class="fa-solid fa-star me-1"></i>AUCTION REQUIREMENT: 1–3 ELITE PLAYERS</span>
+                    {% if franchise.auction_elite_count == 0 %}
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning extra-small fw-semibold"><i class="fa-solid fa-triangle-exclamation me-1"></i>Must Buy 1–3 from Auction (0/3 Purchased)</span>
+                    {% elif franchise.auction_elite_count < franchise.max_auction_elite_allowed %}
+                        <span class="badge bg-success-subtle text-success border border-success extra-small fw-semibold"><i class="fa-solid fa-check me-1"></i>Requirement Met (Can Buy {{ franchise.available_auction_elite_slots }} More)</span>
                     {% else %}
-                        <span class="badge bg-secondary-subtle text-dark border extra-small fw-semibold">Quota Active</span>
+                        <span class="badge bg-primary-subtle text-primary border border-primary extra-small fw-semibold"><i class="fa-solid fa-check-double me-1"></i>Auction Elite Slots Full (3/3)</span>
                     {% endif %}
                 </div>
                 <div class="text-muted small">
-                    Rule: Total maximum 3 Elite players per team (including Captain). Must acquire minimum 1 and maximum 2 Elite players from auction.
+                    <strong>Elite Player Auction Rule:</strong> Captain is already retained and is NOT an auction slot. The auction has 3 Elite Player slots. Team must purchase at least 1 and up to 3 Elite Players. Total team Elite group = 1 Captain + Auction Elites (Max 4).
                 </div>
             </div>
             <div class="d-flex flex-wrap gap-2 text-center">
-                <div class="px-3 py-2 bg-white rounded border border-secondary-subtle shadow-xs">
-                    <small class="text-muted d-block font-display extra-small">CAPTAIN (ELITE)</small>
-                    <span class="fw-bold font-monospace {{ 'text-success' if franchise.is_captain_elite else 'text-muted' }}">{{ '1 / 1' if franchise.is_captain_elite else '0 / 1' }}</span>
+                <div class="px-2.5 py-1.5 bg-white rounded border border-secondary-subtle shadow-xs">
+                    <small class="text-muted d-block font-display extra-small">CAPTAIN (RETAINED)</small>
+                    <span class="fw-bold font-monospace {{ 'text-success' if franchise.is_captain_elite else 'text-muted' }}">1 (Elite)</span>
+                    <small class="text-muted d-block extra-small" style="font-size: 0.65rem;">Not in auction</small>
                 </div>
-                <div class="px-3 py-2 bg-white rounded border border-secondary-subtle shadow-xs">
-                    <small class="text-muted d-block font-display extra-small">AUCTION ELITE</small>
+                <div class="px-2.5 py-1.5 bg-white rounded border border-secondary-subtle shadow-xs">
+                    <small class="text-muted d-block font-display extra-small">AUCTION ELITES</small>
                     <span class="fw-bold font-monospace text-primary">{{ franchise.auction_elite_count }} / {{ franchise.max_auction_elite_allowed }}</span>
-                    <small class="text-muted d-block extra-small">(Min {{ franchise.min_auction_elite_required }})</small>
+                    <small class="text-muted d-block extra-small" style="font-size: 0.65rem;">Req: 1–3</small>
                 </div>
-                <div class="px-3 py-2 bg-white rounded border border-secondary-subtle shadow-xs">
-                    <small class="text-muted d-block font-display extra-small">AVAILABLE ELITE SLOTS</small>
+                <div class="px-2.5 py-1.5 bg-white rounded border border-secondary-subtle shadow-xs">
+                    <small class="text-muted d-block font-display extra-small">AVAILABLE SLOTS</small>
                     <span class="fw-bold font-monospace {{ 'text-danger' if not franchise.can_add_elite else 'text-success' }}">
-                        {{ [franchise.max_elite_allowed - franchise.elite_count, franchise.max_auction_elite_allowed - franchise.auction_elite_count] | min if franchise.can_add_elite else 0 }}
+                        {{ franchise.available_auction_elite_slots }}
                     </span>
+                    <small class="text-muted d-block extra-small" style="font-size: 0.65rem;">{{ 'Full' if not franchise.can_add_elite else 'Can Bid' }}</small>
+                </div>
+                <div class="px-2.5 py-1.5 bg-white rounded border border-secondary-subtle shadow-xs">
+                    <small class="text-muted d-block font-display extra-small">TOTAL ELITES</small>
+                    <span class="fw-bold font-monospace text-dark">{{ franchise.elite_count }} / {{ franchise.max_elite_allowed }}</span>
+                    <small class="text-muted d-block extra-small" style="font-size: 0.65rem;">Capt + Auction</small>
                 </div>
             </div>
         </div>

@@ -103,11 +103,11 @@ def add_team_member(franchise, name, rule_number=None, department=None, year=Non
     role = str(role).strip().upper() if role in PlayerRole.CHOICES else PlayerRole.BATSMAN
     category = PlayerCategory.normalize(category) if category else PlayerCategory.ROOKIE
 
-    # Elite Player Quota check
+    # Elite Player Quota check (1–3 auction Elite players, Captain retained separately)
     if category == PlayerCategory.ELITE and not franchise.can_add_elite:
         raise ValueError(
-            f"Maximum Elite members limit reached: Team '{franchise.name}' already has {franchise.elite_count} Elite member(s) "
-            f"({franchise.auction_elite_count} acquired, max {franchise.max_auction_elite_allowed} acquired / {franchise.max_elite_allowed} total)."
+            f"Maximum Elite members limit reached: Team '{franchise.name}' has already filled all {franchise.max_auction_elite_allowed} available auction Elite player slots "
+            f"({franchise.auction_elite_count}/{franchise.max_auction_elite_allowed}). Captain is retained separately."
         )
 
     # Check if player exists by rule_number

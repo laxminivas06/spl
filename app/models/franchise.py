@@ -239,9 +239,9 @@ class Franchise(db.Model):
     def max_elite_allowed(self):
         try:
             from app.models.setting import SystemSettings
-            return int(SystemSettings.get_setting('max_elite_per_team', '3'))
+            return int(SystemSettings.get_setting('max_elite_per_team', '4'))
         except Exception:
-            return 3
+            return 4
 
     @property
     def min_auction_elite_required(self):
@@ -255,9 +255,9 @@ class Franchise(db.Model):
     def max_auction_elite_allowed(self):
         try:
             from app.models.setting import SystemSettings
-            return int(SystemSettings.get_setting('max_auction_elite_per_team', '2'))
+            return int(SystemSettings.get_setting('max_auction_elite_per_team', '3'))
         except Exception:
-            return 2
+            return 3
 
     @property
     def is_captain_elite(self):
@@ -319,13 +319,21 @@ class Franchise(db.Model):
         return max(0, self.min_auction_elite_required - self.auction_elite_count)
 
     @property
+    def available_auction_elite_slots(self):
+        return max(0, self.max_auction_elite_allowed - self.auction_elite_count)
+
+    @property
+    def auction_elite_requirement_text(self):
+        return f"{self.min_auction_elite_required}–{self.max_auction_elite_allowed} Elite Players"
+
+    @property
     def elite_status_label(self):
         if self.auction_elite_count == 0:
-            return f"Needs Min {self.min_auction_elite_required} Elite from Auction"
+            return f"Requires {self.auction_elite_requirement_text} (0/{self.max_auction_elite_allowed} Purchased)"
         elif self.auction_elite_count >= self.max_auction_elite_allowed:
-            return f"Max Elite Reached ({self.elite_count}/{self.max_elite_allowed})"
+            return f"Auction Elite Slots Full ({self.max_auction_elite_allowed}/{self.max_auction_elite_allowed})"
         else:
-            return f"Elite Quota Met ({self.elite_count}/{self.max_elite_allowed})"
+            return f"Requirement Met ({self.auction_elite_count}/{self.max_auction_elite_allowed} Auction Elites)"
 
     def to_dict(self):
         owners_list = self.get_owners()
@@ -361,8 +369,11 @@ class Franchise(db.Model):
             'captain_year': self.captain_year or (self.captain.year if self.captain else None),
             'captain_category': self.captain_category or (self.captain.category if self.captain else 'ALL_ROUNDER'),
             'captain_photo': self.captain_photo or (self.captain.photo if self.captain else 'default_player.png'),
+            'is_captain_elite': self.is_captain_elite,
             'elite_count': self.elite_count,
             'auction_elite_count': self.auction_elite_count,
+            'available_auction_elite_slots': self.available_auction_elite_slots,
+            'auction_elite_requirement_text': self.auction_elite_requirement_text,
             'max_elite_allowed': self.max_elite_allowed,
             'min_auction_elite_required': self.min_auction_elite_required,
             'max_auction_elite_allowed': self.max_auction_elite_allowed,

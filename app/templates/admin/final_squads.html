@@ -121,10 +121,10 @@
                                 {{ f.remaining_slots if f.remaining_slots is defined else (f.squad_limit - item.count) }}
                             </span>
                         </div>
-                        <div class="bg-white px-3 py-1.5 rounded border {% if f.auction_elite_count >= f.min_auction_elite_required and f.auction_elite_count <= f.max_auction_elite_allowed %}border-success-subtle{% else %}border-warning-subtle{% endif %} shadow-sm">
-                            <span class="text-muted extra-small text-uppercase d-block fw-bold font-display"><i class="fa-solid fa-star text-warning me-1"></i>Elite Quota</span>
-                            <span class="fw-bold font-monospace small {% if f.auction_elite_count >= f.min_auction_elite_required and f.auction_elite_count <= f.max_auction_elite_allowed %}text-success{% else %}text-warning-emphasis{% endif %}">
-                                {{ f.elite_count }}/{{ f.max_elite_allowed }} <span class="extra-small fw-normal text-muted">(Auc: {{ f.auction_elite_count }}/{{ f.max_auction_elite_allowed }})</span>
+                        <div class="bg-white px-3 py-1.5 rounded border {% if f.auction_elite_count >= f.min_auction_elite_required and f.auction_elite_count <= f.max_auction_elite_allowed %}border-success-subtle{% else %}border-danger-subtle{% endif %} shadow-sm">
+                            <span class="text-muted extra-small text-uppercase d-block fw-bold font-display"><i class="fa-solid fa-star text-warning me-1"></i>Auction Elites (Req: 1–3)</span>
+                            <span class="fw-bold font-monospace small {% if f.auction_elite_count >= f.min_auction_elite_required and f.auction_elite_count <= f.max_auction_elite_allowed %}text-success{% else %}text-danger{% endif %}">
+                                {{ f.auction_elite_count }}/{{ f.max_auction_elite_allowed }} <span class="extra-small fw-normal text-muted">(Capt Retained &bull; Total: {{ f.elite_count }}/{{ f.max_elite_allowed }})</span>
                             </span>
                         </div>
                     </div>

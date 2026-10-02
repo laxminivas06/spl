@@ -124,20 +124,21 @@
 <div class="spl-card p-3 mb-4 bg-white shadow-sm border d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
     <div>
         <h6 class="fw-bold text-dark mb-0">
-            <i class="fa-solid fa-crown text-danger me-2"></i>Elite Player Quota Status:
-            <span class="badge {% if franchise.auction_elite_count >= franchise.max_auction_elite_allowed %}bg-primary text-white{% elif franchise.auction_elite_count >= franchise.min_auction_elite_required %}bg-success-subtle text-success border border-success-subtle{% else %}bg-warning-subtle text-warning-emphasis border border-warning-subtle{% endif %} ms-1">
-                {{ franchise.elite_count }} / {{ franchise.max_elite_allowed }} Elite Members
+            <i class="fa-solid fa-crown text-danger me-2"></i>Auction Elite Requirement:
+            <span class="badge {% if franchise.auction_elite_count >= franchise.max_auction_elite_allowed %}bg-primary text-white{% elif franchise.auction_elite_count >= franchise.min_auction_elite_required %}bg-success-subtle text-success border border-success-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %} ms-1">
+                {{ franchise.auction_elite_count }} / {{ franchise.max_auction_elite_allowed }} Auction Elites
             </span>
         </h6>
-        <small class="text-muted">Captain is basically Elite. Maximum 3 Elite members total (including Captain), with min 1 and max 2 acquired from auction.</small>
+        <small class="text-muted">Captain is already retained (1 Elite) and is NOT an auction slot. The auction has 3 Elite slots. Team must purchase 1–3 Elite Players from auction (Total Elite group: 2–4 players).</small>
     </div>
-    <div class="d-flex align-items-center gap-2">
-        <span class="badge bg-light text-dark border font-monospace">Captain: {{ 1 if franchise.is_captain_elite else 0 }}</span>
-        <span class="badge bg-light text-dark border font-monospace">Auction: {{ franchise.auction_elite_count }} / {{ franchise.max_auction_elite_allowed }}</span>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="badge bg-light text-dark border font-monospace">Captain: Retained (1)</span>
+        <span class="badge bg-light text-dark border font-monospace">Auction: {{ franchise.auction_elite_count }} / {{ franchise.max_auction_elite_allowed }} (Req: 1–3)</span>
+        <span class="badge bg-light text-dark border font-monospace">Total: {{ franchise.elite_count }} / {{ franchise.max_elite_allowed }}</span>
         {% if franchise.auction_elite_count == 0 %}
             <span class="badge bg-danger-subtle text-danger border border-danger-subtle extra-small">Min 1 Required</span>
         {% else %}
-            <span class="badge bg-success-subtle text-success border border-success-subtle extra-small">✓ Condition Met</span>
+            <span class="badge bg-success-subtle text-success border border-success-subtle extra-small">✓ Requirement Met</span>
         {% endif %}
     </div>
 </div>

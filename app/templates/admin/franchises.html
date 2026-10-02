@@ -76,13 +76,13 @@
                 <div class="p-2 bg-light border rounded mb-3 d-flex justify-content-between align-items-center">
                     <div>
                         <span class="text-muted extra-small fw-semibold d-block">
-                            <i class="fa-solid fa-crown text-danger me-1"></i>ELITE QUOTA (MAX 3):
+                            <i class="fa-solid fa-crown text-danger me-1"></i>AUCTION ELITES (REQ: 1–3):
                         </span>
-                        <small class="text-muted extra-small">Captain (1) + Auction ({{ f.auction_elite_count }}/{{ f.max_auction_elite_allowed }})</small>
+                        <small class="text-muted extra-small">Auction: <strong>{{ f.auction_elite_count }}/{{ f.max_auction_elite_allowed }}</strong> &bull; Capt: 1 Retained (Total: {{ f.elite_count }}/{{ f.max_elite_allowed }})</small>
                     </div>
                     <div class="text-end">
-                        <span class="badge {% if f.auction_elite_count >= f.max_auction_elite_allowed %}bg-primary text-white{% elif f.auction_elite_count >= f.min_auction_elite_required %}bg-success-subtle text-success border border-success-subtle{% else %}bg-warning-subtle text-warning-emphasis border border-warning-subtle{% endif %} font-monospace">
-                            {{ f.elite_count }} / {{ f.max_elite_allowed }} Elite
+                        <span class="badge {% if f.auction_elite_count >= f.max_auction_elite_allowed %}bg-primary text-white{% elif f.auction_elite_count >= f.min_auction_elite_required %}bg-success-subtle text-success border border-success-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %} font-monospace">
+                            {{ f.auction_elite_count }} / {{ f.max_auction_elite_allowed }} Auction
                         </span>
                     </div>
                 </div>

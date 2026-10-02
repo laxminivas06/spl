@@ -397,7 +397,15 @@ function updateProjectorUi(data) {
     const roleEl = document.getElementById('projector-player-role');
     if (roleEl) roleEl.innerText = p.role;
     const catEl = document.getElementById('projector-player-category');
-    if (catEl) catEl.innerText = p.category || 'NORMAL';
+    if (catEl) {
+        if (p.category === 'Elite') {
+            catEl.className = 'badge bg-warning text-dark border border-warning-subtle fs-6 px-3 py-1.5 fw-bold shadow-xs';
+            catEl.innerHTML = '<i class="fa-solid fa-star me-1 text-dark"></i>ELITE';
+        } else {
+            catEl.className = 'badge bg-secondary-subtle text-black border border-secondary-subtle fs-6 px-3 py-1.5';
+            catEl.innerText = p.category || 'NORMAL';
+        }
+    }
     const branchEl = document.getElementById('projector-player-branch');
     if (branchEl) branchEl.innerText = p.branch || 'CSE';
     const yearEl = document.getElementById('projector-player-year');
@@ -627,24 +635,24 @@ function updateFranchiseUi(data) {
     if (squadEl) squadEl.innerText = `${fi.squad_count} / ${fi.squad_limit}`;
 
     const eliteEl = document.getElementById('franchise-elite-display');
-    if (eliteEl && fi.elite_count !== undefined) {
-        eliteEl.innerText = `${fi.elite_count} / ${fi.max_elite_allowed || 3}`;
+    if (eliteEl && fi.auction_elite_count !== undefined) {
+        eliteEl.innerHTML = `${fi.auction_elite_count} / ${fi.max_auction_elite_allowed || 3} <span class="fs-6 text-muted fw-normal">Auction</span>`;
     }
     const eliteSub = document.getElementById('franchise-elite-subtext');
     if (eliteSub && fi.auction_elite_count !== undefined) {
-        eliteSub.innerHTML = `Auction: <strong class="text-dark">${fi.auction_elite_count}/${fi.max_auction_elite_allowed || 2}</strong> (Min: ${fi.min_auction_elite_required || 1}) • Capt: ${fi.is_captain_elite ? '1' : '0'}`;
+        eliteSub.innerHTML = `Requirement: <strong class="text-dark">1–3 from Auction</strong> &bull; Captain: <span class="text-primary fw-semibold">1 Retained</span> (Total: ${fi.elite_count !== undefined ? fi.elite_count : (fi.auction_elite_count + 1)}/${fi.max_elite_allowed || 4})`;
     }
     const eliteBar = document.getElementById('franchise-elite-bar');
-    if (eliteBar && fi.elite_count !== undefined) {
-        const pct = Math.round((fi.elite_count / (fi.max_elite_allowed || 3)) * 100);
+    if (eliteBar && fi.auction_elite_count !== undefined) {
+        const pct = Math.round((fi.auction_elite_count / (fi.max_auction_elite_allowed || 3)) * 100);
         eliteBar.style.width = `${pct}%`;
     }
     const eliteCond = document.getElementById('franchise-elite-condition-label');
     if (eliteCond && fi.auction_elite_count !== undefined) {
         if (fi.auction_elite_count >= (fi.min_auction_elite_required || 1)) {
-            eliteCond.innerHTML = '<span class="text-success fw-semibold"><i class="fa-solid fa-check me-1"></i>Min Met</span>';
+            eliteCond.innerHTML = `<span class="text-success fw-semibold"><i class="fa-solid fa-check me-1"></i>Req Met (${fi.auction_elite_count}/${fi.max_auction_elite_allowed || 3})</span>`;
         } else {
-            eliteCond.innerHTML = '<span class="text-warning-emphasis fw-semibold"><i class="fa-solid fa-triangle-exclamation me-1"></i>Min 1 Req</span>';
+            eliteCond.innerHTML = '<span class="text-danger fw-semibold"><i class="fa-solid fa-triangle-exclamation me-1"></i>1–3 Required</span>';
         }
     }
 
@@ -701,7 +709,13 @@ function updateFranchiseUi(data) {
     const roleEl = document.getElementById('franchise-player-role');
     if (roleEl) roleEl.innerText = p.role;
     const catEl = document.getElementById('franchise-player-category');
-    if (catEl) catEl.innerText = p.category || 'NORMAL';
+    if (catEl) {
+        if ((p.category || '').toLowerCase() === 'elite') {
+            catEl.innerHTML = `<span class="badge bg-warning text-dark border border-warning-subtle fw-bold px-2 py-1"><i class="fa-solid fa-star me-1 text-dark"></i>ELITE (Req: 1–3)</span>`;
+        } else {
+            catEl.innerText = p.category || 'NORMAL';
+        }
+    }
     const cbEl = document.getElementById('franchise-current-bid');
     if (cbEl) cbEl.innerText = formatCurrencyJs(data.current_bid);
     const stepEl = document.getElementById('franchise-bid-step-text');
