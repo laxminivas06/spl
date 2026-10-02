@@ -39,8 +39,27 @@ HEADER_ALIASES = {
     'category': ['category', 'player category', 'tier', 'grade']
 }
 
+def normalize_photo_url(url):
+    """
+    Transforms any photo URL, converting Google Drive sharing/view/open links
+    into direct image stream URLs (via Google CDN lh3).
+    """
+    if not url or not isinstance(url, str):
+        return url
+    u = url.strip()
+    if not u:
+        return u
+    if any(k in u for k in ['drive.google.com', 'docs.google.com', 'drive.usercontent.google.com', 'lh3.googleusercontent.com']):
+        m = re.search(r'/d/([a-zA-Z0-9_-]+)', u)
+        if m:
+            return f"https://lh3.googleusercontent.com/d/{m.group(1)}"
+        m = re.search(r'[?&]id=([a-zA-Z0-9_-]+)', u)
+        if m:
+            return f"https://lh3.googleusercontent.com/d/{m.group(1)}"
+    return u
+
 def is_valid_image_url(url):
-    """Validate whether a string is a well-formed http/https image URL."""
+    """Validate whether a string is a well-formed http/https image URL or Drive link."""
     if not url or not isinstance(url, str):
         return False
     u = url.strip()
@@ -207,11 +226,11 @@ def preview_players_csv(content, filename=''):
         branch = canonical_row.get('branch', '').strip()
         cat = PlayerCategory.normalize(canonical_row.get('category'))
 
-        # Photo resolution: direct URL or local filename or fallback
+        # Photo resolution: direct URL or Google Drive link or local filename or fallback
         if is_valid_image_url(photo_raw):
-            photo = photo_raw
+            photo = normalize_photo_url(photo_raw)
         elif photo_raw:
-            photo = photo_raw
+            photo = normalize_photo_url(photo_raw)
         else:
             photo = 'default_player.png'
 

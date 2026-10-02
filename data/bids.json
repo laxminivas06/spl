@@ -1,1 +1,128 @@
-[]
+[
+  {
+    "id": 1,
+    "player_id": 67,
+    "franchise_id": 2,
+    "amount": 10000.0,
+    "created_at": "2026-10-02T11:09:33.410587"
+  },
+  {
+    "id": 2,
+    "player_id": 67,
+    "franchise_id": 3,
+    "amount": 12000.0,
+    "created_at": "2026-10-02T11:09:36.723216"
+  },
+  {
+    "id": 3,
+    "player_id": 67,
+    "franchise_id": 1,
+    "amount": 14000.0,
+    "created_at": "2026-10-02T11:09:37.905119"
+  },
+  {
+    "id": 4,
+    "player_id": 67,
+    "franchise_id": 4,
+    "amount": 16000.0,
+    "created_at": "2026-10-02T11:09:38.992095"
+  },
+  {
+    "id": 5,
+    "player_id": 67,
+    "franchise_id": 2,
+    "amount": 18000.0,
+    "created_at": "2026-10-02T11:09:39.772763"
+  },
+  {
+    "id": 6,
+    "player_id": 67,
+    "franchise_id": 3,
+    "amount": 20000.0,
+    "created_at": "2026-10-02T11:09:40.374522"
+  },
+  {
+    "id": 7,
+    "player_id": 67,
+    "franchise_id": 1,
+    "amount": 22000.0,
+    "created_at": "2026-10-02T11:09:41.043474"
+  },
+  {
+    "id": 8,
+    "player_id": 67,
+    "franchise_id": 2,
+    "amount": 27000.0,
+    "created_at": "2026-10-02T11:09:41.590495"
+  },
+  {
+    "id": 9,
+    "player_id": 67,
+    "franchise_id": 4,
+    "amount": 32000.0,
+    "created_at": "2026-10-02T11:09:42.090982"
+  },
+  {
+    "id": 10,
+    "player_id": 67,
+    "franchise_id": 3,
+    "amount": 37000.0,
+    "created_at": "2026-10-02T11:09:42.740936"
+  },
+  {
+    "id": 11,
+    "player_id": 67,
+    "franchise_id": 1,
+    "amount": 42000.0,
+    "created_at": "2026-10-02T11:09:43.242902"
+  },
+  {
+    "id": 12,
+    "player_id": 67,
+    "franchise_id": 2,
+    "amount": 47000.0,
+    "created_at": "2026-10-02T11:09:43.906573"
+  },
+  {
+    "id": 13,
+    "player_id": 67,
+    "franchise_id": 4,
+    "amount": 52000.0,
+    "created_at": "2026-10-02T11:09:44.489561"
+  },
+  {
+    "id": 14,
+    "player_id": 67,
+    "franchise_id": 1,
+    "amount": 62000.0,
+    "created_at": "2026-10-02T11:09:45.391550"
+  },
+  {
+    "id": 15,
+    "player_id": 67,
+    "franchise_id": 2,
+    "amount": 72000.0,
+    "created_at": "2026-10-02T11:09:45.806291"
+  },
+  {
+    "id": 16,
+    "player_id": 67,
+    "franchise_id": 3,
+    "amount": 82000.0,
+    "created_at": "2026-10-02T11:09:46.257032"
+  },
+  {
+    "id": 17,
+    "player_id": 67,
+    "franchise_id": 1,
+    "amount": 92000.0,
+    "created_at": "2026-10-02T11:09:46.925011"
+  },
+  {
+    "id": 18,
+    "player_id": 67,
+    "franchise_id": 4,
+    "amount": 102000.0,
+    "created_at": "2026-10-02T11:09:47.408587"
+  }
+]

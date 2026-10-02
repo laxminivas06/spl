@@ -1,5 +1,25 @@
+import re
 from datetime import datetime
 from app.extensions import db
+
+def normalize_photo_url(url):
+    """
+    Transforms any photo URL, converting Google Drive sharing/view/open links
+    into direct image stream URLs (via Google CDN lh3).
+    """
+    if not url or not isinstance(url, str):
+        return url
+    u = url.strip()
+    if not u:
+        return u
+    if any(k in u for k in ['drive.google.com', 'docs.google.com', 'drive.usercontent.google.com', 'lh3.googleusercontent.com']):
+        m = re.search(r'/d/([a-zA-Z0-9_-]+)', u)
+        if m:
+            return f"https://lh3.googleusercontent.com/d/{m.group(1)}"
+        m = re.search(r'[?&]id=([a-zA-Z0-9_-]+)', u)
+        if m:
+            return f"https://lh3.googleusercontent.com/d/{m.group(1)}"
+    return u
 
 class PlayerRole:
     BATSMAN = 'BATSMAN'
@@ -137,7 +157,7 @@ class Player(db.Model):
             'name': self.name,
             'display_name': self.display_name,
             'room_number': self.room_number,
-            'photo': self.photo,
+            'photo': normalize_photo_url(self.photo),
             'role': self.role,
             'role_icon': self.role_icon,
             'category_icon': self.role_icon,

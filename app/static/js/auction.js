@@ -21,6 +21,29 @@ function formatCurrencyJs(value) {
     }
 }
 
+function normalizeDriveUrlJs(url) {
+    if (!url || typeof url !== 'string') return url;
+    const u = url.trim();
+    if (u.includes('drive.google.com') || u.includes('docs.google.com') || u.includes('drive.usercontent.google.com') || u.includes('lh3.googleusercontent.com')) {
+        const matchD = u.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (matchD && matchD[1]) {
+            return `https://lh3.googleusercontent.com/d/${matchD[1]}`;
+        }
+        const matchId = u.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (matchId && matchId[1]) {
+            return `https://lh3.googleusercontent.com/d/${matchId[1]}`;
+        }
+    }
+    return u;
+}
+
+function resolvePlayerPhotoSrc(photo) {
+    if (!photo) return '/static/uploads/default_player.png';
+    const norm = normalizeDriveUrlJs(photo);
+    if (norm.startsWith('http')) return norm;
+    return `/static/uploads/${norm}`;
+}
+
 // Category Icons (Requirement 1: Exact requested URLs)
 const CATEGORY_ICONS_JS = {
     BATSMAN: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4saHQo4zw7BjytkA_qmWEUs8QViHyauRwpwqzANrRrQ&s=10',
@@ -341,8 +364,7 @@ function updateProjectorUi(data) {
 
         const soldPhoto = document.getElementById('sold-player-photo');
         if (soldPhoto) {
-            const pPhoto = (p && p.photo) ? (p.photo.startsWith('http') ? p.photo : `/static/uploads/${p.photo}`) : '/static/uploads/default_player.png';
-            soldPhoto.src = pPhoto;
+            soldPhoto.src = resolvePlayerPhotoSrc(p ? p.photo : null);
         }
 
         startSoldConfetti();
@@ -360,8 +382,7 @@ function updateProjectorUi(data) {
         if (unsoldPrice) unsoldPrice.innerText = formatCurrencyJs(p.base_price);
         const unsoldPhoto = document.getElementById('unsold-player-photo');
         if (unsoldPhoto) {
-            const pPhoto = (p && p.photo) ? (p.photo.startsWith('http') ? p.photo : `/static/uploads/${p.photo}`) : '/static/uploads/default_player.png';
-            unsoldPhoto.src = pPhoto;
+            unsoldPhoto.src = resolvePlayerPhotoSrc(p ? p.photo : null);
         }
         return;
     }
@@ -371,8 +392,7 @@ function updateProjectorUi(data) {
 
     const imgEl = document.getElementById('projector-player-photo');
     if (imgEl) {
-        const photoSrc = p.photo && p.photo.startsWith('http') ? p.photo : `/static/uploads/${p.photo || 'default_player.png'}`;
-        imgEl.src = photoSrc;
+        imgEl.src = resolvePlayerPhotoSrc(p ? p.photo : null);
     }
 
     const ruleEl = document.getElementById('projector-player-rule');
@@ -705,7 +725,7 @@ function updateFranchiseUi(data) {
     const nameEl = document.getElementById('franchise-player-name');
     if (nameEl) nameEl.innerText = p.name;
     const rollEl = document.getElementById('franchise-player-roll');
-    if (rollEl) rollEl.innerText = `#${p.rule_number || p.roll_number || '--'}`;
+    if (rollEl) rollEl.innerText = p.rule_number || p.roll_number || '--';
     const roleEl = document.getElementById('franchise-player-role');
     if (roleEl) roleEl.innerText = p.role;
     const catEl = document.getElementById('franchise-player-category');
@@ -888,7 +908,7 @@ function renderFoundPlayerCard(p) {
 
     cardEl.classList.remove('d-none');
     document.getElementById('found-player-name').innerText = p.name;
-    document.getElementById('found-player-roll').innerText = `#${p.roll_number}`;
+    document.getElementById('found-player-roll').innerText = p.roll_number || '--';
     document.getElementById('found-player-role').innerText = p.role;
     document.getElementById('found-player-category').innerText = p.category;
     const foundBase = document.getElementById('found-base-price');

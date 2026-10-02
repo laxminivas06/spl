@@ -123,7 +123,7 @@
                 <tr class="history-row">
                     <td class="ps-3 py-2">
                         <img src="{{ url_for('static', filename='uploads/' + p.photo) if p.photo and not p.photo.startswith('http') else (p.photo or url_for('static', filename='uploads/default_player.png')) }}" 
-                             alt="{{ p.name }}" class="rounded-circle object-fit-cover border" width="36" height="36">
+                             alt="{{ p.name }}" class="rounded-2 object-fit-cover border shadow-xs" width="38" height="38" style="aspect-ratio: 1/1;" referrerpolicy="no-referrer" onerror="this.src='/static/uploads/default_player.png'">
                     </td>
                     <td class="py-2 font-monospace fw-bold text-danger">{{ p.rule_number or p.roll_number }}</td>
                     <td class="py-2 fw-bold text-dark">{{ p.name }}</td>

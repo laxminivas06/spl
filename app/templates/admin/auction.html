@@ -12,7 +12,7 @@
     <div>
         <h2 class="fw-bold text-dark mb-0"><i class="fa-solid fa-gavel text-danger me-2"></i>Primary Auction Console
         </h2>
-        <small class="text-muted">Enter player rule number → 10s live bidding timer → Click team cards to bid</small>
+        <small class="text-muted">Enter player roll number → 10s live bidding timer → Click team cards to bid</small>
     </div>
     <div class="d-flex align-items-center gap-2">
         <a href="{{ url_for('live.auction_live') }}" target="_blank" class="btn btn-outline-danger btn-sm fw-semibold">
@@ -36,7 +36,7 @@
             </span>
             <div>
                 <label for="rule-input-dedicated" class="fw-bold text-dark font-display fs-6 mb-0 text-uppercase">
-                    Rule Number:
+                    Roll Number:
                 </label>
                 <div class="text-muted extra-small">Always-visible primary auction player selector</div>
             </div>
@@ -48,7 +48,7 @@
                         class="fa-solid fa-magnifying-glass"></i></span>
                 <input type="text" id="rule-input-dedicated"
                     class="form-control font-monospace fw-bold border-secondary-subtle"
-                    placeholder="RULE NUMBER OR PLAYER NAME" autocomplete="off" style="text-transform: uppercase;"
+                    placeholder="ROLL NUMBER OR PLAYER NAME" autocomplete="off" style="text-transform: uppercase;"
                     oninput="this.value = this.value.toUpperCase(); syncRuleInput(this.value); handleLiveSuggestions(this.value, 'dedicated-suggestions');"
                     onkeypress="if(event.key==='Enter') searchPlayerByRuleDedicated();">
                 <button type="button" class="btn btn-danger fw-bold px-3 d-flex align-items-center gap-1"
@@ -80,9 +80,9 @@
     <div class="p-3 p-md-4">
         <div class="text-center mb-3">
             <h4 class="fw-bold text-dark mb-1"><i class="fa-solid fa-magnifying-glass text-danger me-2"></i>Search by
-                Player Name or Rule Number</h4>
-            <p class="text-muted small mb-0">Enter a player's Rule Number (e.g. R01) or Player Name (e.g. RAHUL) to view
-                details, update rule number, or start bidding</p>
+                Player Name or Roll Number</h4>
+            <p class="text-muted small mb-0">Enter a player's Roll Number or Player Name to view
+                details, update roll number, or start bidding</p>
         </div>
 
         <div class="row justify-content-center">
@@ -136,11 +136,12 @@
                         style="width: 110px; height: 110px; aspect-ratio: 1/1;">
                         <img id="search-res-photo" src="/static/uploads/default_player.png" alt="Player Photo"
                             class="w-100 h-100 object-fit-cover"
+                            referrerpolicy="no-referrer"
                             onerror="this.src='/static/uploads/default_player.png'">
                     </div>
                     <div>
                         <span class="badge bg-danger font-monospace fs-6 px-3 py-1 mb-1 d-inline-block"
-                            id="search-res-rule">RULE #--</span>
+                            id="search-res-rule">--</span>
                     </div>
                     <div>
                         <span class="badge bg-success fs-7 px-2.5 py-1" id="search-res-status">AVAILABLE</span>
@@ -173,11 +174,11 @@
                     <!-- Update Rule Number Section -->
                     <div class="p-2.5 rounded bg-white border border-secondary-subtle mb-3 shadow-sm">
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="text-muted extra-small fw-bold text-uppercase">Current Rule Number</span>
+                            <span class="text-muted extra-small fw-bold text-uppercase">Current Roll Number</span>
                             <span class="badge bg-danger font-monospace" id="curr-rule-display">--</span>
                         </div>
 
-                <label class="text-muted extra-small fw-semibold d-block mb-1">New Rule Number</label>
+                <label class="text-muted extra-small fw-semibold d-block mb-1">New Roll Number</label>
                 <div class="input-group input-group-sm mb-1">
                     <input type="text" id="new-rule-input"
                         class="form-control bg-white text-dark border-secondary-subtle font-monospace"
@@ -212,7 +213,7 @@
         {% for p in available_players %}
         <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 extra-small"
             onclick="quickSelectPlayer('{{ p.rule_number or p.roll_number }}')">
-            <strong class="text-danger">#{{ p.rule_number or p.roll_number }}</strong> {{ p.name }}
+            <strong class="text-danger">{{ p.rule_number or p.roll_number }}</strong> {{ p.name }}
         </button>
         {% else %}
         <span class="text-muted extra-small">No available players remaining in primary pool.</span>
@@ -246,12 +247,12 @@
                 <div
                     class="spl-card-header d-flex justify-content-between align-items-center bg-light border-bottom border-secondary-subtle">
                     <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-id-card text-danger me-2"></i>Active Player Profile</h5>
-                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle font-monospace fw-bold" id="card-rule-number">RULE #--</span>
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle font-monospace fw-bold" id="card-rule-number">--</span>
                 </div>
                 <div class="p-3 text-center">
                     <img id="card-player-photo" src="" alt="Player"
                         class="rounded-3 border border-danger border-2 shadow-sm mb-3 object-fit-cover" width="115"
-                        height="115" onerror="this.src='/static/uploads/default_player.png'">
+                        height="115" referrerpolicy="no-referrer" onerror="this.src='/static/uploads/default_player.png'">
                     <h3 class="fw-bold text-dark mb-1" id="card-player-name">--</h3>
                     <div class="d-flex justify-content-center gap-2 mb-3">
                         <span class="badge bg-light border border-primary text-primary fs-7"
@@ -760,7 +761,7 @@
             // Display player attributes (Requirement 3 & 10)
             document.getElementById('search-res-photo').src = (p.photo && !p.photo.startsWith('http')) ? `/static/uploads/${p.photo}` : (p.photo || '/static/uploads/default_player.png');
             document.getElementById('search-res-name').textContent = p.name;
-            document.getElementById('search-res-rule').textContent = `RULE #${p.rule_number || p.roll_number}`;
+            document.getElementById('search-res-rule').textContent = p.rule_number || p.roll_number;
             document.getElementById('search-res-role').textContent = p.role || 'BATSMAN';
             
             const roleIcon = document.getElementById('search-res-role-icon');
@@ -850,7 +851,7 @@
             searchedPlayerObj.rule_number = data.player.rule_number;
             searchedPlayerObj.roll_number = data.player.roll_number;
             document.getElementById('curr-rule-display').textContent = data.player.rule_number;
-            document.getElementById('search-res-rule').textContent = `RULE #${data.player.rule_number}`;
+            document.getElementById('search-res-rule').textContent = data.player.rule_number;
             document.getElementById('rule-input').value = data.player.rule_number;
 
             feedback.className = 'extra-small text-success mt-1 d-block';
@@ -1137,7 +1138,7 @@
             if (activePill) {
                 if (state.active_player) {
                     const rNo = state.active_player.rule_number || state.active_player.roll_number || '--';
-                    activePill.textContent = `RULE #${rNo} - ${state.active_player.name}`;
+                    activePill.textContent = `${rNo} - ${state.active_player.name}`;
                     activePill.className = 'badge bg-danger-subtle text-danger border border-danger fs-6 font-monospace';
                 } else {
                     activePill.textContent = 'None (Waiting)';
@@ -1191,7 +1192,7 @@
                 entryCard?.classList.add('d-none');
                 arena?.classList.remove('d-none');
 
-                document.getElementById('card-rule-number').textContent = `RULE #${state.active_player.rule_number || state.active_player.roll_number}`;
+                document.getElementById('card-rule-number').textContent = state.active_player.rule_number || state.active_player.roll_number;
                 document.getElementById('card-player-name').textContent = state.active_player.name;
                 const catBadge = document.getElementById('card-player-category');
                 if (catBadge) {

@@ -24,7 +24,7 @@
         <div class="col-md-7">
             <form method="GET" action="{{ url_for('admin.unsold_players') }}" class="row g-2">
                 <div class="col-md-5">
-                    <input type="text" name="search" class="form-control form-control-sm bg-white text-dark border" placeholder="Search name or roll #" value="{{ search }}">
+                    <input type="text" name="search" class="form-control form-control-sm bg-white text-dark border" placeholder="Search name or roll no" value="{{ search }}">
                 </div>
                 <div class="col-md-3">
                     <select name="role" class="form-select form-select-sm bg-white text-dark border">
@@ -78,7 +78,7 @@
                 <tr>
                     <td class="ps-3 py-2">
                         <img src="{{ url_for('static', filename='uploads/' + player.photo) if player.photo and not player.photo.startswith('http') else (player.photo or url_for('static', filename='uploads/default_player.png')) }}" 
-                             alt="{{ player.name }}" class="rounded-circle object-fit-cover border" width="40" height="40">
+                             alt="{{ player.name }}" class="rounded-2 object-fit-cover border shadow-xs" width="42" height="42" style="aspect-ratio: 1/1;" referrerpolicy="no-referrer" onerror="this.src='/static/uploads/default_player.png'">
                     </td>
                     <td class="py-2"><span class="badge bg-light text-black border">{{ player.roll_number }}</span></td>
                     <td class="py-2 fw-bold text-dark">{{ player.name }}</td>

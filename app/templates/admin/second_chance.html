@@ -100,10 +100,10 @@
                 <!-- Col 1: Photo & Status (SQUARE PHOTO FRAME) -->
                 <div class="col-12 col-sm-3 col-md-3 text-center">
                     <div class="border border-danger border-2 rounded-3 shadow-sm overflow-hidden mb-2 mx-auto" style="width: 105px; height: 105px; aspect-ratio: 1/1;">
-                        <img id="sc-search-res-photo" src="/static/uploads/default_player.png" alt="Player Photo" class="w-100 h-100 object-fit-cover" onerror="this.src='/static/uploads/default_player.png'">
+                        <img id="sc-search-res-photo" src="/static/uploads/default_player.png" alt="Player Photo" class="w-100 h-100 object-fit-cover" referrerpolicy="no-referrer" onerror="this.src='/static/uploads/default_player.png'">
                     </div>
                     <div>
-                        <span class="badge bg-danger-subtle text-danger border border-danger font-monospace fs-6 px-3 py-1 mb-1 d-inline-block" id="sc-search-res-rule">RULE #--</span>
+                        <span class="badge bg-danger-subtle text-danger border border-danger font-monospace fs-6 px-3 py-1 mb-1 d-inline-block" id="sc-search-res-rule">--</span>
                     </div>
                     <div>
                         <span class="badge bg-secondary-subtle text-dark border border-secondary-subtle fs-7 px-2.5 py-1" id="sc-search-res-status">UNSOLD</span>
@@ -165,7 +165,7 @@
             <div class="d-flex flex-wrap justify-content-center gap-1.5" style="max-height: 90px; overflow-y: auto;">
                 {% for p in eligible_players %}
                 <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 extra-small" onclick="quickSelectSecondChance('{{ p.rule_number or p.roll_number }}')">
-                    <strong class="text-danger">#{{ p.rule_number or p.roll_number }}</strong> {{ p.name }}
+                    <strong class="text-danger">{{ p.rule_number or p.roll_number }}</strong> {{ p.name }}
                 </button>
                 {% else %}
                 <span class="text-muted extra-small">No eligible unsold players waiting.</span>
@@ -195,11 +195,11 @@
             <div class="spl-card h-100 bg-white border border-secondary-subtle shadow-sm">
                 <div class="spl-card-header d-flex justify-content-between align-items-center bg-light border-bottom border-secondary-subtle">
                     <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-id-card text-danger me-2"></i>Second-Chance Player</h5>
-                    <span class="badge bg-danger-subtle text-danger border border-danger font-monospace fw-bold" id="sc-card-rule-number">RULE #--</span>
+                    <span class="badge bg-danger-subtle text-danger border border-danger font-monospace fw-bold" id="sc-card-rule-number">--</span>
                 </div>
                 <div class="p-3 text-center">
                     <div class="border border-danger border-3 rounded-3 shadow mb-3 overflow-hidden bg-white mx-auto" style="width: 120px; height: 120px; aspect-ratio: 1/1;">
-                        <img id="sc-card-player-photo" src="" alt="Player" class="w-100 h-100 object-fit-cover" onerror="this.src='/static/uploads/default_player.png'">
+                        <img id="sc-card-player-photo" src="" alt="Player" class="w-100 h-100 object-fit-cover" referrerpolicy="no-referrer" onerror="this.src='/static/uploads/default_player.png'">
                     </div>
                     <h3 class="fw-bold text-dark mb-1" id="sc-card-player-name">--</h3>
                     <div class="d-flex justify-content-center gap-2 mb-3">
@@ -375,7 +375,7 @@
             <p class="text-muted small mb-0">Only players marked eligible for second-chance. Click <strong>Auction Now</strong> to start bidding.</p>
         </div>
         <div class="d-flex gap-2">
-            <input type="text" id="sc-table-search" class="form-control form-control-sm bg-white text-dark border-secondary-subtle" placeholder="Search rule #, name, role...">
+            <input type="text" id="sc-table-search" class="form-control form-control-sm bg-white text-dark border-secondary-subtle" placeholder="Search roll no, name, role...">
         </div>
     </div>
 
@@ -384,7 +384,7 @@
             <thead class="text-dark small text-uppercase bg-light border-bottom border-secondary-subtle font-display">
                 <tr>
                     <th class="ps-3 py-2">Photo</th>
-                    <th class="py-2">Rule #</th>
+                    <th class="py-2">Roll No</th>
                     <th class="py-2">Player Name</th>
                     <th class="py-2">Role</th>
                     <th class="py-2">Branch / Year</th>
@@ -397,9 +397,9 @@
                 <tr class="sc-table-row">
                     <td class="ps-3 py-2">
                         <img src="{{ url_for('static', filename='uploads/' + p.photo) if p.photo and not p.photo.startswith('http') else (p.photo or url_for('static', filename='uploads/default_player.png')) }}" 
-                             alt="{{ p.name }}" class="rounded-circle object-fit-cover border border-secondary-subtle" width="40" height="40" onerror="this.src='/static/uploads/default_player.png'">
+                             alt="{{ p.name }}" class="rounded-2 object-fit-cover border border-secondary-subtle shadow-xs" width="42" height="42" style="aspect-ratio: 1/1;" referrerpolicy="no-referrer" onerror="this.src='/static/uploads/default_player.png'">
                     </td>
-                    <td class="py-2 font-monospace fw-bold text-danger">#{{ p.rule_number or p.roll_number }}</td>
+                    <td class="py-2 font-monospace fw-bold text-danger">{{ p.rule_number or p.roll_number }}</td>
                     <td class="py-2 fw-bold text-dark">{{ p.name }}</td>
                     <td class="py-2"><span class="badge bg-light border border-primary text-primary">{{ p.role }}</span></td>
                     <td class="py-2 small text-muted">{{ p.branch or '-' }} / Yr {{ p.year or '-' }}</td>
@@ -632,7 +632,7 @@ async function searchSecondChancePlayerByRule(overrideRule = null) {
             photoEl.src = '/static/uploads/default_player.png';
         }
 
-        document.getElementById('sc-search-res-rule').textContent = `RULE #${p.rule_number || p.roll_number}`;
+        document.getElementById('sc-search-res-rule').textContent = p.rule_number || p.roll_number;
         document.getElementById('sc-search-res-name').textContent = p.name;
         document.getElementById('sc-search-res-role').textContent = p.role || 'BATSMAN';
         const roleIconEl = document.getElementById('sc-search-res-role-icon');
@@ -712,7 +712,7 @@ async function updateSecondChancePlayerRule() {
         searchedSCPlayerObj.rule_number = data.player.rule_number;
         searchedSCPlayerObj.roll_number = data.player.roll_number;
         document.getElementById('sc-curr-rule-display').textContent = data.player.rule_number;
-        document.getElementById('sc-search-res-rule').textContent = `RULE #${data.player.rule_number}`;
+        document.getElementById('sc-search-res-rule').textContent = data.player.rule_number || data.player.roll_number;
         document.getElementById('sc-rule-input').value = data.player.rule_number;
 
         feedback.className = 'extra-small text-success mt-1 d-block';
@@ -1035,7 +1035,7 @@ async function pollScState() {
             entryCard?.classList.add('d-none');
             arena?.classList.remove('d-none');
 
-            document.getElementById('sc-card-rule-number').textContent = `RULE #${state.active_player.rule_number || state.active_player.roll_number}`;
+            document.getElementById('sc-card-rule-number').textContent = state.active_player.rule_number || state.active_player.roll_number;
             document.getElementById('sc-card-player-name').textContent = state.active_player.name;
             document.getElementById('sc-card-player-role').textContent = state.active_player.role;
             const cardRoleIcon = document.getElementById('sc-card-role-icon');

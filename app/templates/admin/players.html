@@ -130,9 +130,9 @@
                 <tr>
                     <td class="text-center">
                         {% if p.photo and p.photo.startswith('http') %}
-                            <img src="{{ p.photo }}" alt="{{ p.name }}" class="player-thumb" onerror="this.src='/static/uploads/default_player.png'">
+                            <img src="{{ p.photo }}" alt="{{ p.name }}" class="player-thumb" referrerpolicy="no-referrer" onerror="this.src='/static/uploads/default_player.png'">
                         {% elif p.photo %}
-                            <img src="{{ url_for('static', filename='uploads/' + p.photo) }}" alt="{{ p.name }}" class="player-thumb" onerror="this.src='/static/uploads/default_player.png'">
+                            <img src="{{ url_for('static', filename='uploads/' + p.photo) }}" alt="{{ p.name }}" class="player-thumb" referrerpolicy="no-referrer" onerror="this.src='/static/uploads/default_player.png'">
                         {% else %}
                             <div class="player-thumb bg-light border d-flex align-items-center justify-content-center text-primary">
                                 <i class="fa-solid fa-user"></i>
@@ -269,6 +269,7 @@
                                                          src="{{ p.photo if p.photo and p.photo.startswith('http') else url_for('static', filename='uploads/' + (p.photo or 'default_player.png')) }}" 
                                                          class="w-100 h-100 object-fit-cover" 
                                                          alt="Preview"
+                                                         referrerpolicy="no-referrer"
                                                          onerror="this.src='/static/uploads/default_player.png'">
                                                 </div>
                                                 <div class="flex-grow-1">
@@ -383,7 +384,7 @@
                             <div class="d-flex align-items-center gap-3">
                                 <div class="border border-danger border-2 rounded-3 bg-light d-flex align-items-center justify-content-center overflow-hidden" 
                                      style="width: 70px; height: 70px; aspect-ratio: 1/1; flex-shrink: 0;">
-                                    <img id="add_photo_preview_img" src="/static/uploads/default_player.png" class="w-100 h-100 object-fit-cover d-none" alt="Preview">
+                                    <img id="add_photo_preview_img" src="/static/uploads/default_player.png" class="w-100 h-100 object-fit-cover d-none" alt="Preview" referrerpolicy="no-referrer">
                                     <i id="add_photo_preview_icon" class="fa-solid fa-camera text-danger fs-4"></i>
                                 </div>
                                 <div class="flex-grow-1">
@@ -581,9 +582,10 @@ function viewPlayerModal(playerId) {
         .then(data => {
             const photoSrc = data.photo && data.photo.startsWith('http') ? data.photo : '/static/uploads/' + (data.photo || 'default_player.png');
             modalBody.innerHTML = `
-                <div class="spl-card border-0 bg-transparent p-0">
-                    <div class="mb-3">
-                        <img src="${photoSrc}" class="rounded-circle border border-danger shadow" width="100" height="100" style="object-fit:cover;" onerror="this.src='/static/uploads/default_player.png'">
+                    <div class="mb-3 d-flex justify-content-center">
+                        <div class="border border-danger border-2 rounded-3 shadow-sm overflow-hidden bg-light" style="width: 110px; height: 110px; aspect-ratio: 1/1;">
+                            <img src="${photoSrc}" class="w-100 h-100 object-fit-cover" alt="${data.name}" referrerpolicy="no-referrer" onerror="this.src='/static/uploads/default_player.png'">
+                        </div>
                     </div>
                     <h3 class="fw-bold text-dark mb-0">${data.name}</h3>
                     <div class="text-danger fw-semibold mb-3">Roll Number: ${data.rule_number || data.roll_number}</div>
@@ -607,8 +609,29 @@ function viewPlayerModal(playerId) {
         });
 }
 
+function transformDriveUrlJs(url) {
+    if (!url || typeof url !== 'string') return url;
+    const u = url.trim();
+    if (u.includes('drive.google.com') || u.includes('docs.google.com') || u.includes('drive.usercontent.google.com') || u.includes('lh3.googleusercontent.com')) {
+        const matchD = u.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (matchD && matchD[1]) {
+            return `https://lh3.googleusercontent.com/d/${matchD[1]}`;
+        }
+        const matchId = u.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (matchId && matchId[1]) {
+            return `https://lh3.googleusercontent.com/d/${matchId[1]}`;
+        }
+    }
+    return u;
+}
+
 function handlePhotoUrlInput(input, imgId, iconId) {
-    const url = input.value.trim();
+    let url = input.value.trim();
+    const transformed = transformDriveUrlJs(url);
+    if (transformed !== url) {
+        input.value = transformed;
+        url = transformed;
+    }
     const img = document.getElementById(imgId);
     const icon = document.getElementById(iconId);
     if (url && (url.startsWith('http://') || url.startsWith('https://'))) {

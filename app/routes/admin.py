@@ -9,6 +9,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from app.extensions import db
 from app.models import User, Player, PlayerRole, PlayerCategory, PlayerStatus, Franchise, AuctionState, AuctionStatus, SystemSettings, AuditLog, Transaction, Bid, Fixture, FixtureStage, FixtureStatus
+from app.models.player import normalize_photo_url
 from app.utils.decorators import admin_required
 from app.services.csv_service import (
     parse_and_import_players_csv, preview_players_csv,
@@ -156,7 +157,7 @@ def add_player():
     role = request.form.get('role', PlayerRole.BATSMAN).strip().upper()
     branch = request.form.get('branch', '').strip() or None
     category = PlayerCategory.normalize(request.form.get('category'))
-    photo_url = request.form.get('photo_url', '').strip()
+    photo_url = normalize_photo_url(request.form.get('photo_url', '').strip())
 
     if not roll_number or len(roll_number) != 10 or not re.match(r'^[A-Z0-9]{10}$', roll_number):
         flash('Roll Number must be exactly 10 alphanumeric characters (e.g. SPL26A001X).', 'danger')
@@ -172,15 +173,15 @@ def add_player():
 
     photo_filename = 'default_player.png'
     file = request.files.get('photo_file')
-    if file and file.filename and file.filename.strip():
+    if photo_url:
+        photo_filename = photo_url
+    elif file and file.filename and file.filename.strip():
         saved_photo, err = validate_and_save_image(file, prefix=f"player_{roll_number}")
         if err:
             flash(f"Player photo error: {err}", 'danger')
             return redirect(url_for('admin.players'))
         if saved_photo:
             photo_filename = saved_photo
-    elif photo_url:
-        photo_filename = photo_url
 
     player = Player(
         roll_number=roll_number,
@@ -243,17 +244,17 @@ def edit_player(id):
     if new_cat:
         player.category = PlayerCategory.normalize(new_cat)
 
-    new_photo_url = request.form.get('photo_url', '').strip()
+    new_photo_url = normalize_photo_url(request.form.get('photo_url', '').strip())
     file = request.files.get('photo_file')
-    if file and file.filename and file.filename.strip():
+    if new_photo_url:
+        player.photo = new_photo_url
+    elif file and file.filename and file.filename.strip():
         saved_photo, err = validate_and_save_image(file, prefix=f"player_{player.roll_number}")
         if err:
             flash(f"Player photo error: {err}", 'danger')
             return redirect(url_for('admin.players'))
         if saved_photo:
             player.photo = saved_photo
-    elif new_photo_url:
-        player.photo = new_photo_url
 
     db.session.commit()
     log_audit(current_user.id, 'EDIT_PLAYER', 'Player', player.id, old_data, player.to_dict())
