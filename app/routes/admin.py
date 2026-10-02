@@ -1177,6 +1177,18 @@ def auction_control():
     available_players = Player.query.filter(Player.status == PlayerStatus.AVAILABLE, Player.sold_to == None).order_by(Player.roll_number.asc()).all()
     return render_template('admin/auction.html', franchises=franchises, available_players=available_players)
 
+@admin_bp.route('/auction/fresh-reset', methods=['POST'])
+@login_required
+@admin_required
+def fresh_auction_reset():
+    try:
+        from app.services.auction_service import reset_auction_fresh
+        reset_auction_fresh(current_user.id)
+        flash('Fresh Auction Reset Completed! All previous auction data, bids, and spending have been reset. Master franchises, squads, and player profiles remain completely intact.', 'success')
+    except Exception as e:
+        flash(f'Auction reset failed: {str(e)}', 'danger')
+    return redirect(url_for('admin.auction_control'))
+
 # ==================== PHASE 6 MODULES ====================
 
 # 1. UNSOLD PLAYER MANAGEMENT

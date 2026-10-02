@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "id": 1,
+    "admin_id": 1,
+    "franchise_id": null,
+    "action": "EDIT_PLAYER",
+    "target_type": "Player",
+    "target_id": 81,
+    "status": "SUCCESS",
+    "ip_address": "127.0.0.1",
+    "user_email": null,
+    "category": null,
+    "old_value": "{'id': 81, 'roll_number': '23N81A6638', 'rule_number': '23N81A6638', 'name': 'Dileep', 'display_name': 'Dileep', 'room_number': None, 'photo': 'https://lh3.googleusercontent.com/d/1ZN5hr9wsgmUQ9f0S9h6JMtBdwditQ4ve', 'role': 'ALL_ROUNDER', 'role_icon': 'https://static.vecteezy.com/system/resources/previews/000/363/479/non_2x/vector-glyph-black-icon.jpg', 'category_icon': 'https://static.vecteezy.com/system/resources/previews/000/363/479/non_2x/vector-glyph-black-icon.jpg', 'branch': 'CSE-AIML', 'year': '4', 'experience': None, 'category': 'Skilled', 'base_price': 10000.0, 'status': 'AVAILABLE', 'is_sold': False, 'is_retained': False, 'retained_amount': 0.0, 'is_second_chance_eligible': False, 'auction_type': 'PRIMARY', 'auctionType': 'PRIMARY', 'sold_to': None, 'soldTo': None, 'sold_price': None, 'soldPrice': None, 'sold_at': None, 'soldAt': None, 'is_captain': False, 'display_price': '—', 'franchise_name': None, 'franchise_short': None}",
+    "new_value": "{'id': 81, 'roll_number': '23N81A6638', 'rule_number': '23N81A6638', 'name': 'Dileep', 'display_name': 'Dileep', 'room_number': None, 'photo': 'https://kommodo.ai/i/mEapjGsENy51bRfobx4T', 'role': 'ALL_ROUNDER', 'role_icon': 'https://static.vecteezy.com/system/resources/previews/000/363/479/non_2x/vector-glyph-black-icon.jpg', 'category_icon': 'https://static.vecteezy.com/system/resources/previews/000/363/479/non_2x/vector-glyph-black-icon.jpg', 'branch': 'CSE-AIML', 'year': '4', 'experience': None, 'category': 'Skilled', 'base_price': 10000.0, 'status': 'AVAILABLE', 'is_sold': False, 'is_retained': False, 'retained_amount': 0.0, 'is_second_chance_eligible': False, 'auction_type': 'PRIMARY', 'auctionType': 'PRIMARY', 'sold_to': None, 'soldTo': None, 'sold_price': None, 'soldPrice': None, 'sold_at': None, 'soldAt': None, 'is_captain': False, 'display_price': '—', 'franchise_name': None, 'franchise_short': None}",
+    "created_at": "2026-10-02T11:45:58.529708"
+  },
+  {
+    "id": 2,
+    "admin_id": 1,
+    "franchise_id": null,
+    "action": "EDIT_PLAYER",
+    "target_type": "Player",
+    "target_id": 81,
+    "status": "SUCCESS",
+    "ip_address": "127.0.0.1",
+    "user_email": null,
+    "category": null,
+    "old_value": "{'id': 81, 'roll_number': '23N81A6638', 'rule_number': '23N81A6638', 'name': 'Dileep', 'display_name': 'Dileep', 'room_number': None, 'photo': 'https://kommodo.ai/i/mEapjGsENy51bRfobx4T', 'role': 'ALL_ROUNDER', 'role_icon': 'https://static.vecteezy.com/system/resources/previews/000/363/479/non_2x/vector-glyph-black-icon.jpg', 'category_icon': 'https://static.vecteezy.com/system/resources/previews/000/363/479/non_2x/vector-glyph-black-icon.jpg', 'branch': 'CSE-AIML', 'year': '4', 'experience': None, 'category': 'Skilled', 'base_price': 10000.0, 'status': 'AVAILABLE', 'is_sold': False, 'is_retained': False, 'retained_amount': 0.0, 'is_second_chance_eligible': False, 'auction_type': 'PRIMARY', 'auctionType': 'PRIMARY', 'sold_to': None, 'soldTo': None, 'sold_price': None, 'soldPrice': None, 'sold_at': None, 'soldAt': None, 'is_captain': False, 'display_price': '—', 'franchise_name': None, 'franchise_short': None}",
+    "new_value": "{'id': 81, 'roll_number': '23N81A6638', 'rule_number': '23N81A6638', 'name': 'Dileep', 'display_name': 'Dileep', 'room_number': None, 'photo': 'https://kommodo.ai/i/mEapjGsENy51bRfobx4T', 'role': 'ALL_ROUNDER', 'role_icon': 'https://static.vecteezy.com/system/resources/previews/000/363/479/non_2x/vector-glyph-black-icon.jpg', 'category_icon': 'https://static.vecteezy.com/system/resources/previews/000/363/479/non_2x/vector-glyph-black-icon.jpg', 'branch': 'CSE-AIML', 'year': '4', 'experience': None, 'category': 'Skilled', 'base_price': 10000.0, 'status': 'AVAILABLE', 'is_sold': False, 'is_retained': False, 'retained_amount': 0.0, 'is_second_chance_eligible': False, 'auction_type': 'PRIMARY', 'auctionType': 'PRIMARY', 'sold_to': None, 'soldTo': None, 'sold_price': None, 'soldPrice': None, 'sold_at': None, 'soldAt': None, 'is_captain': False, 'display_price': '—', 'franchise_name': None, 'franchise_short': None}",
+    "created_at": "2026-10-02T11:47:24.965051"
+  }
+]

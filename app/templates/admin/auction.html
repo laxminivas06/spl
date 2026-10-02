@@ -18,6 +18,9 @@
         <a href="{{ url_for('live.auction_live') }}" target="_blank" class="btn btn-outline-danger btn-sm fw-semibold">
             <i class="fa-solid fa-tv me-1"></i> Open Projector View
         </a>
+        <button type="button" class="btn btn-outline-secondary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#freshAuctionResetModal" title="Reset auction to clean starting state">
+            <i class="fa-solid fa-rotate-left me-1"></i> Fresh Auction Reset
+        </button>
         <span id="auction-state-badge" class="badge bg-secondary fs-6 px-3 py-2">
             WAITING
         </span>
@@ -1353,4 +1356,48 @@
         }
     }
 </script>
+
+<!-- Fresh Auction Reset Modal -->
+<div class="modal fade" id="freshAuctionResetModal" tabindex="-1" aria-labelledby="freshAuctionResetModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-2 border-danger shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-danger text-white py-3">
+                <h5 class="modal-title font-display fw-black" id="freshAuctionResetModalLabel">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i> FRESH AUCTION RESET
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.fresh_auction_reset') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body p-4 text-start">
+                    <p class="fw-bold text-dark mb-2 fs-6">Are you sure you want to reset the auction to a fresh starting state?</p>
+                    <div class="p-3 bg-light rounded-3 border border-secondary-subtle small mb-3">
+                        <div class="fw-bold text-success mb-1"><i class="fa-solid fa-shield-halved me-1"></i> PERMANENT DATA PRESERVED:</div>
+                        <ul class="mb-2 ps-3 text-muted">
+                            <li>All <strong>Franchises</strong> (names, owners, emails, logos, settings)</li>
+                            <li>All <strong>Final Squads & Captains</strong> (retained roles, categories)</li>
+                            <li>All <strong>Players in database</strong> (profiles, photos, roles, categories)</li>
+                        </ul>
+                        <div class="fw-bold text-danger mb-1"><i class="fa-solid fa-rotate-left me-1"></i> AUCTION DATA RESET:</div>
+                        <ul class="mb-0 ps-3 text-muted">
+                            <li>All previous bids, auction transactions & audit logs cleared</li>
+                            <li>Franchise spent purse reset to ₹0; remaining purse restored</li>
+                            <li>All players reset to <strong>AVAILABLE</strong> for bidding</li>
+                            <li>Auction console status reset to <strong>WAITING</strong></li>
+                        </ul>
+                    </div>
+                    <div class="text-danger extra-small font-display fw-bold">
+                        <i class="fa-solid fa-circle-info me-1"></i> This action cannot be undone. Bidding will restart from Player #1.
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2.5 px-4 d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-sm px-4 fw-bold shadow-sm">
+                        <i class="fa-solid fa-rotate-left me-1"></i> Confirm Fresh Reset
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}

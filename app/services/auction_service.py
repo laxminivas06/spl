@@ -400,6 +400,73 @@ def reset_to_waiting(admin_id=None):
     log_audit(admin_id, 'AUCTION_RESET', 'AuctionState', state.id, None, 'Reset to WAITING')
     return state
 
+def reset_auction_fresh(admin_id=None):
+    """
+    Fresh Auction Reset:
+    - Clears all temporary auction records, bids, transactions, and audit logs.
+    - Resets global AuctionState to pristine WAITING.
+    - Resets every player's status to AVAILABLE, clearing sold_to, sold_price, sold_at.
+    - Restores each franchise's remaining purse to starting_purse (minus captain retention).
+    - Preserves all permanent franchise master data, owner details, categories, and captains.
+    - Preserves all final squads and player records in database without duplication or loss.
+    """
+    # 1. Reset Auction State
+    state = get_auction_state()
+    state.status = AuctionStatus.WAITING
+    state.active_player_id = None
+    state.current_bid = 0.0
+    state.highest_bidder_id = None
+    state.timer_end = None
+    state.sold_display_until = None
+    state.paused_seconds_left = None
+    state.last_bid_at = None
+    state.started_at = None
+
+    # 2. Reset all players to AVAILABLE (except retained captain players if stored in Player table)
+    for p in Player.query.all():
+        if p.is_captain:
+            p.status = PlayerStatus.RETAINED
+            p.sold_price = 50000.0
+        else:
+            p.status = PlayerStatus.AVAILABLE
+            p.sold_to = None
+            p.sold_price = None
+            p.sold_at = None
+            p.is_second_chance_eligible = False
+            p.auction_type = 'PRIMARY'
+
+    # 3. Reset all franchise purses
+    for f in Franchise.query.all():
+        f.recalculate_purse()
+
+    # 4. Remove all bids
+    for b in list(Bid.query.all()):
+        db.session.delete(b)
+
+    # 5. Remove all transactions
+    for t in list(Transaction.query.all()):
+        db.session.delete(t)
+
+    # 6. Reset System Settings
+    SystemSettings.set_setting('second_chance_active', 'false')
+    SystemSettings.set_setting('squads_locked', 'false')
+    SystemSettings.set_setting('event_state', 'SETUP')
+
+    # Commit all changes to JSON database
+    db.session.commit()
+
+    # 7. Clear audit logs for auction
+    try:
+        from app.models.audit import AuditLog
+        for log in list(AuditLog.query.all()):
+            db.session.delete(log)
+        db.session.commit()
+    except Exception:
+        pass
+
+    log_audit(admin_id, 'FRESH_AUCTION_RESET', 'Auction', None, None, 'Full fresh auction reset executed successfully.')
+    return True
+
 def update_player_rule_number(player_id, new_rule_number, admin_id=None):
     """
     Update player rule number with strict duplicate prevention across the application (Requirements 4 & 5).

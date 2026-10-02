@@ -426,6 +426,17 @@ def api_reset_waiting():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
+@api_bp.route('/auction/fresh-reset', methods=['POST'])
+@login_required
+@admin_required
+def api_fresh_auction_reset():
+    try:
+        from app.services.auction_service import reset_auction_fresh
+        reset_auction_fresh(current_user.id)
+        return jsonify({'success': True, 'message': 'Fresh Auction Reset completed successfully.'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
 @api_bp.route('/auction/second-chance/find-player', methods=['POST'])
 @login_required
 @admin_required

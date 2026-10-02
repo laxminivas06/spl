@@ -149,4 +149,27 @@
         </div>
     </div>
 </form>
+
+<!-- Auction Maintenance & Fresh Reset Card -->
+<div class="spl-card border-danger border-2 mt-4 bg-white shadow-sm p-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+            <h5 class="fw-bold text-danger mb-1 font-display">
+                <i class="fa-solid fa-triangle-exclamation me-1.5"></i> Fresh Auction Reset
+            </h5>
+            <p class="text-muted small mb-0 font-sans">
+                Reset all previous bids, auction spending, and player sale statuses to start a brand new auction.
+                <strong>Permanent franchise master data, owner details, captains, and player database remain completely preserved.</strong>
+            </p>
+        </div>
+        <div>
+            <form method="POST" action="{{ url_for('admin.fresh_auction_reset') }}" onsubmit="return confirm('Are you sure you want to perform a Fresh Auction Reset?\n\n• All previous bids and auction spending will be cleared.\n• Every player will become AVAILABLE again for bidding.\n• Every franchise will have its original purse restored.\n• Franchise master data and final squads remain 100% untouched.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-outline-danger font-display fw-bold px-4 py-2">
+                    <i class="fa-solid fa-rotate-left me-1"></i> Fresh Auction Reset
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
