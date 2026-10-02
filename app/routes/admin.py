@@ -10,7 +10,12 @@ from flask_login import login_required, current_user
 from app.extensions import db
 from app.models import User, Player, PlayerRole, PlayerCategory, PlayerStatus, Franchise, AuctionState, AuctionStatus, SystemSettings, AuditLog, Transaction, Bid, Fixture, FixtureStage, FixtureStatus
 from app.utils.decorators import admin_required
-from app.services.csv_service import parse_and_import_players_csv, preview_players_csv
+from app.services.csv_service import (
+    parse_and_import_players_csv, preview_players_csv,
+    export_players_excel, export_players_csv,
+    generate_player_template_excel, generate_player_template_csv,
+    is_valid_image_url
+)
 from app.services.audit_service import log_audit
 from app.services.auction_service import validate_squads_integrity, confirm_and_lock_squads, unlock_squads_override
 from app.services.fixture_service import generate_fixtures, validate_fixtures, publish_fixtures, unpublish_fixtures
@@ -149,15 +154,12 @@ def add_player():
     roll_number = request.form.get('roll_number', '').strip().upper()
     name = request.form.get('name', '').strip()
     role = request.form.get('role', PlayerRole.BATSMAN).strip().upper()
+    branch = request.form.get('branch', '').strip() or None
     category = PlayerCategory.normalize(request.form.get('category'))
-    base_price = 10000.0  # Fixed globally at ₹10,000
-
-    if year not in ['1', '2', '3', '4']:
-        flash('Year must be selected from 4, 3, 2, or 1.', 'danger')
-        return redirect(url_for('admin.players'))
+    photo_url = request.form.get('photo_url', '').strip()
 
     if not roll_number or len(roll_number) != 10 or not re.match(r'^[A-Z0-9]{10}$', roll_number):
-        flash('Rule Number must be exactly 10 alphanumeric characters (e.g. SPL26A001X).', 'danger')
+        flash('Roll Number must be exactly 10 alphanumeric characters (e.g. SPL26A001X).', 'danger')
         return redirect(url_for('admin.players'))
 
     if not name:
@@ -165,7 +167,7 @@ def add_player():
         return redirect(url_for('admin.players'))
 
     if Player.query.filter((Player.roll_number == roll_number) | (Player.rule_number == roll_number)).first():
-        flash(f'Player with Rule Number "{roll_number}" already exists.', 'danger')
+        flash(f'Player with Roll Number "{roll_number}" already exists.', 'danger')
         return redirect(url_for('admin.players'))
 
     photo_filename = 'default_player.png'
@@ -177,17 +179,18 @@ def add_player():
             return redirect(url_for('admin.players'))
         if saved_photo:
             photo_filename = saved_photo
+    elif photo_url:
+        photo_filename = photo_url
 
     player = Player(
         roll_number=roll_number,
         name=name,
         photo=photo_filename,
         role=role if role in PlayerRole.CHOICES else PlayerRole.BATSMAN,
-        branch=None,
-        year=year,
+        branch=branch,
+        year=year or None,
         experience=None,
         category=category,
-        base_price=base_price,
         status=PlayerStatus.AVAILABLE,
         auction_type='PRIMARY',
         room_number=None
@@ -197,7 +200,7 @@ def add_player():
     db.session.commit()
 
     log_audit(current_user.id, 'ADD_PLAYER', 'Player', player.id, None, player.name)
-    flash(f'Player "{name}" (Rule #{roll_number}) added successfully.', 'success')
+    flash(f'Player "{name}" (Roll #{roll_number}) added successfully.', 'success')
     return redirect(url_for('admin.players'))
 
 @admin_bp.route('/players/<int:id>/edit', methods=['POST'])
@@ -211,18 +214,22 @@ def edit_player(id):
     new_rule = (request.form.get('roll_number') or request.form.get('rule_number') or player.roll_number or '').strip().upper()
     if new_rule:
         if len(new_rule) != 10 or not re.match(r'^[A-Z0-9]{10}$', new_rule):
-            flash('Rule Number must be exactly 10 alphanumeric characters (e.g. SPL26A001X).', 'danger')
+            flash('Roll Number must be exactly 10 alphanumeric characters (e.g. SPL26A001X).', 'danger')
             return redirect(url_for('admin.players'))
         if new_rule != player.roll_number:
             existing = Player.query.filter((Player.roll_number == new_rule) | (Player.rule_number == new_rule)).first()
             if existing and existing.id != player.id:
-                flash(f'Rule Number "{new_rule}" already belongs to another player.', 'danger')
+                flash(f'Roll Number "{new_rule}" already belongs to another player.', 'danger')
                 return redirect(url_for('admin.players'))
             player.roll_number = new_rule
 
     new_year = request.form.get('year', '').strip()
-    if new_year and new_year in ['1', '2', '3', '4']:
+    if new_year:
         player.year = new_year
+
+    new_branch = request.form.get('branch', '').strip()
+    if new_branch is not None:
+        player.branch = new_branch if new_branch else None
 
     new_name = request.form.get('name', '').strip()
     if new_name:
@@ -236,8 +243,7 @@ def edit_player(id):
     if new_cat:
         player.category = PlayerCategory.normalize(new_cat)
 
-    player.base_price = 10000.0
-
+    new_photo_url = request.form.get('photo_url', '').strip()
     file = request.files.get('photo_file')
     if file and file.filename and file.filename.strip():
         saved_photo, err = validate_and_save_image(file, prefix=f"player_{player.roll_number}")
@@ -246,6 +252,8 @@ def edit_player(id):
             return redirect(url_for('admin.players'))
         if saved_photo:
             player.photo = saved_photo
+    elif new_photo_url:
+        player.photo = new_photo_url
 
     db.session.commit()
     log_audit(current_user.id, 'EDIT_PLAYER', 'Player', player.id, old_data, player.to_dict())
@@ -319,10 +327,10 @@ def delete_player(id):
 def preview_csv():
     file = request.files.get('csv_file')
     if not file or not file.filename:
-        return jsonify({'success': False, 'message': 'Please select a valid CSV file.'}), 400
+        return jsonify({'success': False, 'message': 'Please select a valid Excel (.xlsx) or CSV file.'}), 400
 
     content = file.read()
-    preview = preview_players_csv(content)
+    preview = preview_players_csv(content, filename=file.filename)
     return jsonify({'success': True, 'preview': preview})
 
 @admin_bp.route('/players/import-csv', methods=['POST'])
@@ -331,19 +339,51 @@ def preview_csv():
 def import_csv():
     file = request.files.get('csv_file')
     if not file or not file.filename:
-        flash('Please select a valid CSV file.', 'danger')
+        flash('Please select a valid Excel (.xlsx) or CSV file.', 'danger')
         return redirect(url_for('admin.players'))
 
     content = file.read()
-    import_result = parse_and_import_players_csv(content)
+    import_result = parse_and_import_players_csv(content, filename=file.filename)
 
     log_audit(
-        current_user.id, 'IMPORT_PLAYERS_CSV', 'Player', None,
+        current_user.id, 'IMPORT_PLAYERS_EXCEL_CSV', 'Player', None,
         None, f"Imported: {import_result['imported']}, Skipped: {import_result['skipped']}, Duplicates: {import_result['duplicates']}"
     )
 
-    flash(f"CSV Import Summary: {import_result['imported']} Imported, {import_result['duplicates']} duplicates skipped, {import_result['skipped']} Skipped.", 'success' if import_result['imported'] > 0 else 'warning')
+    flash(f"Import Summary: {import_result['imported']} Imported, {import_result['duplicates']} duplicates skipped, {import_result['skipped']} Skipped.", 'success' if import_result['imported'] > 0 else 'warning')
     return redirect(url_for('admin.players'))
+
+@admin_bp.route('/players/export')
+@login_required
+@admin_required
+def export_players():
+    fmt = request.args.get('format', 'excel').lower()
+    if fmt == 'csv':
+        csv_text = export_players_csv()
+        response = Response(csv_text, mimetype='text/csv')
+        response.headers['Content-Disposition'] = 'attachment; filename=SPL_Players_Roster.csv'
+        return response
+    else:
+        file_bytes, mimetype, filename = export_players_excel()
+        response = Response(file_bytes, mimetype=mimetype)
+        response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+        return response
+
+@admin_bp.route('/players/download-template')
+@login_required
+@admin_required
+def download_player_template():
+    fmt = request.args.get('format', 'excel').lower()
+    if fmt == 'csv':
+        csv_text = generate_player_template_csv()
+        response = Response(csv_text, mimetype='text/csv')
+        response.headers['Content-Disposition'] = 'attachment; filename=SPL_Player_Import_Template.csv'
+        return response
+    else:
+        file_bytes, mimetype, filename = generate_player_template_excel()
+        response = Response(file_bytes, mimetype=mimetype)
+        response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+        return response
 
 @admin_bp.route('/players/<int:id>/json')
 @login_required
@@ -1491,7 +1531,7 @@ def download_auction_report():
 
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(['Roll Number', 'Player Name', 'Role', 'Category', 'Base Price', 'Status', 'Franchise', 'Purchase Price'])
+    writer.writerow(['Roll Number', 'Player Name', 'Role', 'Category', 'Branch', 'Year', 'Status', 'Franchise', 'Purchase Price'])
 
     for p in players:
         franchise_name = p.franchise.name if p.franchise else '---'
@@ -1507,7 +1547,8 @@ def download_auction_report():
             p.name,
             role_str,
             p.category,
-            f"Rs. {p.base_price:,.0f}",
+            p.branch or '---',
+            p.year or '---',
             p.status,
             franchise_name,
             sold_price_str

@@ -52,7 +52,6 @@ class Player(db.Model):
     year = db.Column(db.String(20), nullable=True)
     experience = db.Column(db.String(255), nullable=True)
     category = db.Column(db.String(50), nullable=False, default=PlayerCategory.ROOKIE)
-    base_price = db.Column(db.Float, default=10000.0, nullable=False)
     status = db.Column(db.String(30), default=PlayerStatus.AVAILABLE, nullable=False)
     is_second_chance_eligible = db.Column(db.Boolean, default=False, nullable=False)
     auction_type = db.Column(db.String(30), default='PRIMARY', nullable=False)  # PRIMARY or SECOND_CHANCE
@@ -95,6 +94,21 @@ class Player(db.Model):
         if self.sold_price is None or self.sold_price == 0:
             return "—"
         return f"₹ {self.sold_price:,.0f}"
+
+    @property
+    def base_price(self):
+        """Common base price configured at the auction level in SystemSettings."""
+        from app.models.setting import SystemSettings
+        try:
+            val = SystemSettings.get_setting('base_price', '10000')
+            return float(val) if val else 10000.0
+        except Exception:
+            return 10000.0
+
+    @base_price.setter
+    def base_price(self, value):
+        # Base price is configured at auction level and not stored per player
+        pass
 
     @property
     def rule_number(self):

@@ -66,7 +66,8 @@
                     <th class="py-2">Player Name</th>
                     <th class="py-2">Role</th>
                     <th class="py-2">Category</th>
-                    <th class="py-2">Base Price</th>
+                    <th class="py-2">Branch</th>
+                    <th class="py-2">Year</th>
                     <th class="py-2">First Round Result</th>
                     <th class="py-2">Second Chance Status</th>
                     <th class="py-2 pe-3 text-end">Action</th>
@@ -83,7 +84,8 @@
                     <td class="py-2 fw-bold text-dark">{{ player.name }}</td>
                     <td class="py-2"><span class="badge bg-light text-black border">{{ player.role }}</span></td>
                     <td class="py-2"><span class="badge bg-light text-black border">{{ player.category }}</span></td>
-                    <td class="py-2 font-monospace">₹ {{ player.base_price | currency }}</td>
+                    <td class="py-2">{{ player.branch or '-' }}</td>
+                    <td class="py-2">{{ player.year or '-' }}</td>
                     <td class="py-2"><span class="badge bg-danger-subtle text-black border border-danger-subtle">UNSOLD</span></td>
                     <td class="py-2">
                         {% if player.is_second_chance_eligible %}

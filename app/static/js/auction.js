@@ -398,9 +398,9 @@ function updateProjectorUi(data) {
     if (roleEl) roleEl.innerText = p.role;
     const catEl = document.getElementById('projector-player-category');
     if (catEl) {
-        if (p.category === 'Elite') {
+        if ((p.category || '').toLowerCase() === 'elite') {
             catEl.className = 'badge bg-warning text-dark border border-warning-subtle fs-6 px-3 py-1.5 fw-bold shadow-xs';
-            catEl.innerHTML = '<i class="fa-solid fa-star me-1 text-dark"></i>ELITE';
+            catEl.innerHTML = '<i class="fa-solid fa-star me-1 text-dark"></i>ELITE (Req: 1–3)';
         } else {
             catEl.className = 'badge bg-secondary-subtle text-black border border-secondary-subtle fs-6 px-3 py-1.5';
             catEl.innerText = p.category || 'NORMAL';
@@ -891,7 +891,8 @@ function renderFoundPlayerCard(p) {
     document.getElementById('found-player-roll').innerText = `#${p.roll_number}`;
     document.getElementById('found-player-role').innerText = p.role;
     document.getElementById('found-player-category').innerText = p.category;
-    document.getElementById('found-base-price').innerText = formatCurrencyJs(p.base_price);
+    const foundBase = document.getElementById('found-base-price');
+    if (foundBase) foundBase.innerText = formatCurrencyJs(p.base_price);
 
     const actBtn = document.getElementById('btn-activate-player');
     if (actBtn) {

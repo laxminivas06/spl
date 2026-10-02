@@ -172,10 +172,10 @@
                                 {{ p.branch or '-' }} / Yr {{ p.year or '-' }}
                             </td>
                             <td class="py-2">
-                                {% if p.category == 'Elite' %}
-                                <span class="badge bg-warning text-dark border border-warning-subtle fw-bold"><i class="fa-solid fa-star me-1"></i>Elite</span>
+                                {% if p.category and p.category|lower == 'elite' %}
+                                <span class="badge bg-warning text-dark border border-warning-subtle fw-bold"><i class="fa-solid fa-star me-1 text-dark"></i>Elite {% if is_cap %}<small class="fw-normal text-muted">(Retained)</small>{% else %}<small class="fw-normal text-muted">(Auction)</small>{% endif %}</span>
                                 {% else %}
-                                <span class="badge bg-secondary-subtle text-black border border-secondary-subtle">{{ p.category }}</span>
+                                <span class="badge bg-secondary-subtle text-black border border-secondary-subtle">{{ p.category or 'Normal' }}</span>
                                 {% endif %}
                             </td>
                             <td class="py-2 font-monospace fw-bold">

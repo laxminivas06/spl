@@ -74,8 +74,8 @@
                             <strong>{{ highest_bidder.name if highest_bidder else 'None' }}</strong>
                         </li>
                         <li class="list-group-item d-flex justify-content-between">
-                            <span>Base Price:</span>
-                            <span>₹{{ "{:,}".format(current_player.base_price or 10000) }}</span>
+                            <span>Branch & Year:</span>
+                            <span>{{ current_player.branch or '-' }} &bull; Yr {{ current_player.year or '-' }}</span>
                         </li>
                     </ul>
                     {% else %}

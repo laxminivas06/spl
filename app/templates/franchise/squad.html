@@ -282,10 +282,10 @@
                         <img src="{{ p.role | category_icon }}" class="category-icon-img" style="width: 16px; height: 16px; object-fit: contain;">
                         {{ p.role }}
                     </span>
-                    {% if p.category == 'Elite' %}
-                        <span class="badge bg-warning text-dark border border-warning-subtle font-display fw-bold"><i class="fa-solid fa-star me-1"></i>Elite</span>
+                    {% if p.category and p.category|lower == 'elite' %}
+                        <span class="badge bg-warning text-dark border border-warning-subtle font-display fw-bold"><i class="fa-solid fa-star me-1 text-dark"></i>Elite {% if is_cap %}<small class="fw-normal text-muted">(Retained)</small>{% else %}<small class="fw-normal text-muted">(Auction)</small>{% endif %}</span>
                     {% else %}
-                        <span class="badge bg-secondary-subtle text-black border border-secondary-subtle font-display">{{ p.category }}</span>
+                        <span class="badge bg-secondary-subtle text-black border border-secondary-subtle font-display">{{ p.category or 'Normal' }}</span>
                     {% endif %}
                 </div>
 
