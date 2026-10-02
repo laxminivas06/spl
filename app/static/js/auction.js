@@ -626,6 +626,28 @@ function updateFranchiseUi(data) {
     const squadEl = document.getElementById('franchise-squad-display');
     if (squadEl) squadEl.innerText = `${fi.squad_count} / ${fi.squad_limit}`;
 
+    const eliteEl = document.getElementById('franchise-elite-display');
+    if (eliteEl && fi.elite_count !== undefined) {
+        eliteEl.innerText = `${fi.elite_count} / ${fi.max_elite_allowed || 3}`;
+    }
+    const eliteSub = document.getElementById('franchise-elite-subtext');
+    if (eliteSub && fi.auction_elite_count !== undefined) {
+        eliteSub.innerHTML = `Auction: <strong class="text-dark">${fi.auction_elite_count}/${fi.max_auction_elite_allowed || 2}</strong> (Min: ${fi.min_auction_elite_required || 1}) • Capt: ${fi.is_captain_elite ? '1' : '0'}`;
+    }
+    const eliteBar = document.getElementById('franchise-elite-bar');
+    if (eliteBar && fi.elite_count !== undefined) {
+        const pct = Math.round((fi.elite_count / (fi.max_elite_allowed || 3)) * 100);
+        eliteBar.style.width = `${pct}%`;
+    }
+    const eliteCond = document.getElementById('franchise-elite-condition-label');
+    if (eliteCond && fi.auction_elite_count !== undefined) {
+        if (fi.auction_elite_count >= (fi.min_auction_elite_required || 1)) {
+            eliteCond.innerHTML = '<span class="text-success fw-semibold"><i class="fa-solid fa-check me-1"></i>Min Met</span>';
+        } else {
+            eliteCond.innerHTML = '<span class="text-warning-emphasis fw-semibold"><i class="fa-solid fa-triangle-exclamation me-1"></i>Min 1 Req</span>';
+        }
+    }
+
     const activePlayerCard = document.getElementById('franchise-active-player-section');
     if (!data.active_player) {
         if (activePlayerCard) {

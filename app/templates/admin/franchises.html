@@ -32,8 +32,14 @@
                             <h5 class="fw-bold text-dark mb-0 text-truncate">{{ f.name }}</h5>
                             <span class="badge bg-primary text-uppercase">{{ f.short_name }}</span>
                         </div>
-                        <small class="text-muted text-truncate d-block">
-                            <i class="fa-solid fa-user-tie me-1 text-primary"></i>{{ f.owner_name or 'Owner Not Assigned' }}
+                        {% set f_card_owners = f.get_owners() %}
+                        <small class="text-muted text-truncate d-block" title="{% for o in f_card_owners %}{{ o.name }}{% if not loop.last %}, {% endif %}{% endfor %}">
+                            <i class="fa-solid fa-user-tie me-1 text-primary"></i>
+                            {% if f_card_owners %}
+                                {{ f_card_owners | map(attribute='name') | join(', ') }}
+                            {% else %}
+                                {{ f.owner_name or 'Owner Not Assigned' }}
+                            {% endif %}
                         </small>
                     </div>
                 </div>
@@ -66,6 +72,21 @@
                     </div>
                 </div>
 
+                <!-- Elite Quota Status -->
+                <div class="p-2 bg-light border rounded mb-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted extra-small fw-semibold d-block">
+                            <i class="fa-solid fa-crown text-danger me-1"></i>ELITE QUOTA (MAX 3):
+                        </span>
+                        <small class="text-muted extra-small">Captain (1) + Auction ({{ f.auction_elite_count }}/{{ f.max_auction_elite_allowed }})</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge {% if f.auction_elite_count >= f.max_auction_elite_allowed %}bg-primary text-white{% elif f.auction_elite_count >= f.min_auction_elite_required %}bg-success-subtle text-success border border-success-subtle{% else %}bg-warning-subtle text-warning-emphasis border border-warning-subtle{% endif %} font-monospace">
+                            {{ f.elite_count }} / {{ f.max_elite_allowed }} Elite
+                        </span>
+                    </div>
+                </div>
+
                 <!-- Captain Card Details -->
                 <div class="p-2.5 bg-light border rounded mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
@@ -86,19 +107,38 @@
                     </div>
                 </div>
 
-                <!-- Gmail & Auth Status -->
+                <!-- Owners & Auth Status -->
+                {% set f_card_owners = f.get_owners() %}
                 <div class="p-2.5 bg-light border rounded mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="text-muted extra-small fw-semibold">REGISTERED GMAIL:</span>
-                        {% if f.authorized_email %}
+                    <div class="d-flex justify-content-between align-items-center mb-1.5">
+                        <span class="text-muted extra-small fw-semibold">REGISTERED OWNER(S):</span>
+                        <span class="badge bg-light text-primary border extra-small font-monospace">
+                            {{ f_card_owners|length if f_card_owners else (1 if f.authorized_email else 0) }}/3 Active
+                        </span>
+                    </div>
+                    {% if f_card_owners %}
+                        <div class="extra-small text-muted mb-2">
+                            {% for ow in f_card_owners %}
+                            <div class="d-flex justify-content-between align-items-center text-truncate py-0.5">
+                                <span class="fw-semibold text-dark text-truncate me-1">
+                                    <i class="fa-brands fa-google text-danger me-1 extra-small"></i>{{ ow.name }}
+                                </span>
+                                <span class="text-muted font-monospace text-truncate extra-small" title="{{ ow.email }}">{{ ow.email }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% elif f.authorized_email %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="badge bg-light text-primary border extra-small text-truncate" style="max-width: 170px;">
                                 <i class="fa-brands fa-google me-1"></i>{{ f.authorized_email }}
                             </span>
-                        {% else %}
-                            <span class="badge bg-light text-muted border extra-small">No Gmail Set</span>
-                        {% endif %}
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
+                        </div>
+                    {% else %}
+                        <div class="mb-2">
+                            <span class="badge bg-light text-muted border extra-small">No Owner Registered</span>
+                        </div>
+                    {% endif %}
+                    <div class="d-flex justify-content-between align-items-center pt-1 border-top">
                         <span class="text-muted extra-small fw-semibold">LOGIN STATUS:</span>
                         <form method="POST" action="{{ url_for('admin.toggle_franchise_status', id=f.id) }}" class="d-inline">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -146,17 +186,123 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-muted small fw-semibold">SHORT CODE *</label>
-                                <input type="text" class="form-control form-control-spl" name="short_name" value="{{ f.short_name }}" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label text-muted small fw-semibold">OWNER NAME</label>
-                                <input type="text" class="form-control form-control-spl" name="owner_name" value="{{ f.owner_name or '' }}">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label text-muted small fw-semibold">REGISTERED GMAIL (FOR LOGIN) *</label>
-                                <input type="email" class="form-control form-control-spl" name="authorized_email" value="{{ f.authorized_email or '' }}" placeholder="owner@gmail.com">
+                                <input type="text" class="form-control form-control-spl font-monospace" name="short_name" value="{{ f.short_name }}" required>
                             </div>
 
+                            <!-- Franchisee Owners Section (Max 3) -->
+                            {% set cur_owners = f.get_owners() %}
+                            {% if not cur_owners %}
+                                {% set cur_owners = [{'name': f.owner_name or '', 'email': f.authorized_email or '', 'phone': ''}] %}
+                            {% endif %}
+                            <div class="col-12 mt-2 pt-2 border-top">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <h6 class="fw-bold text-primary mb-0">
+                                            <i class="fa-solid fa-user-group text-danger me-2"></i>Franchisee Owners
+                                        </h6>
+                                        <small class="text-muted extra-small">Owner 1 is primary & mandatory for login. Add up to 2 additional co-owners (maximum 3 total).</small>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary btn-sm py-1 px-2.5" id="addOwnerBtn_{{ f.id }}" onclick="addOwnerSlot('{{ f.id }}')">
+                                        <i class="fa-solid fa-user-plus me-1"></i> Add Owner
+                                    </button>
+                                </div>
+                                <div id="ownersContainer_{{ f.id }}" class="d-flex flex-column gap-2">
+                                    <!-- Owner 1: Mandatory -->
+                                    {% set o1 = cur_owners[0] if cur_owners|length > 0 else {} %}
+                                    <div class="card border bg-light shadow-none mb-1 owner-card-slot" id="ownerCard_{{ f.id }}_1" data-slot="1">
+                                        <div class="card-header bg-white py-1.5 px-3 border-bottom d-flex justify-content-between align-items-center">
+                                            <span class="small fw-bold text-dark">
+                                                <i class="fa-solid fa-user-tie text-primary me-1"></i> Owner 1 (Primary)
+                                            </span>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle extra-small">Mandatory</span>
+                                        </div>
+                                        <div class="card-body p-2.5">
+                                            <div class="row g-2">
+                                                <div class="col-12 col-md-4">
+                                                    <label class="form-label text-muted extra-small fw-semibold mb-1">OWNER NAME *</label>
+                                                    <input type="text" class="form-control form-control-spl form-control-sm" name="owner_name_1" value="{{ o1.name or f.owner_name or '' }}" placeholder="e.g. John Doe" required>
+                                                </div>
+                                                <div class="col-12 col-md-4">
+                                                    <label class="form-label text-muted extra-small fw-semibold mb-1">REGISTERED EMAIL (FOR LOGIN) *</label>
+                                                    <input type="email" class="form-control form-control-spl form-control-sm" name="owner_email_1" value="{{ o1.email or f.authorized_email or '' }}" placeholder="owner1@gmail.com" required>
+                                                </div>
+                                                <div class="col-12 col-md-4">
+                                                    <label class="form-label text-muted extra-small fw-semibold mb-1">PHONE NUMBER (OPTIONAL)</label>
+                                                    <input type="tel" class="form-control form-control-spl form-control-sm" name="owner_phone_1" value="{{ o1.phone or '' }}" placeholder="+91 9876543210">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Owner 2: Optional -->
+                                    {% if cur_owners|length > 1 %}
+                                    {% set o2 = cur_owners[1] %}
+                                    <div class="card border bg-light shadow-none mb-1 owner-card-slot" id="ownerCard_{{ f.id }}_2" data-slot="2">
+                                        <div class="card-header bg-white py-1.5 px-3 border-bottom d-flex justify-content-between align-items-center">
+                                            <span class="small fw-bold text-dark">
+                                                <i class="fa-solid fa-user text-muted me-1"></i> Owner 2 (Co-Owner)
+                                            </span>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="badge bg-light text-muted border extra-small">Optional</span>
+                                                <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size: 0.72rem;" onclick="removeOwnerSlot('{{ f.id }}', 2)" title="Remove Owner 2">
+                                                    <i class="fa-solid fa-trash-can me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="card-body p-2.5">
+                                            <div class="row g-2">
+                                                <div class="col-12 col-md-4">
+                                                    <label class="form-label text-muted extra-small fw-semibold mb-1">OWNER NAME</label>
+                                                    <input type="text" class="form-control form-control-spl form-control-sm" name="owner_name_2" value="{{ o2.name or '' }}" placeholder="e.g. Jane Smith">
+                                                </div>
+                                                <div class="col-12 col-md-4">
+                                                    <label class="form-label text-muted extra-small fw-semibold mb-1">REGISTERED EMAIL (FOR LOGIN)</label>
+                                                    <input type="email" class="form-control form-control-spl form-control-sm" name="owner_email_2" value="{{ o2.email or '' }}" placeholder="owner2@gmail.com">
+                                                </div>
+                                                <div class="col-12 col-md-4">
+                                                    <label class="form-label text-muted extra-small fw-semibold mb-1">PHONE NUMBER (OPTIONAL)</label>
+                                                    <input type="tel" class="form-control form-control-spl form-control-sm" name="owner_phone_2" value="{{ o2.phone or '' }}" placeholder="+91 9876543210">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Owner 3: Optional -->
+                                    {% if cur_owners|length > 2 %}
+                                    {% set o3 = cur_owners[2] %}
+                                    <div class="card border bg-light shadow-none mb-1 owner-card-slot" id="ownerCard_{{ f.id }}_3" data-slot="3">
+                                        <div class="card-header bg-white py-1.5 px-3 border-bottom d-flex justify-content-between align-items-center">
+                                            <span class="small fw-bold text-dark">
+                                                <i class="fa-solid fa-user text-muted me-1"></i> Owner 3 (Co-Owner)
+                                            </span>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="badge bg-light text-muted border extra-small">Optional</span>
+                                                <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size: 0.72rem;" onclick="removeOwnerSlot('{{ f.id }}', 3)" title="Remove Owner 3">
+                                                    <i class="fa-solid fa-trash-can me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="card-body p-2.5">
+                                            <div class="row g-2">
+                                                <div class="col-12 col-md-4">
+                                                    <label class="form-label text-muted extra-small fw-semibold mb-1">OWNER NAME</label>
+                                                    <input type="text" class="form-control form-control-spl form-control-sm" name="owner_name_3" value="{{ o3.name or '' }}" placeholder="e.g. Alex Green">
+                                                </div>
+                                                <div class="col-12 col-md-4">
+                                                    <label class="form-label text-muted extra-small fw-semibold mb-1">REGISTERED EMAIL (FOR LOGIN)</label>
+                                                    <input type="email" class="form-control form-control-spl form-control-sm" name="owner_email_3" value="{{ o3.email or '' }}" placeholder="owner3@gmail.com">
+                                                </div>
+                                                <div class="col-12 col-md-4">
+                                                    <label class="form-label text-muted extra-small fw-semibold mb-1">PHONE NUMBER (OPTIONAL)</label>
+                                                    <input type="tel" class="form-control form-control-spl form-control-sm" name="owner_phone_3" value="{{ o3.phone or '' }}" placeholder="+91 9876543210">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
 
                             <!-- Captain Assignment Details -->
                             <div class="col-12 mt-2 pt-2 border-top">
@@ -178,11 +324,33 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label text-muted small fw-semibold">CAPTAIN CATEGORY</label>
-                                <input type="text" class="form-control form-control-spl form-control-sm" id="cap_cat_{{ f.id }}" name="captain_category" value="{{ f.captain_category or '' }}">
+                                {% set cur_cat = f.captain_category or (f.captain.category if f.captain else 'Elite') %}
+                                {% set ns_cat = namespace(found=false) %}
+                                <select class="form-select form-control-spl form-select-sm" id="cap_cat_{{ f.id }}" name="captain_category">
+                                    <option value="" disabled {% if not cur_cat %}selected{% endif %}>-- Select Category --</option>
+                                    {% for cat in categories %}
+                                        {% if cur_cat and (cur_cat|lower == cat|lower) %}{% set ns_cat.found = true %}{% endif %}
+                                        <option value="{{ cat }}" {% if cur_cat and (cur_cat|lower == cat|lower) %}selected{% endif %}>{{ cat }}</option>
+                                    {% endfor %}
+                                    {% if cur_cat and not ns_cat.found %}
+                                        <option value="{{ cur_cat }}" selected>{{ cur_cat }}</option>
+                                    {% endif %}
+                                </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label text-muted small fw-semibold">CAPTAIN DEPARTMENT / BRANCH</label>
-                                <input type="text" class="form-control form-control-spl form-control-sm" id="cap_dept_{{ f.id }}" name="captain_department" value="{{ f.captain_department or '' }}">
+                                <label class="form-label text-muted small fw-semibold">CAPTAIN BRANCH / DEPARTMENT</label>
+                                {% set cur_branch = f.captain_department or (f.captain.branch if f.captain else (f.branch or '')) %}
+                                {% set ns_branch = namespace(found=false) %}
+                                <select class="form-select form-control-spl form-select-sm" id="cap_dept_{{ f.id }}" name="captain_department">
+                                    <option value="" {% if not cur_branch %}selected{% endif %}>-- Select Branch --</option>
+                                    {% for b in branches %}
+                                        {% if cur_branch and (cur_branch|lower == b|lower) %}{% set ns_branch.found = true %}{% endif %}
+                                        <option value="{{ b }}" {% if cur_branch and (cur_branch|lower == b|lower) %}selected{% endif %}>{{ b }}</option>
+                                    {% endfor %}
+                                    {% if cur_branch and not ns_branch.found %}
+                                        <option value="{{ cur_branch }}" selected>{{ cur_branch }}</option>
+                                    {% endif %}
+                                </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-muted small fw-semibold">CAPTAIN YEAR</label>
@@ -235,16 +403,102 @@
                             <input type="text" class="form-control form-control-spl" name="name" placeholder="Cyber Vipers" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label text-muted small fw-semibold">EMAIL (FOR LOGIN) *</label>
-                            <input type="email" class="form-control form-control-spl" name="authorized_email" placeholder="owner@gmail.com" required>
-                        </div>
-                        <div class="col-md-6">
                             <label class="form-label text-muted small fw-semibold">SHORT CODE *</label>
                             <input type="text" class="form-control form-control-spl font-monospace" name="short_name" placeholder="CV" style="text-transform: uppercase;" required>
                         </div>
+
+                        <!-- Franchisee Owners Section (Max 3) -->
+                        <div class="col-12 mt-2 pt-2 border-top">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <h6 class="fw-bold text-primary mb-0">
+                                        <i class="fa-solid fa-user-group text-danger me-2"></i>Franchisee Owners
+                                    </h6>
+                                    <small class="text-muted extra-small">Owner 1 is primary & mandatory for login. Add up to 2 additional co-owners (maximum 3 total).</small>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm py-1 px-2.5" id="addOwnerBtn_add" onclick="addOwnerSlot('add')">
+                                    <i class="fa-solid fa-user-plus me-1"></i> Add Owner
+                                </button>
+                            </div>
+                            <div id="ownersContainer_add" class="d-flex flex-column gap-2">
+                                <!-- Owner 1: Mandatory -->
+                                <div class="card border bg-light shadow-none mb-1 owner-card-slot" id="ownerCard_add_1" data-slot="1">
+                                    <div class="card-header bg-white py-1.5 px-3 border-bottom d-flex justify-content-between align-items-center">
+                                        <span class="small fw-bold text-dark">
+                                            <i class="fa-solid fa-user-tie text-primary me-1"></i> Owner 1 (Primary)
+                                        </span>
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle extra-small">Mandatory</span>
+                                    </div>
+                                    <div class="card-body p-2.5">
+                                        <div class="row g-2">
+                                            <div class="col-12 col-md-4">
+                                                <label class="form-label text-muted extra-small fw-semibold mb-1">OWNER NAME *</label>
+                                                <input type="text" class="form-control form-control-spl form-control-sm" name="owner_name_1" placeholder="e.g. John Doe" required>
+                                            </div>
+                                            <div class="col-12 col-md-4">
+                                                <label class="form-label text-muted extra-small fw-semibold mb-1">REGISTERED EMAIL (FOR LOGIN) *</label>
+                                                <input type="email" class="form-control form-control-spl form-control-sm" name="owner_email_1" placeholder="owner1@gmail.com" required>
+                                            </div>
+                                            <div class="col-12 col-md-4">
+                                                <label class="form-label text-muted extra-small fw-semibold mb-1">PHONE NUMBER (OPTIONAL)</label>
+                                                <input type="tel" class="form-control form-control-spl form-control-sm" name="owner_phone_1" placeholder="+91 9876543210">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Captain Assignment Details -->
+                        <div class="col-12 mt-2 pt-2 border-top">
+                            <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-crown text-danger me-2"></i>Captain Details (Optional)</h6>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small fw-semibold">CAPTAIN ROLL NUMBER</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control form-control-spl" id="cap_rule_add" name="captain_rule_number" placeholder="e.g. 24">
+                                <button type="button" class="btn btn-outline-primary" onclick="validateCaptainRule('add')" title="Auto-fill from Player database">
+                                    <i class="fa-solid fa-magnifying-glass"></i> Check
+                                </button>
+                            </div>
+                            <div id="cap_msg_add" class="extra-small mt-1 text-muted"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small fw-semibold">CAPTAIN NAME</label>
+                            <input type="text" class="form-control form-control-spl form-control-sm" id="cap_name_add" name="captain_name" placeholder="Captain name">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small fw-semibold">CAPTAIN CATEGORY</label>
+                            <select class="form-select form-control-spl form-select-sm" id="cap_cat_add" name="captain_category">
+                                <option value="" disabled>-- Select Category --</option>
+                                {% for cat in categories %}
+                                    <option value="{{ cat }}" {% if loop.first %}selected{% endif %}>{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                         <div class="col-md-6">
-                            <label class="form-label text-muted small fw-semibold">OWNER NAME</label>
-                            <input type="text" class="form-control form-control-spl" name="owner_name" placeholder="John Smith">
+                            <label class="form-label text-muted small fw-semibold">CAPTAIN BRANCH / DEPARTMENT</label>
+                            <select class="form-select form-control-spl form-select-sm" id="cap_dept_add" name="captain_department">
+                                <option value="" selected>-- Select Branch --</option>
+                                {% for b in branches %}
+                                    <option value="{{ b }}">{{ b }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">CAPTAIN YEAR</label>
+                            <input type="text" class="form-control form-control-spl form-control-sm" id="cap_year_add" name="captain_year" placeholder="e.g. 3">
+                        </div>
+
+                        <!-- Logo & Status -->
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">UPLOAD LOGO</label>
+                            <input type="file" class="form-control form-control-spl" name="logo_file" accept=".png,.jpg,.jpeg,.webp" onchange="validateImageFileSize(this, 100);">
+                            <div class="extra-small text-muted mt-1">Max logo file size: 100KB (PNG, JPG, WEBP)</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-semibold">OR LOGO URL</label>
+                            <input type="url" class="form-control form-control-spl" name="logo_url" placeholder="https://...">
                         </div>
                     </div>
                     <div class="alert alert-light border mt-3 mb-0 small text-muted">
@@ -263,9 +517,24 @@
 
 {% block extra_js %}
 <script>
+function setSelectValueCaseInsensitive(selectElem, targetVal) {
+    if (!selectElem || !targetVal) return;
+    const lower = targetVal.toString().trim().toLowerCase();
+    for (let i = 0; i < selectElem.options.length; i++) {
+        if (selectElem.options[i].value.toLowerCase() === lower || selectElem.options[i].text.toLowerCase() === lower) {
+            selectElem.selectedIndex = i;
+            return;
+        }
+    }
+    // Option not in list; add and select it
+    const opt = new Option(targetVal, targetVal, true, true);
+    selectElem.add(opt);
+}
+
 function validateCaptainRule(idSuffix) {
     const input = document.getElementById(`cap_rule_${idSuffix}`);
     const msg = document.getElementById(`cap_msg_${idSuffix}`);
+    if (!input || !msg) return;
     const val = input.value.trim();
 
     if (!val) {
@@ -282,10 +551,21 @@ function validateCaptainRule(idSuffix) {
         .then(data => {
             if (data.success && data.player) {
                 const p = data.player;
-                document.getElementById(`cap_name_${idSuffix}`).value = p.name;
-                document.getElementById(`cap_dept_${idSuffix}`).value = p.branch || '';
-                document.getElementById(`cap_year_${idSuffix}`).value = p.year || '';
-                document.getElementById(`cap_cat_${idSuffix}`).value = p.category || 'NORMAL';
+                const nameInput = document.getElementById(`cap_name_${idSuffix}`);
+                if (nameInput) nameInput.value = p.name || '';
+                
+                const yearInput = document.getElementById(`cap_year_${idSuffix}`);
+                if (yearInput) yearInput.value = p.year || '';
+
+                const deptSelect = document.getElementById(`cap_dept_${idSuffix}`);
+                if (deptSelect && p.branch) {
+                    setSelectValueCaseInsensitive(deptSelect, p.branch);
+                }
+
+                const catSelect = document.getElementById(`cap_cat_${idSuffix}`);
+                if (catSelect && p.category) {
+                    setSelectValueCaseInsensitive(catSelect, p.category);
+                }
 
                 msg.className = 'extra-small mt-1 text-success';
                 msg.textContent = `✓ Found: ${p.name} (${p.branch || 'General'})`;
@@ -312,5 +592,94 @@ function validateImageFileSize(input, maxKb = 100) {
     }
     return true;
 }
+
+function getOwnerCount(prefix) {
+    const container = document.getElementById(`ownersContainer_${prefix}`);
+    if (!container) return 0;
+    return container.querySelectorAll('.owner-card-slot').length;
+}
+
+function updateAddOwnerButton(prefix) {
+    const btn = document.getElementById(`addOwnerBtn_${prefix}`);
+    if (!btn) return;
+    const count = getOwnerCount(prefix);
+    if (count >= 3) {
+        btn.disabled = true;
+        btn.classList.add('disabled');
+        btn.innerHTML = '<i class="fa-solid fa-ban me-1"></i> Max 3 Owners';
+    } else {
+        btn.disabled = false;
+        btn.classList.remove('disabled');
+        btn.innerHTML = `<i class="fa-solid fa-user-plus me-1"></i> Add Owner (${count}/3)`;
+    }
+}
+
+function removeOwnerSlot(prefix, slot) {
+    const card = document.getElementById(`ownerCard_${prefix}_${slot}`);
+    if (card) {
+        card.remove();
+        updateAddOwnerButton(prefix);
+    }
+}
+
+function addOwnerSlot(prefix) {
+    const container = document.getElementById(`ownersContainer_${prefix}`);
+    if (!container) return;
+
+    let nextSlot = null;
+    if (!document.getElementById(`ownerCard_${prefix}_2`)) {
+        nextSlot = 2;
+    } else if (!document.getElementById(`ownerCard_${prefix}_3`)) {
+        nextSlot = 3;
+    }
+
+    if (!nextSlot) {
+        alert('Maximum of 3 owners reached.');
+        return;
+    }
+
+    const title = nextSlot === 2 ? 'Owner 2 (Co-Owner)' : 'Owner 3 (Co-Owner)';
+    const cardHtml = `
+        <div class="card border bg-light shadow-none mb-1 owner-card-slot" id="ownerCard_${prefix}_${nextSlot}" data-slot="${nextSlot}">
+            <div class="card-header bg-white py-1.5 px-3 border-bottom d-flex justify-content-between align-items-center">
+                <span class="small fw-bold text-dark">
+                    <i class="fa-solid fa-user text-muted me-1"></i> ${title}
+                </span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-light text-muted border extra-small">Optional</span>
+                    <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size: 0.72rem;" onclick="removeOwnerSlot('${prefix}', ${nextSlot})" title="Remove ${title}">
+                        <i class="fa-solid fa-trash-can me-1"></i> Remove
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-2.5">
+                <div class="row g-2">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label text-muted extra-small fw-semibold mb-1">OWNER NAME</label>
+                        <input type="text" class="form-control form-control-spl form-control-sm" name="owner_name_${nextSlot}" placeholder="e.g. Co-Owner Name">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label text-muted extra-small fw-semibold mb-1">REGISTERED EMAIL (FOR LOGIN)</label>
+                        <input type="email" class="form-control form-control-spl form-control-sm" name="owner_email_${nextSlot}" placeholder="owner${nextSlot}@gmail.com">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label text-muted extra-small fw-semibold mb-1">PHONE NUMBER (OPTIONAL)</label>
+                        <input type="tel" class="form-control form-control-spl form-control-sm" name="owner_phone_${nextSlot}" placeholder="+91 9876543210">
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', cardHtml);
+    updateAddOwnerButton(prefix);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[id^="ownersContainer_"]').forEach(function(el) {
+        const prefix = el.id.replace('ownersContainer_', '');
+        updateAddOwnerButton(prefix);
+    });
+});
 </script>
 {% endblock %}

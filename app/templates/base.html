@@ -45,7 +45,7 @@
         <!-- Global Header with Brand & Navigation (Only for Authenticated Users) -->
         <header
             class="spl-global-header d-flex flex-wrap justify-content-between align-items-center mb-4 p-3 rounded-3 shadow-sm border bg-white">
-            {% set brand_url = url_for('admin.dashboard') if current_user.is_admin else url_for('franchise.dashboard') %}
+            {% set brand_url = url_for('public.public_captains') if (request.endpoint in ['public.public_captains', 'public.captains_projector'] or is_captains_view) else (url_for('admin.dashboard') if current_user.is_admin else url_for('franchise.dashboard')) %}
             <a href="{{ brand_url }}"
                 class="text-decoration-none d-flex align-items-center gap-2.5">
                 <div class="spl-logo-icon">
@@ -70,6 +70,31 @@
 
             <!-- Header Quick Nav Links (Role-Aware) -->
             <nav class="d-flex align-items-center flex-wrap gap-2 mt-2 mt-md-0">
+                {% if request.endpoint in ['public.public_captains', 'public.captains_projector'] or is_captains_view %}
+                <!-- Captain View Clean Navigation: Only Projector (Teams, Captain, Fixtures, Admin Panel, Logout removed) -->
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('public.captains_projector') }}" target="_blank"
+                        class="btn btn-sm btn-danger fw-bold font-display shadow-sm px-3" title="Open Captain Projector View">
+                        <i class="fa-solid fa-tv me-1.5"></i> Projector
+                    </a>
+                    <button type="button" class="btn btn-sm btn-danger dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false" title="Switch Projector Screen">
+                        <span class="visually-hidden">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 font-display">
+                        <li>
+                            <a class="dropdown-item fw-bold text-danger small py-2 d-flex align-items-center gap-2" href="{{ url_for('public.captains_projector') }}" target="_blank">
+                                <i class="fa-solid fa-crown text-danger"></i> Captain Projector Slideshow
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li>
+                            <a class="dropdown-item fw-semibold text-dark small py-2 d-flex align-items-center gap-2" href="{{ url_for('live.auction_live') }}" target="_blank">
+                                <i class="fa-solid fa-satellite-dish text-primary"></i> Live Auction Projector
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                {% else %}
                 <a href="{{ url_for('public.public_teams') }}"
                     class="btn btn-sm btn-outline-primary fw-semibold font-display">
                     <i class="fa-solid fa-users me-1"></i> Teams
@@ -107,6 +132,7 @@
                         <i class="fa-solid fa-right-from-bracket me-1"></i><span class="d-none d-sm-inline">Logout</span>
                     </a>
                 </div>
+                {% endif %}
             </nav>
         </header>
         {% endif %}

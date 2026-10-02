@@ -103,7 +103,7 @@ body.is-fullscreen #btn-fullscreen-toggle {
     </button>
 </div>
 
-<div class="container-fluid px-2 px-md-4 py-3 max-w-1440" id="live-projector-content">
+<div class="container-fluid px-2 px-md-4 py-3 max-w-1440 min-vh-100 d-flex flex-column justify-content-between" id="live-projector-content">
     
     <!-- Top Status Banner matching ui.html -->
     <div class="d-flex justify-content-between align-items-center mb-3 text-muted px-2 font-display">
@@ -346,6 +346,11 @@ body.is-fullscreen #btn-fullscreen-toggle {
             <div class="text-muted fs-6 mt-2">No bids placed during round. Player is eligible for Second-Chance auction.</div>
         </div>
 
+    </div>
+
+    <!-- Projector Footer: Developer Credit & Branding -->
+    <div class="mt-4 projector-footer-container">
+        {% include "includes/footer.html" %}
     </div>
 
 </div>

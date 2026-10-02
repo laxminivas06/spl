@@ -11,7 +11,8 @@
                      alt="Aivontraa Automation" 
                      class="aivontraa-footer-logo"
                      style="height: 32px; width: auto; max-width: 130px; object-fit: contain;"
-                     onerror="this.onerror=null; this.src='/static/images/aivontraa_logo.png';"
+                     data-fallback="{{ url_for('static', filename='images/aivontraa_logo.png') }}"
+                     onerror="this.onerror=null; this.src=this.dataset.fallback;"
                      loading="lazy">
             </a>
             <div class="spl-footer-developer-credit font-sans text-dark">

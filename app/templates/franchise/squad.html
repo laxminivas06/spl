@@ -104,6 +104,45 @@
         </div>
     </div>
 
+    <!-- Elite Quota Status Card -->
+    <div class="card border border-warning-subtle bg-warning-subtle bg-opacity-10 shadow-sm p-3 mb-4 rounded-3">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                    <span class="badge bg-warning text-dark fw-bold font-display px-2 py-1"><i class="fa-solid fa-star me-1"></i>ELITE QUOTA</span>
+                    <span class="fw-bold text-dark fs-5 font-monospace">{{ franchise.elite_count }} / {{ franchise.max_elite_allowed }} Players</span>
+                    {% if franchise.auction_elite_count >= franchise.min_auction_elite_required and franchise.auction_elite_count <= franchise.max_auction_elite_allowed %}
+                        <span class="badge bg-success-subtle text-success border border-success extra-small fw-semibold"><i class="fa-solid fa-check me-1"></i>Condition Satisfied</span>
+                    {% elif franchise.needs_mandatory_elite %}
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning extra-small fw-semibold"><i class="fa-solid fa-triangle-exclamation me-1"></i>Need {{ franchise.required_elite_slots_needed }} More Elite</span>
+                    {% else %}
+                        <span class="badge bg-secondary-subtle text-dark border extra-small fw-semibold">Quota Active</span>
+                    {% endif %}
+                </div>
+                <div class="text-muted small">
+                    Rule: Total maximum 3 Elite players per team (including Captain). Must acquire minimum 1 and maximum 2 Elite players from auction.
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 text-center">
+                <div class="px-3 py-2 bg-white rounded border border-secondary-subtle shadow-xs">
+                    <small class="text-muted d-block font-display extra-small">CAPTAIN (ELITE)</small>
+                    <span class="fw-bold font-monospace {{ 'text-success' if franchise.is_captain_elite else 'text-muted' }}">{{ '1 / 1' if franchise.is_captain_elite else '0 / 1' }}</span>
+                </div>
+                <div class="px-3 py-2 bg-white rounded border border-secondary-subtle shadow-xs">
+                    <small class="text-muted d-block font-display extra-small">AUCTION ELITE</small>
+                    <span class="fw-bold font-monospace text-primary">{{ franchise.auction_elite_count }} / {{ franchise.max_auction_elite_allowed }}</span>
+                    <small class="text-muted d-block extra-small">(Min {{ franchise.min_auction_elite_required }})</small>
+                </div>
+                <div class="px-3 py-2 bg-white rounded border border-secondary-subtle shadow-xs">
+                    <small class="text-muted d-block font-display extra-small">AVAILABLE ELITE SLOTS</small>
+                    <span class="fw-bold font-monospace {{ 'text-danger' if not franchise.can_add_elite else 'text-success' }}">
+                        {{ [franchise.max_elite_allowed - franchise.elite_count, franchise.max_auction_elite_allowed - franchise.auction_elite_count] | min if franchise.can_add_elite else 0 }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Analytics Stat Cards -->
     <div class="row g-4 mb-4">
         <div class="col-md-3">
@@ -237,7 +276,11 @@
                         <img src="{{ p.role | category_icon }}" class="category-icon-img" style="width: 16px; height: 16px; object-fit: contain;">
                         {{ p.role }}
                     </span>
-                    <span class="badge bg-secondary-subtle text-black border border-secondary-subtle font-display">{{ p.category }}</span>
+                    {% if p.category == 'Elite' %}
+                        <span class="badge bg-warning text-dark border border-warning-subtle font-display fw-bold"><i class="fa-solid fa-star me-1"></i>Elite</span>
+                    {% else %}
+                        <span class="badge bg-secondary-subtle text-black border border-secondary-subtle font-display">{{ p.category }}</span>
+                    {% endif %}
                 </div>
 
                 <div class="p-2 bg-light rounded border mb-2">

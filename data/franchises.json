@@ -6,6 +6,7 @@
     "logo": "default_logo.png",
     "authorized_email": "morishettylaxminivas@gmail.com",
     "owner_name": "Cyber Vipers Owner",
+    "owners_data": null,
     "google_auth_enabled": true,
     "starting_purse": 550000.0,
     "remaining_purse": 550000.0,
@@ -20,7 +21,7 @@
     "vice_captain_id": null,
     "is_active": true,
     "created_at": "2026-10-01T18:17:33.783704",
-    "updated_at": "2026-10-01T18:50:13.513324"
+    "updated_at": "2026-10-02T09:29:10.251720"
   },
   {
     "id": 2,
@@ -29,6 +30,7 @@
     "logo": "logo_12_workshop.png",
     "authorized_email": "hello.aivontraa@gmail.com",
     "owner_name": "1212",
+    "owners_data": null,
     "google_auth_enabled": true,
     "starting_purse": 550000.0,
     "remaining_purse": 500000.0,
@@ -43,6 +45,6 @@
     "vice_captain_id": null,
     "is_active": true,
     "created_at": "2026-10-01T18:22:02.833340",
-    "updated_at": "2026-10-01T18:50:13.513133"
+    "updated_at": "2026-10-02T09:29:10.251731"
   }
 ]

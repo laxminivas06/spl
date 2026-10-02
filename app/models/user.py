@@ -21,7 +21,10 @@ class User(UserMixin, db.Model):
     franchise = db.relationship('Franchise', back_populates='users')
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        try:
+            self.password_hash = generate_password_hash(password)
+        except (AttributeError, ValueError):
+            self.password_hash = generate_password_hash(password, method='pbkdf2:sha256')
 
     def check_password(self, password):
         if not self.password_hash:

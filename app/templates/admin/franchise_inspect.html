@@ -120,6 +120,28 @@
     </div>
 </div>
 
+<!-- Elite Quota Banner -->
+<div class="spl-card p-3 mb-4 bg-white shadow-sm border d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+    <div>
+        <h6 class="fw-bold text-dark mb-0">
+            <i class="fa-solid fa-crown text-danger me-2"></i>Elite Player Quota Status:
+            <span class="badge {% if franchise.auction_elite_count >= franchise.max_auction_elite_allowed %}bg-primary text-white{% elif franchise.auction_elite_count >= franchise.min_auction_elite_required %}bg-success-subtle text-success border border-success-subtle{% else %}bg-warning-subtle text-warning-emphasis border border-warning-subtle{% endif %} ms-1">
+                {{ franchise.elite_count }} / {{ franchise.max_elite_allowed }} Elite Members
+            </span>
+        </h6>
+        <small class="text-muted">Captain is basically Elite. Maximum 3 Elite members total (including Captain), with min 1 and max 2 acquired from auction.</small>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-light text-dark border font-monospace">Captain: {{ 1 if franchise.is_captain_elite else 0 }}</span>
+        <span class="badge bg-light text-dark border font-monospace">Auction: {{ franchise.auction_elite_count }} / {{ franchise.max_auction_elite_allowed }}</span>
+        {% if franchise.auction_elite_count == 0 %}
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle extra-small">Min 1 Required</span>
+        {% else %}
+            <span class="badge bg-success-subtle text-success border border-success-subtle extra-small">✓ Condition Met</span>
+        {% endif %}
+    </div>
+</div>
+
 <!-- Squad Roster Table -->
 <div class="spl-card p-0 overflow-hidden mb-4 bg-white shadow-sm border">
     <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">

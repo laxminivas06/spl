@@ -107,6 +107,10 @@ def create_app(config_name=None):
     # Global Jinja Context Processor
     @app.context_processor
     def inject_global_vars():
+        from app.models.franchise import get_available_branches
+        from app.models.player import PlayerCategory
+        branch_list = get_available_branches()
+        cat_list = PlayerCategory.CHOICES
         return {
             'event_name': SystemSettings.get_setting('event_name', 'SPL'),
             'event_subtitle': SystemSettings.get_setting('event_subtitle', 'Sphoorthy Premier League'),
@@ -114,7 +118,11 @@ def create_app(config_name=None):
             'CATEGORY_ICONS': CATEGORY_ICONS,
             'CATEGORY_FALLBACKS': CATEGORY_FALLBACKS,
             'get_category_icon': get_category_icon,
-            'get_category_fallback': get_category_fallback
+            'get_category_fallback': get_category_fallback,
+            'branches': branch_list,
+            'available_branches': branch_list,
+            'categories': cat_list,
+            'available_categories': cat_list
         }
 
     # Custom Jinja filters

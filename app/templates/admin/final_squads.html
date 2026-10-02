@@ -121,6 +121,12 @@
                                 {{ f.remaining_slots if f.remaining_slots is defined else (f.squad_limit - item.count) }}
                             </span>
                         </div>
+                        <div class="bg-white px-3 py-1.5 rounded border {% if f.auction_elite_count >= f.min_auction_elite_required and f.auction_elite_count <= f.max_auction_elite_allowed %}border-success-subtle{% else %}border-warning-subtle{% endif %} shadow-sm">
+                            <span class="text-muted extra-small text-uppercase d-block fw-bold font-display"><i class="fa-solid fa-star text-warning me-1"></i>Elite Quota</span>
+                            <span class="fw-bold font-monospace small {% if f.auction_elite_count >= f.min_auction_elite_required and f.auction_elite_count <= f.max_auction_elite_allowed %}text-success{% else %}text-warning-emphasis{% endif %}">
+                                {{ f.elite_count }}/{{ f.max_elite_allowed }} <span class="extra-small fw-normal text-muted">(Auc: {{ f.auction_elite_count }}/{{ f.max_auction_elite_allowed }})</span>
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -166,7 +172,11 @@
                                 {{ p.branch or '-' }} / Yr {{ p.year or '-' }}
                             </td>
                             <td class="py-2">
+                                {% if p.category == 'Elite' %}
+                                <span class="badge bg-warning text-dark border border-warning-subtle fw-bold"><i class="fa-solid fa-star me-1"></i>Elite</span>
+                                {% else %}
                                 <span class="badge bg-secondary-subtle text-black border border-secondary-subtle">{{ p.category }}</span>
+                                {% endif %}
                             </td>
                             <td class="py-2 font-monospace fw-bold">
                                 {% if is_cap %}

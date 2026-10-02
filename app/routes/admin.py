@@ -364,12 +364,165 @@ def get_player_by_rule(rule_no):
 
 # ==================== FRANCHISE MANAGEMENT ====================
 
+import re
+
+def is_valid_email(email):
+    """Validate RFC email address format."""
+    if not email or not isinstance(email, str):
+        return False
+    return bool(re.match(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$', email.strip()))
+
+def extract_owners_from_request(req_form):
+    """
+    Extract up to 3 owners from form submission.
+    Supports owner_name_1, owner_email_1, owner_phone_1 ...
+    or owner_name[], owner_email[] list syntax,
+    or legacy single fields.
+    """
+    owners = []
+    # 1. Numbered fields (Owner 1, 2, 3)
+    for idx in (1, 2, 3):
+        name = req_form.get(f'owner_name_{idx}', '').strip()
+        email = req_form.get(f'owner_email_{idx}', '').strip().lower()
+        phone = req_form.get(f'owner_phone_{idx}', '').strip()
+        if name or email or phone:
+            owners.append({
+                'name': name,
+                'email': email,
+                'phone': phone
+            })
+
+    # 2. List syntax fallback
+    if not owners:
+        names = req_form.getlist('owner_name[]') or req_form.getlist('owner_name')
+        emails = req_form.getlist('owner_email[]') or req_form.getlist('authorized_email[]') or req_form.getlist('authorized_email')
+        phones = req_form.getlist('owner_phone[]')
+        for i in range(max(len(names), len(emails))):
+            name = names[i].strip() if i < len(names) else ''
+            email = emails[i].strip().lower() if i < len(emails) else ''
+            phone = phones[i].strip() if i < len(phones) else ''
+            if name or email:
+                owners.append({'name': name, 'email': email, 'phone': phone})
+
+    # 3. Single legacy fields fallback
+    if not owners:
+        single_name = req_form.get('owner_name', '').strip()
+        single_email = (req_form.get('authorized_email') or req_form.get('gmail') or req_form.get('email') or '').strip().lower()
+        single_phone = req_form.get('owner_phone', '').strip()
+        if single_name or single_email:
+            owners.append({'name': single_name, 'email': single_email, 'phone': single_phone})
+
+    return owners[:3]
+
+def validate_owners(owners, franchise_id=None):
+    """
+    Validates owners:
+    - Owner 1 is mandatory (Name & Valid Email required).
+    - Owner 2 and Owner 3 are optional. If added, both Name and valid Email are required.
+    - No duplicate emails within the same franchise.
+    - No duplicate emails across other franchises.
+    Returns (cleaned_owners, error_message).
+    """
+    if not owners or not owners[0].get('name') or not owners[0].get('name').strip():
+        return None, 'Owner 1 (Primary) Name is mandatory.'
+
+    owner1_email = (owners[0].get('email') or '').strip().lower()
+    if not owner1_email:
+        return None, 'Owner 1 (Primary) Login Email is mandatory.'
+    if not is_valid_email(owner1_email):
+        return None, f"Owner 1 email '{owner1_email}' is not a valid email address."
+
+    cleaned = [{
+        'name': owners[0]['name'].strip(),
+        'email': owner1_email,
+        'phone': owners[0].get('phone', '').strip()
+    }]
+
+    for idx, o in enumerate(owners[1:], start=2):
+        name = (o.get('name') or '').strip()
+        email = (o.get('email') or '').strip().lower()
+        phone = (o.get('phone') or '').strip()
+
+        # If completely empty, skip optional owner
+        if not name and not email and not phone:
+            continue
+
+        if not name:
+            return None, f"Owner {idx} requires a Name if added."
+        if not email:
+            return None, f"Owner {idx} requires an Email if added."
+        if not is_valid_email(email):
+            return None, f"Owner {idx} email '{email}' is not a valid email address."
+
+        cleaned.append({
+            'name': name,
+            'email': email,
+            'phone': phone
+        })
+
+    # Duplicate check within this franchise
+    emails = [o['email'] for o in cleaned if o.get('email')]
+    if len(emails) != len(set(emails)):
+        return None, 'Each owner in the franchise must have a unique email address.'
+
+    # Collision check with other franchises
+    for em in emails:
+        for f in Franchise.query.all():
+            if franchise_id and f.id == franchise_id:
+                continue
+            for existing_ow in f.get_owners():
+                if existing_ow.get('email', '').strip().lower() == em:
+                    return None, f"Email '{em}' is already assigned to franchise '{f.name}'."
+
+    return cleaned, None
+
+def sync_franchise_owner_users(franchise, cleaned_owners):
+    """Synchronize User login accounts for all owners of the franchise."""
+    new_emails = set(o['email'] for o in cleaned_owners if o.get('email'))
+
+    # Provision / update user accounts for all owners
+    for o in cleaned_owners:
+        email = o.get('email')
+        name = o.get('name')
+        if not email:
+            continue
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            uname = f"{franchise.short_name.lower()}_{email.split('@')[0]}"
+            if User.query.filter_by(username=uname).first():
+                uname = f"{franchise.short_name.lower()}_{franchise.id}_{len(uname)}"
+            user = User(
+                username=uname,
+                email=email,
+                display_name=name or franchise.name,
+                role='FRANCHISE',
+                franchise_id=franchise.id,
+                is_active=franchise.is_active
+            )
+            user.set_password('SPL@2025')
+            db.session.add(user)
+        else:
+            user.franchise_id = franchise.id
+            user.role = 'FRANCHISE'
+            user.is_active = franchise.is_active
+            if name:
+                user.display_name = name
+
+    # Unlink any user accounts previously associated with this franchise whose email was removed
+    existing_users = User.query.filter_by(franchise_id=franchise.id).all()
+    for u in existing_users:
+        if u.email.strip().lower() not in new_emails and not u.is_admin:
+            u.franchise_id = None
+
 @admin_bp.route('/franchises', methods=['GET'])
 @login_required
 @admin_required
 def franchises():
+    from app.models.franchise import get_available_branches
     franchise_list = Franchise.query.order_by(Franchise.id.asc()).all()
-    return render_template('admin/franchises.html', franchises=franchise_list)
+    categories = PlayerCategory.CHOICES
+    branches = get_available_branches()
+    return render_template('admin/franchises.html', franchises=franchise_list, categories=categories, branches=branches)
 
 @admin_bp.route('/franchises/add', methods=['POST'])
 @login_required
@@ -377,33 +530,34 @@ def franchises():
 def add_franchise():
     name = request.form.get('name', '').strip()
     short_name = request.form.get('short_name', '').strip().upper()
-    authorized_email = request.form.get('authorized_email', '').strip().lower() or request.form.get('gmail', '').strip().lower() or request.form.get('email', '').strip().lower()
-    owner_name = request.form.get('owner_name', '').strip()
-    # Default to True — franchises should always allow Google OAuth unless explicitly disabled
     google_auth_enabled = request.form.get('google_auth_enabled') != 'false'
-
-    captain_rule_number = request.form.get('captain_rule_number', '').strip()
-    captain_name = request.form.get('captain_name', '').strip()
-    captain_department = request.form.get('captain_department', '').strip()
-    captain_year = request.form.get('captain_year', '').strip()
-    captain_category = request.form.get('captain_category', '').strip().upper()
-    captain_id = None
 
     if not name or not short_name:
         flash('Franchise name and short code are required.', 'danger')
+        return redirect(url_for('admin.franchises'))
+
+    if Franchise.query.filter_by(name=name).first():
+        flash(f'Franchise name "{name}" already exists.', 'danger')
         return redirect(url_for('admin.franchises'))
 
     if Franchise.query.filter_by(short_name=short_name).first():
         flash(f'Franchise code "{short_name}" already exists.', 'danger')
         return redirect(url_for('admin.franchises'))
 
-    if authorized_email:
-        existing_email = Franchise.query.filter_by(authorized_email=authorized_email).first()
-        if existing_email:
-            flash('This Gmail account is already assigned to another franchise.', 'danger')
-            return redirect(url_for('admin.franchises'))
+    raw_owners = extract_owners_from_request(request.form)
+    cleaned_owners, err = validate_owners(raw_owners)
+    if err:
+        flash(err, 'danger')
+        return redirect(url_for('admin.franchises'))
 
-    # Validate Captain Rule Number with Player data if provided
+    captain_rule_number = request.form.get('captain_rule_number', '').strip()
+    captain_name = request.form.get('captain_name', '').strip()
+    captain_department = (request.form.get('captain_department', '') or request.form.get('branch', '')).strip()
+    captain_year = request.form.get('captain_year', '').strip()
+    captain_cat_raw = request.form.get('captain_category', '').strip()
+    captain_category = PlayerCategory.normalize(captain_cat_raw) if captain_cat_raw else 'Elite'
+    captain_id = None
+
     if captain_rule_number:
         captain_player = Player.query.filter(Player.roll_number.ilike(captain_rule_number)).first()
         if captain_player:
@@ -414,15 +568,15 @@ def add_franchise():
                 captain_department = captain_player.branch
             if not captain_year:
                 captain_year = captain_player.year
-            if not captain_category:
+            if not captain_cat_raw:
                 captain_category = captain_player.category
         else:
             flash(f"Note: Captain rule number '{captain_rule_number}' was not found in registered player database.", 'warning')
 
     try:
-        starting_purse = float(SystemSettings.get_setting('starting_purse', '300000'))
+        starting_purse = float(SystemSettings.get_setting('starting_purse', '550000'))
     except (ValueError, TypeError):
-        starting_purse = 300000.0
+        starting_purse = 550000.0
 
     try:
         squad_limit = int(SystemSettings.get_setting('squad_limit', '15'))
@@ -444,8 +598,6 @@ def add_franchise():
     franchise = Franchise(
         name=name,
         short_name=short_name,
-        authorized_email=authorized_email or None,
-        owner_name=owner_name or None,
         google_auth_enabled=google_auth_enabled,
         starting_purse=starting_purse,
         remaining_purse=starting_purse,
@@ -459,35 +611,16 @@ def add_franchise():
         captain_id=captain_id,
         is_active=True
     )
+    franchise.set_owners(cleaned_owners)
 
     db.session.add(franchise)
     db.session.commit()
 
-    # Automatically provision User account for franchisee login via registered Gmail
-    if authorized_email:
-        f_user = User.query.filter_by(email=authorized_email).first()
-        if not f_user:
-            uname = f"{short_name.lower()}_owner"
-            if User.query.filter_by(username=uname).first():
-                uname = f"{short_name.lower()}_{franchise.id}"
-            f_user = User(
-                username=uname,
-                email=authorized_email,
-                display_name=owner_name or name,
-                role='FRANCHISE',
-                franchise_id=franchise.id,
-                is_active=True
-            )
-            f_user.set_password('SPL@2025')
-            db.session.add(f_user)
-            db.session.commit()
-        else:
-            f_user.franchise_id = franchise.id
-            f_user.role = 'FRANCHISE'
-            db.session.commit()
+    sync_franchise_owner_users(franchise, cleaned_owners)
+    db.session.commit()
 
     log_audit(current_user.id, 'FRANCHISE_CREATED', 'Franchise', franchise.id, None, franchise.name, franchise_id=franchise.id)
-    flash(f'Franchisee "{name}" created successfully. Registered Gmail "{authorized_email or "None"}" configured for login.', 'success')
+    flash(f'Franchisee "{name}" created successfully with {len(cleaned_owners)} owner(s).', 'success')
     return redirect(url_for('admin.franchises'))
 
 @admin_bp.route('/franchises/<int:id>/edit', methods=['POST'])
@@ -499,20 +632,35 @@ def edit_franchise(id):
 
     new_name = request.form.get('name', franchise.name).strip()
     new_short = request.form.get('short_name', franchise.short_name).strip().upper()
-    email_input = (request.form.get('authorized_email') or request.form.get('gmail') or '').strip().lower()
-    owner_name_input = request.form.get('owner_name', '').strip()
+
+    if not new_name or not new_short:
+        flash('Franchise name and short code cannot be empty.', 'danger')
+        return redirect(url_for('admin.franchises'))
+
+    if new_name.lower() != franchise.name.lower():
+        existing_name = Franchise.query.filter(Franchise.name.ilike(new_name)).first()
+        if existing_name and existing_name.id != franchise.id:
+            flash(f'Franchise name "{new_name}" is already taken.', 'danger')
+            return redirect(url_for('admin.franchises'))
+
+    if new_short != franchise.short_name:
+        existing_short = Franchise.query.filter_by(short_name=new_short).first()
+        if existing_short and existing_short.id != franchise.id:
+            flash(f'Franchise code "{new_short}" is already taken.', 'danger')
+            return redirect(url_for('admin.franchises'))
+
+    raw_owners = extract_owners_from_request(request.form)
+    cleaned_owners, err = validate_owners(raw_owners, franchise_id=franchise.id)
+    if err:
+        flash(err, 'danger')
+        return redirect(url_for('admin.franchises'))
 
     captain_rule_number = request.form.get('captain_rule_number', '').strip()
     captain_name = request.form.get('captain_name', '').strip()
-    captain_department = request.form.get('captain_department', '').strip()
+    captain_department = (request.form.get('captain_department', '') or request.form.get('branch', '')).strip()
     captain_year = request.form.get('captain_year', '').strip()
-    captain_category = request.form.get('captain_category', '').strip().upper()
-
-    if email_input:
-        existing_email = Franchise.query.filter_by(authorized_email=email_input).first()
-        if existing_email and existing_email.id != franchise.id:
-            flash('This Gmail account is already assigned to another franchise.', 'danger')
-            return redirect(url_for('admin.franchises'))
+    captain_cat_raw = request.form.get('captain_category', '').strip()
+    captain_category = PlayerCategory.normalize(captain_cat_raw) if captain_cat_raw else (franchise.captain_category or 'Elite')
 
     # Validate Captain Rule Number with Player data if provided
     captain_id = franchise.captain_id
@@ -526,22 +674,20 @@ def edit_franchise(id):
                 captain_department = captain_player.branch
             if not captain_year:
                 captain_year = captain_player.year
-            if not captain_category:
+            if not captain_cat_raw:
                 captain_category = captain_player.category
         else:
             flash(f"Note: Captain rule number '{captain_rule_number}' was not found in registered player database.", 'warning')
 
     franchise.name = new_name
     franchise.short_name = new_short
-    franchise.authorized_email = email_input if email_input else None
-    franchise.owner_name = owner_name_input if owner_name_input else None
+    franchise.set_owners(cleaned_owners)
     franchise.captain_name = captain_name or None
     franchise.captain_rule_number = captain_rule_number or None
     franchise.captain_department = captain_department or None
     franchise.captain_year = captain_year or None
     franchise.captain_category = captain_category or None
     franchise.captain_id = captain_id
-    # Default to True — preserve existing unless explicitly set to false
     franchise.google_auth_enabled = request.form.get('google_auth_enabled') != 'false'
     franchise.is_active = 'is_active' in request.form or request.form.get('is_active') == 'true'
 
@@ -551,7 +697,7 @@ def edit_franchise(id):
         franchise.starting_purse = new_starting
         franchise.remaining_purse = max(0.0, new_starting - spent)
         franchise.squad_limit = int(request.form.get('squad_limit', franchise.squad_limit))
-    except ValueError:
+    except (ValueError, TypeError):
         pass
 
     file = request.files.get('logo_file')
@@ -568,31 +714,13 @@ def edit_franchise(id):
 
     db.session.commit()
 
-    # Sync User account
-    if email_input:
-        f_user = User.query.filter_by(email=email_input).first()
-        if not f_user:
-            uname = f"{new_short.lower()}_owner"
-            f_user = User(
-                username=uname,
-                email=email_input,
-                display_name=owner_name_input or new_name,
-                role='FRANCHISE',
-                franchise_id=franchise.id,
-                is_active=True
-            )
-            f_user.set_password('SPL@2025')
-            db.session.add(f_user)
-            db.session.commit()
-        else:
-            f_user.franchise_id = franchise.id
-            f_user.role = 'FRANCHISE'
-            f_user.is_active = franchise.is_active
-            db.session.commit()
+    sync_franchise_owner_users(franchise, cleaned_owners)
+    db.session.commit()
 
     log_audit(
         current_user.id, 'FRANCHISE_UPDATED', 'Franchise', franchise.id,
         str(old_data), str(franchise.to_dict()),
+        f"Franchisee '{franchise.name}' updated by Admin {current_user.username}",
         franchise_id=franchise.id
     )
     flash(f'Franchisee "{franchise.name}" updated successfully.', 'success')
@@ -945,6 +1073,12 @@ def settings():
         theme_default = request.form.get('theme_default', 'dark').strip()
         show_price_public = 'true' if 'show_purchase_price_publicly' in request.form or request.form.get('show_purchase_price_publicly') == 'true' else 'false'
 
+        # Elite Quota Options (Max 3 total, Min 1 / Max 2 from Auction)
+        max_elite_per_team = request.form.get('max_elite_per_team', '3').strip()
+        min_auction_elite_per_team = request.form.get('min_auction_elite_per_team', '1').strip()
+        max_auction_elite_per_team = request.form.get('max_auction_elite_per_team', '2').strip()
+        enforce_elite_limits = 'true' if 'enforce_elite_limits' in request.form or request.form.get('enforce_elite_limits') == 'true' else 'false'
+
         # Global Audit Settings
         audit_logging_enabled = 'true' if 'audit_logging_enabled' in request.form or request.form.get('audit_logging_enabled') == 'true' else 'false'
         audit_retention_days = request.form.get('audit_retention_days', '90').strip()
@@ -959,12 +1093,16 @@ def settings():
         SystemSettings.set_setting('timer_seconds', timer_seconds)
         SystemSettings.set_setting('theme_default', theme_default)
         SystemSettings.set_setting('SHOW_PURCHASE_PRICE_PUBLICLY', show_price_public)
+        SystemSettings.set_setting('max_elite_per_team', max_elite_per_team)
+        SystemSettings.set_setting('min_auction_elite_per_team', min_auction_elite_per_team)
+        SystemSettings.set_setting('max_auction_elite_per_team', max_auction_elite_per_team)
+        SystemSettings.set_setting('enforce_elite_limits', enforce_elite_limits)
         SystemSettings.set_setting('audit_logging_enabled', audit_logging_enabled)
         SystemSettings.set_setting('audit_retention_days', audit_retention_days)
         SystemSettings.set_setting('audit_log_level', audit_log_level)
         SystemSettings.set_setting('audit_track_ip', audit_track_ip)
 
-        log_audit(current_user.id, 'UPDATE_SETTINGS', 'SystemSettings', None, None, f"Event: {event_name}, Audit: {audit_log_level}")
+        log_audit(current_user.id, 'UPDATE_SETTINGS', 'SystemSettings', None, None, f"Event: {event_name}, Elite Max: {max_elite_per_team}, Audit: {audit_log_level}")
         flash('System configuration and Global Audit settings saved successfully.', 'success')
         return redirect(url_for('admin.settings'))
 
@@ -978,6 +1116,10 @@ def settings():
         timer_seconds=SystemSettings.get_setting('timer_seconds', '10'),
         theme_default=SystemSettings.get_setting('theme_default', 'dark'),
         show_purchase_price_publicly=SystemSettings.get_setting('SHOW_PURCHASE_PRICE_PUBLICLY', 'true'),
+        max_elite_per_team=SystemSettings.get_setting('max_elite_per_team', '3'),
+        min_auction_elite_per_team=SystemSettings.get_setting('min_auction_elite_per_team', '1'),
+        max_auction_elite_per_team=SystemSettings.get_setting('max_auction_elite_per_team', '2'),
+        enforce_elite_limits=SystemSettings.get_setting('enforce_elite_limits', 'true'),
         audit_logging_enabled=SystemSettings.get_setting('audit_logging_enabled', 'true'),
         audit_retention_days=SystemSettings.get_setting('audit_retention_days', '90'),
         audit_log_level=SystemSettings.get_setting('audit_log_level', 'ALL'),

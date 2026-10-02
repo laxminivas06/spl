@@ -133,6 +133,9 @@ def get_state():
 
     # All active registered franchises with real-time purse & eligibility
     # All active registered franchises with real-time purse & eligibility
+    is_elite_player = bool(player and str(player.category or '').strip().lower() == 'elite')
+    enforce_elite = SystemSettings.get_setting('enforce_elite_limits', 'true') == 'true'
+
     all_franchises = Franchise.query.filter_by(is_active=True).order_by(Franchise.id.asc()).all()
     res['franchises'] = []
     for f in all_franchises:
@@ -148,6 +151,12 @@ def get_state():
         elif f.squad_count >= f.squad_limit:
             can_bid = False
             cannot_reason = '15 / 15 Members (Team Full)'
+        elif enforce_elite and is_elite_player and not f.can_add_elite:
+            can_bid = False
+            cannot_reason = f'Elite Limit Reached (Max {f.max_elite_allowed})'
+        elif enforce_elite and not is_elite_player and f.needs_mandatory_elite and f.remaining_slots <= f.required_elite_slots_needed:
+            can_bid = False
+            cannot_reason = 'Reserve Slot for Mandatory Elite'
         elif f.remaining_purse < next_valid_bid:
             can_bid = False
             cannot_reason = 'Low Purse'
@@ -169,7 +178,15 @@ def get_state():
             'is_eligible_for_bidding': f.is_eligible_for_bidding,
             'can_bid': can_bid,
             'is_highest_bidder': (state.highest_bidder_id == f.id),
-            'cannot_bid_reason': cannot_reason
+            'cannot_bid_reason': cannot_reason,
+            'elite_count': f.elite_count,
+            'auction_elite_count': f.auction_elite_count,
+            'max_elite_allowed': f.max_elite_allowed,
+            'min_auction_elite_required': f.min_auction_elite_required,
+            'max_auction_elite_allowed': f.max_auction_elite_allowed,
+            'can_add_elite': f.can_add_elite,
+            'needs_mandatory_elite': f.needs_mandatory_elite,
+            'elite_status_label': f.elite_status_label
         })
 
     # Franchise-Specific State Additions
@@ -194,6 +211,12 @@ def get_state():
             elif franchise.squad_count >= franchise.squad_limit:
                 can_bid = False
                 cannot_bid_reason = f"Squad Limit Reached ({franchise.squad_count}/{franchise.squad_limit}) - Team Full"
+            elif enforce_elite and is_elite_player and not franchise.can_add_elite:
+                can_bid = False
+                cannot_bid_reason = f"Elite Limit Reached (Max {franchise.max_elite_allowed} / Team)"
+            elif enforce_elite and not is_elite_player and franchise.needs_mandatory_elite and franchise.remaining_slots <= franchise.required_elite_slots_needed:
+                can_bid = False
+                cannot_bid_reason = "Must Reserve Slot for Mandatory Elite Player"
             elif franchise.remaining_purse < next_valid_bid:
                 can_bid = False
                 cannot_bid_reason = f"Insufficient Purse (Need ₹{next_valid_bid:,.0f})"
@@ -211,7 +234,15 @@ def get_state():
                 'squad_limit': franchise.squad_limit,
                 'can_bid': can_bid,
                 'cannot_bid_reason': cannot_bid_reason,
-                'is_highest_bidder': (state.highest_bidder_id == franchise.id)
+                'is_highest_bidder': (state.highest_bidder_id == franchise.id),
+                'elite_count': franchise.elite_count,
+                'auction_elite_count': franchise.auction_elite_count,
+                'max_elite_allowed': franchise.max_elite_allowed,
+                'min_auction_elite_required': franchise.min_auction_elite_required,
+                'max_auction_elite_allowed': franchise.max_auction_elite_allowed,
+                'can_add_elite': franchise.can_add_elite,
+                'needs_mandatory_elite': franchise.needs_mandatory_elite,
+                'elite_status_label': franchise.elite_status_label
             }
 
     # Admin-Specific Additions (Recent Bids for active player)

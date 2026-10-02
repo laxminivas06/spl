@@ -280,8 +280,13 @@ def google_callback():
                 or candidates[0]
             )
 
-    # Strategy 3: find by Franchise.authorized_email
+    # Strategy 3: find by Franchise.authorized_email or any registered owner email
     franchise = Franchise.query.filter(Franchise.authorized_email.ilike(norm_email)).first()
+    if not franchise:
+        for f in Franchise.query.all():
+            if any(o.get('email', '').strip().lower() == norm_email for o in f.get_owners()):
+                franchise = f
+                break
 
     # ── Admin auto-provisioning / assignment ──────────────────────────────────
     if norm_email in admin_emails_cfg or norm_email in hardcoded_admins:

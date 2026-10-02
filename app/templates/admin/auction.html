@@ -516,10 +516,10 @@
                             f.remaining_purse | currency }}</strong>
                     </div>
 
-                    <!-- Squad Count -->
-                    <div class="extra-small text-muted mb-2">
-                        Squad: <span class="text-dark fw-bold" id="team-squad-{{ f.id }}">{{ f.squad_count }}</span>/{{
-                        f.squad_limit }}
+                    <!-- Squad Count & Elite Quota -->
+                    <div class="extra-small text-muted mb-2 d-flex justify-content-between align-items-center">
+                        <span>Squad: <strong class="text-dark" id="team-squad-{{ f.id }}">{{ f.squad_count }}</strong>/{{ f.squad_limit }}</span>
+                        <span>Elite: <strong class="{% if f.auction_elite_count >= f.max_auction_elite_allowed %}text-primary{% elif f.auction_elite_count >= f.min_auction_elite_required %}text-success{% else %}text-danger{% endif %}" id="team-elite-{{ f.id }}" title="Captain (1) + Auction ({{ f.auction_elite_count }}/{{ f.max_auction_elite_allowed }})">{{ f.elite_count }}/{{ f.max_elite_allowed }}</strong></span>
                     </div>
 
                     <!-- Action Button (Click to Bid) -->
@@ -1315,6 +1315,12 @@
                             statusEl.className = 'badge bg-danger-subtle text-danger border border-danger extra-small';
                             statusEl.innerHTML = '<i class="fa-solid fa-ban me-1"></i>Not Eligible (Captain Required)';
                         }
+                    }
+
+                    const eliteEl = document.getElementById(`team-elite-${f.id}`);
+                    if (eliteEl && f.elite_count !== undefined) {
+                        eliteEl.textContent = `${f.elite_count}/${f.max_elite_allowed || 3}`;
+                        eliteEl.className = (f.auction_elite_count >= (f.max_auction_elite_allowed || 2)) ? 'text-primary' : (f.auction_elite_count >= (f.min_auction_elite_required || 1) ? 'text-success' : 'text-danger');
                     }
 
                     if (card && btn) {
