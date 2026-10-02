@@ -266,9 +266,9 @@
                     <!-- Square Photo Frame (STRICT REQUIREMENT: Square, NOT circular) -->
                     <div class="border border-danger border-2 rounded-3 shadow-sm overflow-hidden bg-white mx-auto" style="width: 90px; height: 90px; aspect-ratio: 1/1;">
                         {% if p.photo and p.photo.startswith('http') %}
-                            <img src="{{ p.photo }}" alt="{{ p.name }}" class="w-100 h-100 object-fit-cover">
+                            <img src="{{ p.photo }}" alt="{{ p.name }}" class="w-100 h-100 object-fit-cover" referrerpolicy="no-referrer" onerror="this.src='/static/uploads/default_player.png'">
                         {% elif p.photo %}
-                            <img src="{{ url_for('static', filename='uploads/' + p.photo) }}" alt="{{ p.name }}" class="w-100 h-100 object-fit-cover" onerror="this.src='/static/uploads/default_player.png'">
+                            <img src="{{ url_for('static', filename='uploads/' + p.photo) }}" alt="{{ p.name }}" class="w-100 h-100 object-fit-cover" referrerpolicy="no-referrer" onerror="this.src='/static/uploads/default_player.png'">
                         {% else %}
                             <img src="/static/uploads/default_player.png" class="w-100 h-100 object-fit-cover" alt="Default Player">
                         {% endif %}

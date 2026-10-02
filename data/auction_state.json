@@ -1,16 +1,1 @@
-[
-  {
-    "id": 1,
-    "status": "WAITING",
-    "active_player_id": null,
-    "current_bid": 0.0,
-    "highest_bidder_id": null,
-    "timer_seconds": 30,
-    "timer_end": null,
-    "sold_display_until": null,
-    "paused_seconds_left": null,
-    "last_bid_at": "2026-10-02T11:09:47.408495",
-    "started_at": "2026-10-02T11:09:29.490528",
-    "updated_at": "2026-10-02T11:10:28.234795"
-  }
-]
+[]

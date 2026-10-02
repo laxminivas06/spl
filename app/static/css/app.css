@@ -353,12 +353,47 @@ a:hover {
 .player-thumb {
   width: 44px;
   height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  max-width: 44px;
+  max-height: 44px;
   aspect-ratio: 1 / 1;
   border-radius: 8px; /* Modern square box frame, NOT circular */
   object-fit: cover;
-  border: 2px solid var(--spl-border-color);
-  background-color: #f8fafc;
+  object-position: center top;
+  border: 1.5px solid var(--spl-border-color);
+  background-color: #ffffff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.player-photo-square {
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 8px;
+}
+
+.squad-photo-thumb {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  aspect-ratio: 1 / 1;
+  border-radius: 6px;
+  object-fit: cover;
+  object-position: center top;
+}
+
+@media (max-width: 576px) {
+  .player-thumb {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    border-radius: 6px;
+  }
 }
 
 /* ==========================================

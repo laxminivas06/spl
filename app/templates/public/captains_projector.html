@@ -32,24 +32,12 @@
     <div class="bg-white rounded-4 shadow-sm p-3 p-md-4 p-lg-5 border-2 border-danger position-relative my-auto overflow-hidden">
         
         <!-- Header Branding & Slide Counter -->
-        <div class="text-center mb-4 pb-3 border-bottom border-secondary-subtle position-relative">
+        <div class="text-center mb-4 pb-2 border-bottom border-secondary-subtle position-relative">
             <h1 class="display-6 fw-black text-dark font-display mb-1 tracking-wide text-uppercase">
                 {{ event_name or 'SPHOORTHY PREMIER LEAGUE' }}
             </h1>
-            <div class="text-danger font-display text-uppercase fw-bold letter-spacing-2 small mb-2">
+            <div class="text-danger font-display text-uppercase fw-bold letter-spacing-2 small">
                 OFFICIAL TEAM CAPTAINS — RETAINED SQUAD LEADERS
-            </div>
-            
-            <!-- Quick Team Selector Pills -->
-            <div class="d-flex flex-wrap justify-content-center gap-1.5 mt-2" id="captain-nav-pills">
-                {% for cap in captains %}
-                <button type="button" 
-                        class="btn btn-sm btn-outline-danger font-display fw-bold captain-pill-btn {% if loop.first %}active{% endif %}" 
-                        onclick="goToCaptain('{{ loop.index0 }}')"
-                        data-index="{{ loop.index0 }}">
-                    {{ cap.team_short }}
-                </button>
-                {% endfor %}
             </div>
         </div>
 
@@ -69,40 +57,24 @@
                 </button>
             </div>
 
-            <!-- CENTER: ACTIVE CAPTAIN CARD (Requirement 3: Optimized for Projector) -->
-            <div class="col flex-grow-1" style="max-width: 900px; margin: 0 auto;">
+            <!-- CENTER: ACTIVE CAPTAIN CARD (Optimized for Projector & All Devices) -->
+            <div class="col flex-grow-1" style="max-width: 980px; margin: 0 auto;">
                 
                 {% for cap in captains %}
                 {% set f = cap.franchise %}
                 <div class="captain-slide-item {% if not loop.first %}d-none{% endif %}" id="captain-slide-{{ loop.index0 }}" data-index="{{ loop.index0 }}">
                     
-                    <div class="spl-card p-4 p-md-5 bg-white border-2 border-danger shadow rounded-4 text-center">
+                    <div class="spl-card p-3 p-md-4 p-lg-5 bg-white border-2 border-danger shadow rounded-4 text-center projector-slide-card">
                         
-                        <!-- 1. Team Name (Top, Large Display) -->
-                        <div class="d-inline-flex align-items-center justify-content-center gap-2 mb-1">
-                            <img src="{{ url_for('static', filename='uploads/' + f.logo) if f.logo and not f.logo.startswith('http') else (f.logo or url_for('static', filename='uploads/default_logo.png')) }}" 
-                                 alt="{{ f.name }}" 
-                                 class="rounded-2 border border-secondary-subtle object-fit-contain p-1" 
-                                 width="48" height="48"
-                                 onerror="this.src='/static/uploads/default_logo.png'">
-                            <h2 class="display-5 fw-black text-danger font-display mb-0 text-uppercase tracking-wide">
-                                {{ cap.team_name }}
-                            </h2>
-                        </div>
-
-                        <!-- 2. Franchisee Name -->
-                        <div class="text-dark fs-5 fw-bold font-display text-uppercase mb-4">
-                            Franchisee: <span class="text-dark fw-black">{{ cap.franchisee_name }}</span>
-                        </div>
-
-                        <!-- 3. SQUARE PHOTO FRAME (Strict Requirement 3: SQUARE FRAME, NO CIRCLE) -->
-                        <div class="d-flex justify-content-center mb-4">
+                        <!-- 1. PLAYER PHOTO (Top Focal Point, Strict Square Container, Face Visible) -->
+                        <div class="d-flex justify-content-center mb-3">
                             <div class="spl-projector-square-frame border-3 border-danger shadow rounded-3 overflow-hidden bg-light position-relative"
-                                 style="width: 240px; height: 240px; max-width: 100%; aspect-ratio: 1/1;">
+                                 style="width: 230px; height: 230px; max-width: 100%; aspect-ratio: 1/1;">
                                 <img src="{{ url_for('static', filename='uploads/' + cap.captain_photo) if cap.captain_photo and not cap.captain_photo.startswith('http') else (cap.captain_photo or url_for('static', filename='uploads/default_player.png')) }}" 
                                      alt="{{ cap.captain_name }}" 
                                      class="w-100 h-100 object-fit-cover"
-                                     style="aspect-ratio: 1/1;"
+                                     style="aspect-ratio: 1/1; object-position: center top;"
+                                     referrerpolicy="no-referrer"
                                      onerror="this.onerror=null; this.src='/static/uploads/default_player.png';">
                                 <span class="badge bg-danger position-absolute bottom-0 end-0 m-2 px-2.5 py-1 font-display fw-black fs-6 shadow-sm">
                                     C
@@ -110,47 +82,97 @@
                             </div>
                         </div>
 
-                        <!-- 4. Captain Name (C) (Requirement 2 & 3) -->
-                        <h1 class="display-4 fw-black text-dark font-display mb-2 text-uppercase tracking-wide">
+                        <!-- 2. PLAYER INFORMATION -->
+                        <h1 class="display-5 fw-black text-dark font-display mb-1 text-uppercase tracking-wide captain-title-text">
                             {{ cap.captain_name }} <span class="text-danger fw-bold">(C)</span>
                         </h1>
+                        {% if cap.roll_number %}
+                        <div class="text-danger font-monospace fw-bold mb-2 small letter-spacing-1">
+                            Roll No: {{ cap.roll_number }}
+                        </div>
+                        {% endif %}
 
-                        <!-- 5. Captain Category with EXACT Category Icon (Requirement 1) -->
-                        <div class="d-inline-flex align-items-center justify-content-center gap-2 px-4 py-2 rounded-pill bg-light border border-secondary-subtle mb-3 shadow-sm">
+                        <!-- Category with EXACT Category Icon -->
+                        <div class="d-inline-flex align-items-center justify-content-center gap-2 px-3 py-1.5 rounded-pill bg-light border border-secondary-subtle mb-2.5 shadow-xs">
                             <img src="{{ get_category_icon(cap.category) }}" 
                                  alt="{{ cap.category }}" 
                                  class="category-icon-img" 
-                                 style="width: 28px; height: 28px; object-fit: contain;"
+                                 style="width: 24px; height: 24px; object-fit: contain;"
                                  onerror="this.onerror=null; this.src='{{ get_category_fallback(cap.category) }}';">
-                            <span class="fs-5 fw-black text-dark font-display text-uppercase">{{ cap.category }}</span>
+                            <span class="fs-6 fw-black text-dark font-display text-uppercase">{{ cap.category }}</span>
                         </div>
 
-                        <!-- 6 & 7. Year & Department -->
-                        <div class="row justify-content-center g-3 mb-4">
-                            <div class="col-auto">
-                                <div class="px-3 py-1.5 rounded bg-light border border-secondary-subtle text-dark font-sans fs-6">
-                                    <span class="text-muted fw-bold">Year:</span> <strong class="text-dark">{{ cap.year or '4th Year' }}</strong>
-                                </div>
-                            </div>
-                            <div class="col-auto">
-                                <div class="px-3 py-1.5 rounded bg-light border border-secondary-subtle text-dark font-sans fs-6">
-                                    <span class="text-muted fw-bold">Department:</span> <strong class="text-dark">{{ cap.department or 'CSE' }}</strong>
-                                </div>
-                            </div>
+                        <!-- Year & Department & Retention Status -->
+                        <div class="d-flex flex-wrap justify-content-center align-items-center gap-2 mb-3">
+                            <span class="badge bg-light border border-secondary-subtle text-dark font-sans px-3 py-1.5 fs-7">
+                                <span class="text-muted fw-semibold">Year:</span> <strong class="text-dark">{{ cap.year or '4th Year' }}</strong>
+                            </span>
+                            <span class="badge bg-light border border-secondary-subtle text-dark font-sans px-3 py-1.5 fs-7">
+                                <span class="text-muted fw-semibold">Branch:</span> <strong class="text-dark">{{ cap.department or 'CSE' }}</strong>
+                            </span>
+                            <span class="badge bg-danger text-white font-display fw-bold px-3 py-1.5 fs-7 shadow-xs">
+                                <i class="fa-solid fa-lock me-1"></i>RETAINED — ₹ {{ cap.retained_amount | currency }}
+                            </span>
                         </div>
 
-                        <!-- 8. Retained Status & Amount (Requirement 2 & 3) -->
-                        <div class="d-inline-block">
-                            <div class="badge bg-danger fs-4 px-4 py-2.5 rounded-3 text-uppercase font-display fw-black shadow-sm">
-                                <i class="fa-solid fa-lock me-2"></i>RETAINED — ₹ {{ cap.retained_amount | currency }}
-                            </div>
-                            <div class="mt-2 text-center">
-                                <span class="badge bg-warning text-dark border border-warning-subtle px-3 py-1 font-display fw-bold">
-                                    <i class="fa-solid fa-star me-1 text-dark"></i>Retained Elite • Not in Auction
-                                </span>
-                                <div class="text-muted extra-small font-display fw-semibold mt-1">
-                                    Team Auction Requirement: 1–3 Elite Players (Max Total: 4)
+                        <!-- Visual Divider separating Player from Franchise / Owner Info -->
+                        <hr class="border-secondary-subtle my-3 my-md-4">
+
+                        <!-- 3. FRANCHISE / TEAM INFORMATION & 4. OWNER -->
+                        <div class="franchise-presentation-box p-3 p-md-4 rounded-3 bg-light border border-secondary-subtle text-start">
+                            <div class="row align-items-center g-3">
+                                
+                                <!-- Franchise Logo (Prominent, High-Visibility, Preserves Aspect Ratio) -->
+                                <div class="col-12 col-md-auto d-flex justify-content-center">
+                                    <div class="projector-franchise-logo-box bg-white border border-secondary-subtle rounded-3 p-2 shadow-xs d-flex align-items-center justify-content-center"
+                                         style="width: 96px; height: 96px; aspect-ratio: 1/1; flex-shrink: 0;">
+                                        <img src="{{ url_for('static', filename='uploads/' + f.logo) if f.logo and not f.logo.startswith('http') else (f.logo or url_for('static', filename='uploads/default_logo.png')) }}" 
+                                             alt="{{ f.name }}" 
+                                             class="w-100 h-100 object-fit-contain"
+                                             referrerpolicy="no-referrer"
+                                             onerror="this.src='/static/uploads/default_logo.png'">
+                                    </div>
                                 </div>
+
+                                <!-- Franchise Team Name & Structured Owner Information -->
+                                <div class="col-12 col-md text-center text-md-start">
+                                    <!-- Team Name -->
+                                    <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-start gap-2 mb-1">
+                                        <span class="badge bg-secondary-subtle text-dark border border-secondary-subtle font-monospace px-2 py-0.5">{{ cap.team_short }}</span>
+                                        <h2 class="h3 fw-black text-danger font-display mb-0 text-uppercase tracking-wide">
+                                            {{ cap.team_name }}
+                                        </h2>
+                                    </div>
+
+                                    <!-- Clean Structured OWNER Display (Requirement 6) -->
+                                    <div class="mt-2">
+                                        <div class="text-muted extra-small font-display fw-bold text-uppercase tracking-wider">
+                                            {% if f.get_owners()|length > 1 %}OWNERS{% else %}OWNER{% endif %}
+                                        </div>
+                                        <div class="d-flex flex-wrap justify-content-center justify-content-md-start align-items-center gap-2 mt-1">
+                                            {% for owner in f.get_owners() %}
+                                            <span class="badge bg-white border border-secondary-subtle text-dark fs-6 font-display fw-bold px-3 py-1.5 shadow-xs">
+                                                <i class="fa-solid fa-user-tie text-danger me-1.5"></i>{{ owner.name }}
+                                            </span>
+                                            {% else %}
+                                            <span class="badge bg-white border border-secondary-subtle text-dark fs-6 font-display fw-bold px-3 py-1.5 shadow-xs">
+                                                <i class="fa-solid fa-user-tie text-danger me-1.5"></i>{{ cap.franchisee_name }}
+                                            </span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Additional Configured Franchise Information -->
+                                    <div class="d-flex flex-wrap justify-content-center justify-content-md-start align-items-center gap-2 mt-2 pt-1">
+                                        <span class="badge bg-warning text-dark border border-warning-subtle font-display fw-bold extra-small py-1 px-2.5">
+                                            <i class="fa-solid fa-star me-1 text-dark"></i>Retained Elite • Not in Auction
+                                        </span>
+                                        <span class="text-muted extra-small font-display fw-semibold">
+                                            Team Auction Requirement: 1–3 Elite Players
+                                        </span>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
 
@@ -206,6 +228,12 @@
 .spl-projector-square-frame:hover {
     transform: scale(1.02);
 }
+.projector-franchise-logo-box {
+    transition: transform 0.2s ease;
+}
+.projector-franchise-logo-box:hover {
+    transform: scale(1.05);
+}
 .spl-proj-nav-btn {
     min-width: 80px;
     min-height: 120px;
@@ -228,6 +256,17 @@ body.is-fullscreen #btn-fullscreen-toggle {
     display: none !important;
 }
 @media (max-width: 768px) {
+    .spl-projector-square-frame {
+        width: 180px !important;
+        height: 180px !important;
+    }
+    .projector-franchise-logo-box {
+        width: 80px !important;
+        height: 80px !important;
+    }
+    .captain-title-text {
+        font-size: 1.75rem !important;
+    }
     .spl-proj-nav-btn {
         min-width: 48px;
         min-height: 64px;
@@ -236,13 +275,30 @@ body.is-fullscreen #btn-fullscreen-toggle {
 }
 @media (max-width: 576px) {
     .spl-projector-square-frame {
-        width: 170px !important;
-        height: 170px !important;
+        width: 150px !important;
+        height: 150px !important;
+    }
+    .projector-franchise-logo-box {
+        width: 70px !important;
+        height: 70px !important;
+    }
+    .captain-title-text {
+        font-size: 1.4rem !important;
     }
     .spl-proj-nav-btn {
         min-width: 40px;
         min-height: 52px;
         padding: 0.35rem !important;
+    }
+}
+@media (max-width: 380px) {
+    .spl-projector-square-frame {
+        width: 130px !important;
+        height: 130px !important;
+    }
+    .projector-franchise-logo-box {
+        width: 60px !important;
+        height: 60px !important;
     }
 }
 </style>

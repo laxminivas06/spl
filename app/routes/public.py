@@ -72,10 +72,11 @@ def get_captains_data():
         f.recalculate_purse()
         cap_player = f.captain_player
         cap_name = f.captain_name or (cap_player.name if cap_player else f"{f.name} Captain")
-        cap_photo = f.captain_photo or (cap_player.photo if cap_player else 'default_player.png')
-        cap_dept = f.captain_department or (cap_player.branch if cap_player and cap_player.branch else 'CSE')
-        cap_year = f.captain_year or (cap_player.year if cap_player and cap_player.year else '4th Year')
-        cap_cat = f.captain_category or (cap_player.category if cap_player and cap_player.category else 'Elite')
+        cap_photo = (cap_player.photo if cap_player and cap_player.photo else None) or f.captain_photo or 'default_player.png'
+        cap_dept = (cap_player.branch if cap_player and cap_player.branch else None) or f.captain_department or 'CSE'
+        cap_year = (cap_player.year if cap_player and cap_player.year else None) or f.captain_year or '4th Year'
+        cap_cat = (cap_player.category if cap_player and cap_player.category else None) or f.captain_category or 'Elite'
+        cap_roll = (cap_player.roll_number if cap_player and cap_player.roll_number else None) or f.captain_rule_number
         from app.models import PlayerCategory
         cap_cat = PlayerCategory.normalize(cap_cat)
         franchisee_name = f.owner_name or f.name
@@ -87,6 +88,7 @@ def get_captains_data():
             'captain_name': cap_name,
             'captain_display_name': f"{cap_name} (C)",
             'captain_photo': cap_photo,
+            'roll_number': cap_roll,
             'category': cap_cat,
             'year': cap_year,
             'department': cap_dept,

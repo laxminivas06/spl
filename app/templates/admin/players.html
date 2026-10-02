@@ -134,9 +134,7 @@
                         {% elif p.photo %}
                             <img src="{{ url_for('static', filename='uploads/' + p.photo) }}" alt="{{ p.name }}" class="player-thumb" referrerpolicy="no-referrer" onerror="this.src='/static/uploads/default_player.png'">
                         {% else %}
-                            <div class="player-thumb bg-light border d-flex align-items-center justify-content-center text-primary">
-                                <i class="fa-solid fa-user"></i>
-                            </div>
+                            <img src="/static/uploads/default_player.png" alt="Default Player" class="player-thumb" onerror="this.src='/static/uploads/default_player.png'">
                         {% endif %}
                     </td>
                     <td class="fw-bold text-danger font-monospace">{{ p.roll_number }}</td>
@@ -175,7 +173,7 @@
                             <button type="button" class="btn btn-outline-danger btn-sm py-0 px-1" data-bs-toggle="modal" data-bs-target="#editPlayerModal{{ p.id }}" title="Edit Player">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
-                            <form method="POST" action="{{ url_for('admin.delete_player', id=p.id) }}" class="d-inline" onsubmit="return confirm('Delete player {{ p.name }} ({{ p.roll_number }})? A database backup snapshot will be saved.');">
+                            <form method="POST" action="{{ url_for('admin.delete_player', id=p.id) }}" class="d-inline" onsubmit="return confirm('Delete player? A database backup snapshot will be saved.');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-1" title="Delete Player">
                                     <i class="fa-solid fa-trash"></i>
