@@ -285,8 +285,6 @@ def delete_player(id):
         modified = False
         if f.captain_id == player.id:
             f.captain_id = None
-            f.captain_name = None
-            f.captain_rule_number = None
             modified = True
         if f.vice_captain_id == player.id:
             f.vice_captain_id = None
@@ -597,22 +595,22 @@ def add_franchise():
     captain_year = request.form.get('captain_year', '').strip()
     captain_cat_raw = request.form.get('captain_category', '').strip()
     captain_category = PlayerCategory.normalize(captain_cat_raw) if captain_cat_raw else 'Elite'
-    captain_id = None
 
-    if captain_rule_number:
-        captain_player = Player.query.filter(Player.roll_number.ilike(captain_rule_number)).first()
-        if captain_player:
-            captain_id = captain_player.id
-            if not captain_name:
-                captain_name = captain_player.name
-            if not captain_department:
-                captain_department = captain_player.branch
-            if not captain_year:
-                captain_year = captain_player.year
-            if not captain_cat_raw:
-                captain_category = captain_player.category
-        else:
-            flash(f"Note: Captain rule number '{captain_rule_number}' was not found in registered player database.", 'warning')
+    captain_photo = None
+    cap_file = request.files.get('captain_photo_file') or request.files.get('captain_photo')
+    if cap_file and cap_file.filename and cap_file.filename.strip():
+        saved_cap, err = validate_and_save_image(cap_file, prefix=f"captain_{short_name}")
+        if err:
+            flash(f"Captain photo error: {err}", 'danger')
+            return redirect(url_for('admin.franchises'))
+        if saved_cap:
+            captain_photo = saved_cap
+    elif request.form.get('captain_photo_url'):
+        captain_photo = normalize_photo_url(request.form.get('captain_photo_url').strip())
+
+    if (captain_name or captain_rule_number) and not captain_photo:
+        flash('Captain photo is mandatory. A captain record cannot be saved without a photo.', 'danger')
+        return redirect(url_for('admin.franchises'))
 
     try:
         starting_purse = float(SystemSettings.get_setting('starting_purse', '550000'))
@@ -649,7 +647,7 @@ def add_franchise():
         captain_department=captain_department or None,
         captain_year=captain_year or None,
         captain_category=captain_category or None,
-        captain_id=captain_id,
+        captain_photo=captain_photo or None,
         is_active=True
     )
     franchise.set_owners(cleaned_owners)
@@ -703,22 +701,23 @@ def edit_franchise(id):
     captain_cat_raw = request.form.get('captain_category', '').strip()
     captain_category = PlayerCategory.normalize(captain_cat_raw) if captain_cat_raw else (franchise.captain_category or 'Elite')
 
-    # Validate Captain Rule Number with Player data if provided
-    captain_id = franchise.captain_id
-    if captain_rule_number:
-        captain_player = Player.query.filter(Player.roll_number.ilike(captain_rule_number)).first()
-        if captain_player:
-            captain_id = captain_player.id
-            if not captain_name:
-                captain_name = captain_player.name
-            if not captain_department:
-                captain_department = captain_player.branch
-            if not captain_year:
-                captain_year = captain_player.year
-            if not captain_cat_raw:
-                captain_category = captain_player.category
-        else:
-            flash(f"Note: Captain rule number '{captain_rule_number}' was not found in registered player database.", 'warning')
+    # Handle Captain Photo (Mandatory)
+    captain_photo = franchise.captain_photo
+    cap_file = request.files.get('captain_photo_file') or request.files.get('captain_photo')
+    if cap_file and cap_file.filename and cap_file.filename.strip():
+        saved_cap, err = validate_and_save_image(cap_file, prefix=f"captain_{new_short}")
+        if err:
+            flash(f"Captain photo error: {err}", 'danger')
+            return redirect(url_for('admin.franchises'))
+        if saved_cap:
+            captain_photo = saved_cap
+    elif request.form.get('captain_photo_url'):
+        captain_photo = normalize_photo_url(request.form.get('captain_photo_url').strip())
+
+    # Validation: Captain Photo is strictly mandatory for any team captain
+    if (captain_name or captain_rule_number or franchise.has_captain) and not captain_photo:
+        flash('Captain photo is mandatory. A captain record cannot be saved or updated without a photo.', 'danger')
+        return redirect(url_for('admin.franchises'))
 
     franchise.name = new_name
     franchise.short_name = new_short
@@ -727,8 +726,8 @@ def edit_franchise(id):
     franchise.captain_rule_number = captain_rule_number or None
     franchise.captain_department = captain_department or None
     franchise.captain_year = captain_year or None
-    franchise.captain_category = captain_category or None
-    franchise.captain_id = captain_id
+    franchise.captain_category = captain_category or 'Elite'
+    franchise.captain_photo = captain_photo or None
     franchise.google_auth_enabled = request.form.get('google_auth_enabled') != 'false'
     franchise.is_active = 'is_active' in request.form or request.form.get('is_active') == 'true'
 
@@ -903,18 +902,26 @@ def admin_add_captain(id):
     rule_number = request.form.get('captain_rule_number', '').strip() or request.form.get('captain_roll_number', '').strip()
     department = request.form.get('captain_department', '').strip() or request.form.get('captain_branch', '').strip()
     year = request.form.get('captain_year', '').strip()
-    category = request.form.get('captain_category', 'NORMAL').strip().upper()
+    category = PlayerCategory.normalize(request.form.get('captain_category', 'Elite'))
 
     photo_fname = None
-    if 'captain_photo' in request.files:
-        photo_file = request.files.get('captain_photo')
-        if photo_file and photo_file.filename and photo_file.filename.strip():
-            saved_cap, err = validate_and_save_image(photo_file, prefix=f"captain_{franchise.short_name}")
-            if err:
-                flash(f"Captain photo error: {err}", 'danger')
-                next_url = request.form.get('next') or request.referrer or url_for('admin.franchises')
-                return redirect(next_url)
-            photo_fname = saved_cap
+    photo_file = request.files.get('captain_photo_file') or request.files.get('captain_photo')
+    if photo_file and photo_file.filename and photo_file.filename.strip():
+        saved_cap, err = validate_and_save_image(photo_file, prefix=f"captain_{franchise.short_name}")
+        if err:
+            flash(f"Captain photo error: {err}", 'danger')
+            next_url = request.form.get('next') or request.referrer or url_for('admin.franchises')
+            return redirect(next_url)
+        photo_fname = saved_cap
+    elif request.form.get('captain_photo_url'):
+        photo_fname = normalize_photo_url(request.form.get('captain_photo_url').strip())
+    elif franchise.captain_photo:
+        photo_fname = franchise.captain_photo
+
+    if not photo_fname:
+        flash('Captain photo is mandatory. A captain record cannot be saved without a photo.', 'danger')
+        next_url = request.form.get('next') or request.referrer or url_for('admin.franchises')
+        return redirect(next_url)
 
     from app.services.team_service import add_team_captain
     try:

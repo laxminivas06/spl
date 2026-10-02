@@ -70,13 +70,12 @@ def get_captains_data():
     captains_list = []
     for f in franchises:
         f.recalculate_purse()
-        cap_player = f.captain_player
-        cap_name = f.captain_name or (cap_player.name if cap_player else f"{f.name} Captain")
-        cap_photo = (cap_player.photo if cap_player and cap_player.photo else None) or f.captain_photo or 'default_player.png'
-        cap_dept = (cap_player.branch if cap_player and cap_player.branch else None) or f.captain_department or 'CSE'
-        cap_year = (cap_player.year if cap_player and cap_player.year else None) or f.captain_year or '4th Year'
-        cap_cat = (cap_player.category if cap_player and cap_player.category else None) or f.captain_category or 'Elite'
-        cap_roll = (cap_player.roll_number if cap_player and cap_player.roll_number else None) or f.captain_rule_number
+        cap_name = f.captain_name or f"{f.name} Captain"
+        cap_photo = f.captain_photo or 'default_player.png'
+        cap_dept = f.captain_department or 'CSE'
+        cap_year = f.captain_year or '4'
+        cap_cat = f.captain_category or 'Elite'
+        cap_roll = f.captain_rule_number or ''
         from app.models import PlayerCategory
         cap_cat = PlayerCategory.normalize(cap_cat)
         franchisee_name = f.owner_name or f.name
@@ -89,13 +88,13 @@ def get_captains_data():
             'captain_display_name': f"{cap_name} (C)",
             'captain_photo': cap_photo,
             'roll_number': cap_roll,
+            'rule_number': cap_roll,
             'category': cap_cat,
             'year': cap_year,
             'department': cap_dept,
             'retained_amount': 50000.0,
             'retained_status': 'RETAINED',
-            'franchise': f,
-            'player': cap_player
+            'franchise': f
         })
     return captains_list
 

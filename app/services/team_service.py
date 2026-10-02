@@ -17,67 +17,24 @@ def add_team_captain(franchise, name, rule_number=None, department=None, year=No
     year = str(year).strip() if year else None
     category = PlayerCategory.normalize(category) if category else PlayerCategory.ELITE
 
+    if not photo or not str(photo).strip():
+        raise ValueError("Captain photo is mandatory. A captain record cannot be saved without a photo.")
+
     # Check 15-member cap
-    if franchise.squad_count >= franchise.squad_limit:
+    if franchise.squad_count >= franchise.squad_limit and not franchise.has_captain:
         raise ValueError("Maximum 15 Members Allowed. Team Full.")
 
-    # Update franchise captain profile
+    # Update franchise captain profile directly - decoupled from Player database
     franchise.captain_name = name
     franchise.captain_rule_number = rule_number
     franchise.captain_department = department
     franchise.captain_year = year
     franchise.captain_category = category
-    if photo:
-        franchise.captain_photo = photo
-
-    # Look for existing player by rule number or captain_id
-    player = None
-    if rule_number:
-        player = Player.query.filter(Player.roll_number.ilike(rule_number)).first()
-
-    if not player and franchise.captain_id:
-        player = Player.query.get(franchise.captain_id)
-
-    if player:
-        # Link existing player as retained Captain
-        player.sold_to = franchise.id
-        player.status = 'RETAINED'
-        player.sold_price = 50000.0
-        player.category = category
-        if department and not player.branch:
-            player.branch = department
-        if year and not player.year:
-            player.year = year
-        if photo and not player.photo:
-            player.photo = photo
-        franchise.captain_id = player.id
-    else:
-        # Create Player record for Captain so they are officially Member 1 in the squad (Retained for 50,000)
-        c_roll = rule_number or f"CAP-{franchise.short_name}"
-        existing_p = Player.query.filter_by(roll_number=c_roll).first()
-        if existing_p:
-            c_roll = f"{c_roll}-{franchise.id}"
-
-        new_player = Player(
-            roll_number=c_roll,
-            name=name,
-            photo=photo or 'default_player.png',
-            role=PlayerRole.ALL_ROUNDER,
-            branch=department,
-            year=year,
-            category=category,
-            base_price=10000.0,
-            status='RETAINED',
-            sold_to=franchise.id,
-            sold_price=50000.0
-        )
-        db.session.add(new_player)
-        db.session.flush()
-        franchise.captain_id = new_player.id
+    franchise.captain_photo = str(photo).strip()
 
     franchise.recalculate_purse()
     db.session.commit()
-    log_audit(actor_id, 'TEAM_CAPTAIN_ADDED', 'Franchise', franchise.id, None, f"Team Captain '{name}' added to {franchise.name}. Team now eligible for bidding.", franchise_id=franchise.id)
+    log_audit(actor_id, 'TEAM_CAPTAIN_ADDED', 'Franchise', franchise.id, None, f"Team Captain '{name}' updated for {franchise.name}. Team now eligible for bidding.", franchise_id=franchise.id)
     return franchise
 
 def add_team_member(franchise, name, rule_number=None, department=None, year=None, role=PlayerRole.BATSMAN, category='Rookie', photo=None, actor_id=None):

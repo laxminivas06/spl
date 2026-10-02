@@ -293,15 +293,24 @@ def add_captain():
     category = PlayerCategory.normalize(request.form.get('captain_category', 'Elite'))
 
     photo_fname = None
-    if 'captain_photo' in request.files:
-        photo_file = request.files.get('captain_photo')
-        if photo_file and photo_file.filename and photo_file.filename.strip():
-            saved_cap, err = validate_and_save_image(photo_file, prefix=f"captain_{franchise.short_name}")
-            if err:
-                flash(f"Captain photo error: {err}", 'danger')
-                next_url = request.form.get('next') or request.referrer or url_for('franchise.squad')
-                return redirect(next_url)
-            photo_fname = saved_cap
+    photo_file = request.files.get('captain_photo_file') or request.files.get('captain_photo')
+    if photo_file and photo_file.filename and photo_file.filename.strip():
+        saved_cap, err = validate_and_save_image(photo_file, prefix=f"captain_{franchise.short_name}")
+        if err:
+            flash(f"Captain photo error: {err}", 'danger')
+            next_url = request.form.get('next') or request.referrer or url_for('franchise.squad')
+            return redirect(next_url)
+        photo_fname = saved_cap
+    elif request.form.get('captain_photo_url'):
+        from app.models.player import normalize_photo_url
+        photo_fname = normalize_photo_url(request.form.get('captain_photo_url').strip())
+    elif franchise.captain_photo:
+        photo_fname = franchise.captain_photo
+
+    if not photo_fname:
+        flash('Captain photo is mandatory. A captain record cannot be saved without a photo.', 'danger')
+        next_url = request.form.get('next') or request.referrer or url_for('franchise.squad')
+        return redirect(next_url)
 
     from app.services.team_service import add_team_captain
     try:
