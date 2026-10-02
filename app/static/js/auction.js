@@ -44,7 +44,7 @@ function toggleSound() {
     localStorage.setItem('spl_sound_enabled', soundEnabled ? 'true' : 'false');
     const soundBtn = document.getElementById('btn-toggle-sound');
     if (soundBtn) {
-        soundBtn.innerHTML = soundEnabled ? '<i class="fa-solid fa-volume-high me-1"></i> SOUND ON' : '<i class="fa-solid fa-volume-xmark me-1"></i> SOUND OFF';
+        soundBtn.innerHTML = soundEnabled ? '<i class="fa-solid fa-volume-high me-1"></i> <span class="sound-text">SOUND ON</span>' : '<i class="fa-solid fa-volume-xmark me-1"></i> <span class="sound-text">SOUND OFF</span>';
         soundBtn.className = soundEnabled ? 'btn btn-success btn-sm' : 'btn btn-outline-secondary btn-sm';
     }
 }
@@ -116,6 +116,9 @@ function playAuctionSound(type) {
 function updateAuctionFullscreenUi() {
     const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
     const fsBtn = document.getElementById('btn-fullscreen-toggle');
+    const soundBtn = document.getElementById('btn-toggle-sound');
+    const toolbar = document.querySelector('.projector-toolbar');
+
     if (fsBtn) {
         if (isFs) {
             fsBtn.classList.add('d-none');
@@ -123,10 +126,27 @@ function updateAuctionFullscreenUi() {
             fsBtn.classList.remove('d-none');
         }
     }
+    if (soundBtn) {
+        if (isFs) {
+            soundBtn.classList.add('d-none');
+        } else {
+            soundBtn.classList.remove('d-none');
+        }
+    }
+    if (toolbar) {
+        if (isFs) {
+            toolbar.classList.add('d-none');
+        } else {
+            toolbar.classList.remove('d-none');
+        }
+    }
+
     if (isFs) {
         document.body.classList.add('is-fullscreen');
+        document.documentElement.classList.add('is-fullscreen');
     } else {
         document.body.classList.remove('is-fullscreen');
+        document.documentElement.classList.remove('is-fullscreen');
     }
 }
 
@@ -143,13 +163,31 @@ document.addEventListener('keydown', function(e) {
 });
 
 function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().then(updateAuctionFullscreenUi).catch(err => {
-            console.warn(`Error attempting to enable fullscreen: ${err.message}`);
-        });
+    const fsDoc = document;
+    const isFs = !!(fsDoc.fullscreenElement || fsDoc.webkitFullscreenElement || fsDoc.mozFullScreenElement || fsDoc.msFullscreenElement);
+    const docEl = document.documentElement;
+
+    if (!isFs) {
+        const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+        if (req) {
+            const p = req.call(docEl);
+            if (p && typeof p.then === 'function') {
+                p.then(updateAuctionFullscreenUi).catch(err => {
+                    console.warn('Error attempting to enable fullscreen:', err);
+                });
+            } else {
+                updateAuctionFullscreenUi();
+            }
+        }
     } else {
-        if (document.exitFullscreen) {
-            document.exitFullscreen().then(updateAuctionFullscreenUi).catch(() => {});
+        const exit = fsDoc.exitFullscreen || fsDoc.webkitExitFullscreen || fsDoc.mozCancelFullScreen || fsDoc.msExitFullscreen;
+        if (exit) {
+            const p = exit.call(fsDoc);
+            if (p && typeof p.then === 'function') {
+                p.then(updateAuctionFullscreenUi).catch(() => {});
+            } else {
+                updateAuctionFullscreenUi();
+            }
         }
     }
 }

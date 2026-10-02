@@ -2,12 +2,90 @@
 
 {% block extra_css %}
 <style>
+/* Floating Live Projector Toolbar */
+.projector-toolbar {
+    position: fixed;
+    top: 14px;
+    right: 18px;
+    z-index: 1050;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 5px 8px;
+    border-radius: 50px;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.projector-toolbar .btn {
+    border-radius: 50px;
+    font-size: 0.78rem;
+    padding: 0.32rem 0.7rem;
+}
+#btn-fullscreen-toggle {
+    width: 32px;
+    height: 32px;
+    padding: 0 !important;
+}
+
+/* Hide toolbar and all controls completely in Fullscreen */
+:fullscreen .projector-toolbar,
+:-webkit-full-screen .projector-toolbar,
+:-moz-full-screen .projector-toolbar,
+:-ms-fullscreen .projector-toolbar,
+html.is-fullscreen .projector-toolbar,
+body.is-fullscreen .projector-toolbar,
+:fullscreen #btn-toggle-sound,
+:-webkit-full-screen #btn-toggle-sound,
+:-moz-full-screen #btn-toggle-sound,
+:-ms-fullscreen #btn-toggle-sound,
+html.is-fullscreen #btn-toggle-sound,
+body.is-fullscreen #btn-toggle-sound,
 :fullscreen #btn-fullscreen-toggle,
 :-webkit-full-screen #btn-fullscreen-toggle,
 :-moz-full-screen #btn-fullscreen-toggle,
 :-ms-fullscreen #btn-fullscreen-toggle,
+html.is-fullscreen #btn-fullscreen-toggle,
 body.is-fullscreen #btn-fullscreen-toggle {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Responsiveness adjustments for smaller displays */
+@media (max-width: 767.98px) {
+    .projector-toolbar {
+        top: 8px;
+        right: 8px;
+        padding: 4px 6px;
+        gap: 4px !important;
+    }
+    .projector-toolbar .btn {
+        font-size: 0.72rem;
+        padding: 0.25rem 0.5rem;
+    }
+    #btn-fullscreen-toggle {
+        width: 28px;
+        height: 28px;
+    }
+    .projector-player-frame {
+        width: 180px !important;
+        height: 180px !important;
+    }
+    #projector-current-bid {
+        font-size: 2.2rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .projector-toolbar {
+        top: 6px;
+        right: 6px;
+    }
+    .projector-toolbar #btn-toggle-sound span.sound-text {
+        display: none;
+    }
 }
 </style>
 {% endblock %}
@@ -18,7 +96,7 @@ body.is-fullscreen #btn-fullscreen-toggle {
 <!-- Projector Floating Control Toolbar (Light Theme Only, No Theme Switcher) -->
 <div class="projector-toolbar d-flex align-items-center gap-2">
     <button type="button" id="btn-toggle-sound" class="btn btn-outline-secondary btn-sm fw-semibold" onclick="toggleSound()">
-        <i class="fa-solid fa-volume-xmark me-1"></i> SOUND OFF
+        <i class="fa-solid fa-volume-xmark me-1"></i> <span class="sound-text">SOUND OFF</span>
     </button>
     <button type="button" id="btn-fullscreen-toggle" class="btn btn-outline-primary btn-sm fw-semibold px-2.5 py-1.5 d-inline-flex align-items-center justify-content-center" onclick="toggleFullscreen()" title="Fullscreen" aria-label="Fullscreen">
         <i class="fa-solid fa-expand fs-6"></i>
@@ -105,7 +183,7 @@ body.is-fullscreen #btn-fullscreen-toggle {
                 <div class="col-12 col-lg-5 text-center text-lg-start">
                     <div class="p-3 rounded-4 bg-light border border-secondary-subtle h-100 d-flex flex-column align-items-center justify-content-between">
                         <!-- Square Photo Frame (STRICT REQUIREMENT: Square, NOT circular) -->
-                        <div class="border border-danger border-3 rounded-3 shadow-sm overflow-hidden bg-white mb-3"
+                        <div class="projector-player-frame border border-danger border-3 rounded-3 shadow-sm overflow-hidden bg-white mb-3"
                              style="width: 240px; height: 240px; max-width: 100%; aspect-ratio: 1/1;">
                             <img id="projector-player-photo" src="{{ url_for('static', filename='uploads/default_player.png') }}"
                                  class="w-100 h-100 object-fit-cover" alt="Player Photo"
