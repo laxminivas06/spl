@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "id": 1,
+    "admin_id": 1,
+    "franchise_id": null,
+    "action": "GOOGLE_LOGIN_SUCCESS",
+    "target_type": "User",
+    "target_id": 1,
+    "status": "SUCCESS",
+    "ip_address": "127.0.0.1",
+    "user_email": null,
+    "category": null,
+    "old_value": null,
+    "new_value": "Signed in via Google OAuth (laxminivasmorishetty143@gmail.com)",
+    "created_at": "2026-10-02T10:25:42.187537"
+  },
+  {
+    "id": 2,
+    "admin_id": 1,
+    "franchise_id": null,
+    "action": "IMPORT_PLAYERS_EXCEL_CSV",
+    "target_type": "Player",
+    "target_id": null,
+    "status": "SUCCESS",
+    "ip_address": "127.0.0.1",
+    "user_email": null,
+    "category": null,
+    "old_value": null,
+    "new_value": "Imported: 81, Skipped: 0, Duplicates: 0",
+    "created_at": "2026-10-02T10:38:14.371249"
+  }
+]

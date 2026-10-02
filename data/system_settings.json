@@ -3,96 +3,120 @@
     "id": 1,
     "key": "event_name",
     "value": "SPL",
-    "updated_at": "2026-10-02T10:03:06.318585"
+    "updated_at": "2026-10-02T10:38:14.371333"
   },
   {
     "id": 2,
     "key": "event_subtitle",
     "value": "Sphoorthy Premier League",
-    "updated_at": "2026-10-02T10:03:06.318592"
+    "updated_at": "2026-10-02T10:38:14.371464"
   },
   {
     "id": 3,
     "key": "starting_purse",
     "value": "550000",
-    "updated_at": "2026-10-02T10:03:06.318598"
+    "updated_at": "2026-10-02T10:38:14.371355"
   },
   {
     "id": 4,
     "key": "squad_limit",
     "value": "15",
-    "updated_at": "2026-10-02T10:03:06.318605"
+    "updated_at": "2026-10-02T10:38:14.371369"
   },
   {
     "id": 5,
     "key": "base_price",
     "value": "10000",
-    "updated_at": "2026-10-02T10:03:06.318611"
+    "updated_at": "2026-10-02T10:38:14.371389"
   },
   {
     "id": 6,
     "key": "timer_seconds",
     "value": "30",
-    "updated_at": "2026-10-02T10:03:06.318618"
+    "updated_at": "2026-10-02T10:38:14.371407"
   },
   {
     "id": 7,
     "key": "bid_increment_step",
     "value": "5000",
-    "updated_at": "2026-10-02T10:03:06.318622"
+    "updated_at": "2026-10-02T10:38:14.371444"
   },
   {
     "id": 8,
     "key": "theme_default",
     "value": "light",
-    "updated_at": "2026-10-02T10:03:06.318625"
+    "updated_at": "2026-10-02T10:38:14.371467"
   },
   {
     "id": 9,
     "key": "SHOW_PURCHASE_PRICE_PUBLICLY",
     "value": "true",
-    "updated_at": "2026-10-02T10:03:06.318628"
+    "updated_at": "2026-10-02T10:38:14.371476"
   },
   {
     "id": 10,
     "key": "audit_logging_enabled",
     "value": "true",
-    "updated_at": "2026-10-02T10:03:06.318569"
+    "updated_at": "2026-10-02T10:38:14.371392"
   },
   {
     "id": 11,
     "key": "audit_retention_days",
     "value": "90",
-    "updated_at": "2026-10-02T10:03:06.318581"
+    "updated_at": "2026-10-02T10:38:14.371513"
   },
   {
     "id": 12,
     "key": "audit_log_level",
     "value": "ALL",
-    "updated_at": "2026-10-02T10:03:06.318588"
+    "updated_at": "2026-10-02T10:38:14.371545"
   },
   {
     "id": 13,
     "key": "audit_track_ip",
     "value": "true",
-    "updated_at": "2026-10-02T10:03:06.318595"
+    "updated_at": "2026-10-02T10:38:14.371559"
   },
   {
     "id": 14,
     "key": "second_chance_active",
     "value": "false",
-    "updated_at": "2026-10-02T10:03:06.318602"
+    "updated_at": "2026-10-02T10:38:14.371568"
   },
   {
     "id": 15,
     "key": "event_state",
     "value": "SETUP",
-    "updated_at": "2026-10-02T10:03:06.318608"
+    "updated_at": "2026-10-02T10:38:14.371594"
   },
   {
     "id": 16,
     "key": "squads_locked",
     "value": "false",
-    "updated_at": "2026-10-02T10:03:06.318615"
+    "updated_at": "2026-10-02T10:38:14.371603"
+  },
+  {
+    "id": 17,
+    "key": "max_elite_per_team",
+    "value": "4",
+    "updated_at": "2026-10-02T10:38:14.371606"
+  },
+  {
+    "id": 18,
+    "key": "min_auction_elite_per_team",
+    "value": "1",
+    "updated_at": "2026-10-02T10:38:14.371620"
+  },
+  {
+    "id": 19,
+    "key": "max_auction_elite_per_team",
+    "value": "3",
+    "updated_at": "2026-10-02T10:38:14.371634"
+  },
+  {
+    "id": 20,
+    "key": "enforce_elite_limits",
+    "value": "true",
+    "updated_at": "2026-10-02T10:38:14.371649"
   }
 ]
