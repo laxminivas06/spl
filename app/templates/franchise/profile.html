@@ -172,9 +172,9 @@
                             <div class="col-12">
                                 <label class="form-label text-muted small fw-semibold">UPLOAD CAPTAIN PHOTO</label>
                                 <div class="input-group">
-                                    <input type="file" class="form-control form-control-spl" name="captain_photo" accept="image/*">
+                                    <input type="file" class="form-control form-control-spl" name="captain_photo" accept=".png,.jpg,.jpeg,.webp" onchange="validateImageFileSize(this, 100);">
                                 </div>
-                                <small class="text-muted extra-small">Supported formats: JPG, PNG, WEBP. Square ratio recommended.</small>
+                                <small class="text-muted extra-small">Supported formats: JPG, PNG, WEBP. Max file size: 100KB.</small>
                             </div>
                         </div>
                     </div>
@@ -188,8 +188,8 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label text-muted small fw-semibold">UPLOAD NEW FRANCHISEE LOGO</label>
-                                <input type="file" class="form-control form-control-spl" name="logo_file" accept="image/*">
-                                <small class="text-muted extra-small">Will be displayed on the Primary Auction console and Live Projector Screen</small>
+                                <input type="file" class="form-control form-control-spl" name="logo_file" accept=".png,.jpg,.jpeg,.webp" onchange="validateImageFileSize(this, 100);">
+                                <small class="text-muted extra-small">Max file size: 100KB (PNG, JPG, WEBP). Displayed on Auction console and Live Projector Screen.</small>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-muted small fw-semibold">OR LOGO WEB URL</label>
@@ -219,4 +219,19 @@
 
     {% include "includes/footer.html" %}
 </div>
+
+<script>
+function validateImageFileSize(input, maxKb = 100) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const maxBytes = maxKb * 1024;
+        if (file.size > maxBytes) {
+            alert(`File size exceeds ${maxKb}KB limit (${(file.size / 1024).toFixed(1)} KB). Please choose an image 100KB or smaller.`);
+            input.value = '';
+            return false;
+        }
+    }
+    return true;
+}
+</script>
 {% endblock %}

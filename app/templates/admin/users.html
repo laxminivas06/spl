@@ -207,7 +207,7 @@
                                 <form method="POST" action="{{ url_for('admin.toggle_user_status', id=u.id) }}" class="d-inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     {% if u.is_active %}
-                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Disable Account">
+                                    <button type="submit" class="btn btn-outline-warning btn-sm" title="Disable Account">
                                         <i class="fa-solid fa-user-slash me-1"></i>Disable
                                     </button>
                                     {% else %}
@@ -215,6 +215,13 @@
                                         <i class="fa-solid fa-user-check me-1"></i>Enable
                                     </button>
                                     {% endif %}
+                                </form>
+                                <!-- Delete Button -->
+                                <form method="POST" action="{{ url_for('admin.delete_user', id=u.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete user \'{{ u.username }}\'? A database backup snapshot will be saved.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete Account">
+                                        <i class="fa-solid fa-trash me-1"></i>Delete
+                                    </button>
                                 </form>
                                 {% endif %}
                             </div>
@@ -271,7 +278,7 @@
                 <form method="POST" action="{{ url_for('admin.toggle_user_status', id=u.id) }}" class="d-contents">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     {% if u.is_active %}
-                    <button type="submit" class="btn btn-outline-danger btn-sm flex-grow-1">
+                    <button type="submit" class="btn btn-outline-warning btn-sm flex-grow-1">
                         <i class="fa-solid fa-user-slash me-1"></i>Disable
                     </button>
                     {% else %}
@@ -279,6 +286,12 @@
                         <i class="fa-solid fa-user-check me-1"></i>Enable
                     </button>
                     {% endif %}
+                </form>
+                <form method="POST" action="{{ url_for('admin.delete_user', id=u.id) }}" class="d-contents" onsubmit="return confirm('Are you sure you want to delete user \'{{ u.username }}\'? A database backup snapshot will be saved.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-danger btn-sm flex-grow-1">
+                        <i class="fa-solid fa-trash me-1"></i>Delete
+                    </button>
                 </form>
                 {% endif %}
             </div>

@@ -160,7 +160,7 @@
                             <button type="button" class="btn btn-outline-danger btn-sm py-0 px-1" data-bs-toggle="modal" data-bs-target="#editPlayerModal{{ p.id }}" title="Edit Player">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
-                            <form method="POST" action="{{ url_for('admin.delete_player', id=p.id) }}" class="d-inline" onsubmit="return confirm('Delete player {{ p.roll_number }}?');">
+                            <form method="POST" action="{{ url_for('admin.delete_player', id=p.id) }}" class="d-inline" onsubmit="return confirm('Delete player {{ p.name }} ({{ p.roll_number }})? A database backup snapshot will be saved.');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-1" title="Delete Player">
                                     <i class="fa-solid fa-trash"></i>
@@ -256,8 +256,8 @@
                                                          onerror="this.src='/static/uploads/default_player.png'">
                                                 </div>
                                                 <div class="flex-grow-1">
-                                                    <input type="file" class="form-control form-control-spl" name="photo_file" accept="image/*" onchange="previewPlayerImage(this, 'edit_photo_preview_{{ p.id }}')">
-                                                    <small class="text-muted extra-small d-block mt-1">Supported formats: JPG, PNG, WEBP. Square ratio recommended.</small>
+                                                    <input type="file" class="form-control form-control-spl" name="photo_file" accept=".png,.jpg,.jpeg,.webp" onchange="previewPlayerImage(this, 'edit_photo_preview_{{ p.id }}')">
+                                                    <small class="text-muted extra-small d-block mt-1">Supported formats: JPG, PNG, WEBP. Max file size: 100KB.</small>
                                                 </div>
                                             </div>
                                         </div>
@@ -370,8 +370,8 @@
                                     <i id="add_photo_preview_icon" class="fa-solid fa-camera text-danger fs-4"></i>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <input type="file" class="form-control form-control-spl" name="photo_file" accept="image/*" onchange="previewPlayerImage(this, 'add_photo_preview_img', 'add_photo_preview_icon')">
-                                    <small class="text-muted extra-small d-block mt-1">Supported formats: JPG, PNG, WEBP. Square ratio recommended.</small>
+                                    <input type="file" class="form-control form-control-spl" name="photo_file" accept=".png,.jpg,.jpeg,.webp" onchange="previewPlayerImage(this, 'add_photo_preview_img', 'add_photo_preview_icon')">
+                                    <small class="text-muted extra-small d-block mt-1">Supported formats: JPG, PNG, WEBP. Max file size: 100KB.</small>
                                 </div>
                             </div>
                         </div>
@@ -491,7 +491,23 @@
 
 {% block extra_js %}
 <script>
+function validateImageFileSize(input, maxKb = 100) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const maxBytes = maxKb * 1024;
+        if (file.size > maxBytes) {
+            alert(`File size exceeds ${maxKb}KB limit (${(file.size / 1024).toFixed(1)} KB). Please select an image 100KB or smaller.`);
+            input.value = '';
+            return false;
+        }
+    }
+    return true;
+}
+
 function previewPlayerImage(input, imgId, iconId) {
+    if (!validateImageFileSize(input, 100)) {
+        return;
+    }
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {

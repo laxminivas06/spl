@@ -325,7 +325,8 @@
 
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-semibold">CAPTAIN PHOTO (OPTIONAL)</label>
-                        <input type="file" name="captain_photo" class="form-control form-control-spl" accept="image/*">
+                        <input type="file" name="captain_photo" class="form-control form-control-spl" accept=".png,.jpg,.jpeg,.webp" onchange="validateImageFileSize(this, 100);">
+                        <div class="extra-small text-muted mt-1">Max photo size: 100KB (PNG, JPG, WEBP)</div>
                     </div>
                 </div>
                 <div class="modal-footer border-top">
@@ -402,7 +403,8 @@
 
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-semibold">PHOTO (OPTIONAL)</label>
-                        <input type="file" name="photo" class="form-control form-control-spl" accept="image/*">
+                        <input type="file" name="photo" class="form-control form-control-spl" accept=".png,.jpg,.jpeg,.webp" onchange="validateImageFileSize(this, 100);">
+                        <div class="extra-small text-muted mt-1">Max photo size: 100KB (PNG, JPG, WEBP)</div>
                     </div>
                 </div>
                 <div class="modal-footer border-top">
@@ -415,4 +417,19 @@
         </div>
     </div>
 </div>
+
+<script>
+function validateImageFileSize(input, maxKb = 100) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const maxBytes = maxKb * 1024;
+        if (file.size > maxBytes) {
+            alert(`File size exceeds ${maxKb}KB limit (${(file.size / 1024).toFixed(1)} KB). Please choose an image 100KB or smaller.`);
+            input.value = '';
+            return false;
+        }
+    }
+    return true;
+}
+</script>
 {% endblock %}

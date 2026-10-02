@@ -5,6 +5,7 @@ from werkzeug.utils import secure_filename
 from app.extensions import db
 from app.models import Franchise, Player, Bid, Transaction, AuctionState, AuctionStatus, PlayerRole, PlayerCategory
 from app.utils.decorators import franchise_required
+from app.utils.image_utils import validate_and_save_image
 from app.services.audit_service import log_audit
 
 def allowed_file(filename):
@@ -232,10 +233,13 @@ def profile():
         # Logo file upload
         if 'logo_file' in request.files:
             logo_file = request.files.get('logo_file')
-            if logo_file and logo_file.filename and allowed_file(logo_file.filename):
-                logo_fname = secure_filename(f"logo_{franchise.short_name}_{logo_file.filename}")
-                logo_file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], logo_fname))
-                franchise.logo = logo_fname
+            if logo_file and logo_file.filename and logo_file.filename.strip():
+                saved_logo, err = validate_and_save_image(logo_file, prefix=f"logo_{franchise.short_name}")
+                if err:
+                    flash(f"Franchise logo error: {err}", 'danger')
+                    return redirect(url_for('franchise.profile'))
+                if saved_logo:
+                    franchise.logo = saved_logo
         elif request.form.get('logo_url'):
             franchise.logo = request.form.get('logo_url').strip()
 
@@ -243,11 +247,14 @@ def profile():
         captain_photo = None
         if 'captain_photo' in request.files:
             captain_file = request.files.get('captain_photo')
-            if captain_file and captain_file.filename and allowed_file(captain_file.filename):
-                cap_fname = secure_filename(f"captain_{franchise.short_name}_{captain_file.filename}")
-                captain_file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], cap_fname))
-                franchise.captain_photo = cap_fname
-                captain_photo = cap_fname
+            if captain_file and captain_file.filename and captain_file.filename.strip():
+                saved_cap, err = validate_and_save_image(captain_file, prefix=f"captain_{franchise.short_name}")
+                if err:
+                    flash(f"Captain photo error: {err}", 'danger')
+                    return redirect(url_for('franchise.profile'))
+                if saved_cap:
+                    franchise.captain_photo = saved_cap
+                    captain_photo = saved_cap
 
         if captain_name:
             from app.services.team_service import add_team_captain
@@ -288,9 +295,13 @@ def add_captain():
     photo_fname = None
     if 'captain_photo' in request.files:
         photo_file = request.files.get('captain_photo')
-        if photo_file and photo_file.filename and allowed_file(photo_file.filename):
-            photo_fname = secure_filename(f"captain_{franchise.short_name}_{photo_file.filename}")
-            photo_file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], photo_fname))
+        if photo_file and photo_file.filename and photo_file.filename.strip():
+            saved_cap, err = validate_and_save_image(photo_file, prefix=f"captain_{franchise.short_name}")
+            if err:
+                flash(f"Captain photo error: {err}", 'danger')
+                next_url = request.form.get('next') or request.referrer or url_for('franchise.squad')
+                return redirect(next_url)
+            photo_fname = saved_cap
 
     from app.services.team_service import add_team_captain
     try:
@@ -326,9 +337,13 @@ def add_member():
     photo_fname = None
     if 'photo' in request.files:
         photo_file = request.files.get('photo')
-        if photo_file and photo_file.filename and allowed_file(photo_file.filename):
-            photo_fname = secure_filename(f"member_{franchise.short_name}_{photo_file.filename}")
-            photo_file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], photo_fname))
+        if photo_file and photo_file.filename and photo_file.filename.strip():
+            saved_photo, err = validate_and_save_image(photo_file, prefix=f"member_{franchise.short_name}")
+            if err:
+                flash(f"Player photo error: {err}", 'danger')
+                next_url = request.form.get('next') or request.referrer or url_for('franchise.squad')
+                return redirect(next_url)
+            photo_fname = saved_photo
 
     from app.services.team_service import add_team_member
     try:

@@ -20,8 +20,14 @@ def create_database_backup(admin_id=None):
     """Safely snapshot the JSON storage files into instance/backups directory."""
     backup_dir = get_backup_dir()
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename = f"spl_backup_{timestamp}.json"
+    base_name = f"spl_backup_{timestamp}"
+    filename = f"{base_name}.json"
     dest_path = os.path.join(backup_dir, filename)
+    counter = 1
+    while os.path.exists(dest_path):
+        filename = f"{base_name}_{counter}.json"
+        dest_path = os.path.join(backup_dir, filename)
+        counter += 1
 
     data_dir = get_json_data_dir()
     tables_data = {}
@@ -51,17 +57,19 @@ def create_database_backup(admin_id=None):
 def list_backups():
     """List available backups with file size and timestamp."""
     backup_dir = get_backup_dir()
-    files = [f for f in os.listdir(backup_dir) if f.endswith('.json') or f.endswith('.db')]
+    files = [f for f in os.listdir(backup_dir) if (f.endswith('.json') or f.endswith('.db')) and f != 'deleted_records.json']
     files.sort(reverse=True)
 
     backups = []
     for f in files:
         full_path = os.path.join(backup_dir, f)
         stat = os.stat(full_path)
+        size_kb = round(stat.st_size / 1024, 1)
         backups.append({
             'filename': f,
             'size_bytes': stat.st_size,
-            'size_kb': round(stat.st_size / 1024, 1),
+            'size_kb': size_kb,
+            'size_formatted': f"{size_kb} KB",
             'created_at': datetime.fromtimestamp(stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
         })
     return backups
@@ -118,3 +126,58 @@ def restore_database_backup(filename, admin_id=None, confirmation_reason=None):
 
     log_audit(admin_id, 'DATABASE_RESTORED', 'System', None, None, f"Restored from {filename}. Reason: {confirmation_reason}")
     return True
+
+def save_deleted_record(entity_type, entity_dict, admin_id=None, backup_filename=None):
+    """
+    Save full deleted entity payload into instance/backups/deleted_records.json.
+    Ensures that deleted Users, Admins, Players, and Franchises can always be inspected.
+    """
+    backup_dir = get_backup_dir()
+    deleted_path = os.path.join(backup_dir, 'deleted_records.json')
+    records = []
+    if os.path.exists(deleted_path):
+        try:
+            with open(deleted_path, 'r', encoding='utf-8') as f:
+                records = json.load(f)
+        except Exception:
+            records = []
+
+    entity_name = ''
+    if isinstance(entity_dict, dict):
+        entity_name = entity_dict.get('name') or entity_dict.get('username') or entity_dict.get('display_name') or f"{entity_type} #{entity_dict.get('id', '')}"
+    else:
+        entity_name = str(entity_dict)
+
+    entry = {
+        'id': len(records) + 1,
+        'entity_type': entity_type,
+        'entity_id': entity_dict.get('id') if isinstance(entity_dict, dict) else None,
+        'entity_name': entity_name,
+        'deleted_at': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+        'deleted_by_admin_id': admin_id,
+        'backup_snapshot': backup_filename,
+        'data': entity_dict
+    }
+    records.append(entry)
+
+    try:
+        with open(deleted_path, 'w', encoding='utf-8') as f:
+            json.dump(records, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        current_app.logger.error(f"Failed to write deleted record archive: {e}")
+
+    return entry
+
+def list_deleted_records():
+    """List archived deleted records in reverse chronological order."""
+    backup_dir = get_backup_dir()
+    deleted_path = os.path.join(backup_dir, 'deleted_records.json')
+    if not os.path.exists(deleted_path):
+        return []
+    try:
+        with open(deleted_path, 'r', encoding='utf-8') as f:
+            records = json.load(f)
+        records.sort(key=lambda r: r.get('id', 0), reverse=True)
+        return records
+    except Exception:
+        return []

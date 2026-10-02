@@ -83,5 +83,89 @@
             </div>
         </div>
     </div>
+
+    <!-- Deleted Items Archive Card -->
+    <div class="card shadow-sm border-0 mb-4 bg-white">
+        <div class="card-header bg-light text-dark fw-bold border-bottom border-secondary-subtle d-flex justify-content-between align-items-center">
+            <div>
+                <i class="bi bi-trash-fill text-danger me-2"></i>Deleted Items Archive (Automatic Pre-Delete Backups)
+            </div>
+            <span class="badge bg-secondary">{{ deleted_records | length if deleted_records else 0 }} archived</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Type</th>
+                            <th>Entity Name / Identifier</th>
+                            <th>Deleted Timestamp</th>
+                            <th>Associated Backup Snapshot</th>
+                            <th class="text-end">Payload</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in deleted_records %}
+                        <tr>
+                            <td>
+                                {% if record.entity_type == 'User' %}
+                                    <span class="badge bg-primary-subtle text-primary border border-primary"><i class="bi bi-person-fill me-1"></i>User</span>
+                                {% elif record.entity_type == 'Franchise' %}
+                                    <span class="badge bg-success-subtle text-success border border-success"><i class="bi bi-shield-fill me-1"></i>Franchise</span>
+                                {% elif record.entity_type == 'Player' %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger"><i class="bi bi-person-badge-fill me-1"></i>Player</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark border">{{ record.entity_type }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold text-dark">{{ record.entity_name }}</td>
+                            <td class="small text-muted">{{ record.deleted_at }}</td>
+                            <td>
+                                {% if record.backup_snapshot %}
+                                    <code class="text-primary fw-bold">{{ record.backup_snapshot }}</code>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#deletedRecordModal{{ loop.index }}">
+                                    <i class="bi bi-code-slash me-1"></i>View Data
+                                </button>
+
+                                <!-- View Data Modal -->
+                                <div class="modal fade text-start" id="deletedRecordModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-light border-bottom">
+                                                <h5 class="modal-title fw-bold text-dark">
+                                                    <i class="bi bi-archive text-danger me-2"></i>Deleted {{ record.entity_type }}: {{ record.entity_name }}
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="alert alert-info py-2 small mb-3">
+                                                    <strong>Snapshot file:</strong> <code>{{ record.backup_snapshot or 'None' }}</code> &bull; 
+                                                    <strong>Deleted at:</strong> {{ record.deleted_at }}
+                                                </div>
+                                                <pre class="bg-dark text-light p-3 rounded" style="max-height: 400px; overflow-y: auto; font-size: 0.82rem;"><code>{{ record.data | tojson(indent=2) }}</code></pre>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-muted text-center py-4">No deleted items yet. When users, players, or franchises are deleted, their full state and pre-delete database snapshots will appear here.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

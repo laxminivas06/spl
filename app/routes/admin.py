@@ -14,8 +14,9 @@ from app.services.csv_service import parse_and_import_players_csv, preview_playe
 from app.services.audit_service import log_audit
 from app.services.auction_service import validate_squads_integrity, confirm_and_lock_squads, unlock_squads_override
 from app.services.fixture_service import generate_fixtures, validate_fixtures, publish_fixtures, unpublish_fixtures
-from app.services.backup_service import create_database_backup, list_backups, restore_database_backup
+from app.services.backup_service import create_database_backup, list_backups, restore_database_backup, save_deleted_record, list_deleted_records
 from app.services.health_service import run_deep_auction_check
+from app.utils.image_utils import validate_and_save_image
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -169,10 +170,13 @@ def add_player():
 
     photo_filename = 'default_player.png'
     file = request.files.get('photo_file')
-    if file and file.filename and allowed_file(file.filename):
-        filename = secure_filename(f"{roll_number}_{file.filename}")
-        file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
-        photo_filename = filename
+    if file and file.filename and file.filename.strip():
+        saved_photo, err = validate_and_save_image(file, prefix=f"player_{roll_number}")
+        if err:
+            flash(f"Player photo error: {err}", 'danger')
+            return redirect(url_for('admin.players'))
+        if saved_photo:
+            photo_filename = saved_photo
 
     player = Player(
         roll_number=roll_number,
@@ -235,10 +239,13 @@ def edit_player(id):
     player.base_price = 10000.0
 
     file = request.files.get('photo_file')
-    if file and file.filename and allowed_file(file.filename):
-        filename = secure_filename(f"{player.roll_number}_{file.filename}")
-        file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
-        player.photo = filename
+    if file and file.filename and file.filename.strip():
+        saved_photo, err = validate_and_save_image(file, prefix=f"player_{player.roll_number}")
+        if err:
+            flash(f"Player photo error: {err}", 'danger')
+            return redirect(url_for('admin.players'))
+        if saved_photo:
+            player.photo = saved_photo
 
     db.session.commit()
     log_audit(current_user.id, 'EDIT_PLAYER', 'Player', player.id, old_data, player.to_dict())
@@ -251,11 +258,59 @@ def edit_player(id):
 def delete_player(id):
     player = Player.query.get_or_404(id)
     name = player.name
+    player_data = player.to_dict()
+
+    # 1. Take database backup snapshot before deleting
+    backup_file = create_database_backup(current_user.id)
+    save_deleted_record('Player', player_data, current_user.id, backup_file)
+
+    # 2. Safely clean up references
+    franchises_to_recalc = set()
+    if player.sold_to:
+        f_sold = db.session.get(Franchise, player.sold_to)
+        if f_sold:
+            franchises_to_recalc.add(f_sold)
+
+    all_franchises = Franchise.query.all()
+    for f in all_franchises:
+        modified = False
+        if f.captain_id == player.id:
+            f.captain_id = None
+            f.captain_name = None
+            f.captain_rule_number = None
+            modified = True
+        if f.vice_captain_id == player.id:
+            f.vice_captain_id = None
+            modified = True
+        if modified:
+            franchises_to_recalc.add(f)
+
+    # Auction state references
+    auction_state = AuctionState.query.first()
+    if auction_state and auction_state.active_player_id == player.id:
+        auction_state.active_player_id = None
+        auction_state.current_bid = 0.0
+        auction_state.highest_bidder_id = None
+        auction_state.status = AuctionStatus.WAITING
+
+    # Clean up bids and transactions referencing this player
+    for b in Bid.query.filter_by(player_id=player.id).all():
+        db.session.delete(b)
+
+    for t in Transaction.query.filter_by(player_id=player.id).all():
+        t.player_id = None
+
+    # Delete the player
     db.session.delete(player)
+
+    # Recalculate affected franchises
+    for f in franchises_to_recalc:
+        f.recalculate_purse()
+
     db.session.commit()
 
-    log_audit(current_user.id, 'DELETE_PLAYER', 'Player', id, name, None)
-    flash(f'Player "{name}" deleted successfully.', 'info')
+    log_audit(current_user.id, 'DELETE_PLAYER', 'Player', id, name, f"Backup saved: {backup_file}")
+    flash(f'Player "{name}" deleted successfully. Saved to backup snapshot "{backup_file}".', 'info')
     return redirect(url_for('admin.players'))
 
 @admin_bp.route('/players/preview-csv', methods=['POST'])
@@ -376,10 +431,13 @@ def add_franchise():
 
     logo_filename = 'default_logo.png'
     file = request.files.get('logo_file')
-    if file and file.filename and allowed_file(file.filename):
-        filename = secure_filename(f"logo_{short_name}_{file.filename}")
-        file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
-        logo_filename = filename
+    if file and file.filename and file.filename.strip():
+        saved_logo, err = validate_and_save_image(file, prefix=f"logo_{short_name}")
+        if err:
+            flash(f"Franchise logo error: {err}", 'danger')
+            return redirect(url_for('admin.franchises'))
+        if saved_logo:
+            logo_filename = saved_logo
     elif request.form.get('logo_url'):
         logo_filename = request.form.get('logo_url').strip()
 
@@ -497,11 +555,14 @@ def edit_franchise(id):
         pass
 
     file = request.files.get('logo_file')
-    if file and file.filename and allowed_file(file.filename):
-        filename = secure_filename(f"logo_{franchise.short_name}_{file.filename}")
-        file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
-        franchise.logo = filename
-        log_audit(current_user.id, 'FRANCHISE_LOGO_UPLOADED', 'Franchise', franchise.id, None, filename, franchise_id=franchise.id)
+    if file and file.filename and file.filename.strip():
+        saved_logo, err = validate_and_save_image(file, prefix=f"logo_{franchise.short_name}")
+        if err:
+            flash(f"Franchise logo error: {err}", 'danger')
+            return redirect(url_for('admin.franchises'))
+        if saved_logo:
+            franchise.logo = saved_logo
+            log_audit(current_user.id, 'FRANCHISE_LOGO_UPLOADED', 'Franchise', franchise.id, None, saved_logo, franchise_id=franchise.id)
     elif request.form.get('logo_url'):
         franchise.logo = request.form.get('logo_url').strip()
 
@@ -553,6 +614,64 @@ def toggle_franchise_status(id):
     status_str = 'ACTIVE (Login Enabled)' if franchise.is_active else 'DISABLED (Login Blocked)'
     log_audit(current_user.id, 'FRANCHISE_STATUS_TOGGLED', 'Franchise', franchise.id, None, status_str, franchise_id=franchise.id)
     flash(f'Franchisee "{franchise.name}" status updated: {status_str}.', 'success')
+    return redirect(url_for('admin.franchises'))
+
+@admin_bp.route('/franchises/<int:id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_franchise(id):
+    franchise = Franchise.query.get_or_404(id)
+    name = franchise.name
+    franchise_data = franchise.to_dict()
+
+    # 1. Take database backup snapshot before deleting
+    backup_file = create_database_backup(current_user.id)
+    save_deleted_record('Franchise', franchise_data, current_user.id, backup_file)
+
+    # 2. Release all players sold to this franchise
+    sold_players = Player.query.filter_by(sold_to=franchise.id).all()
+    for p in sold_players:
+        p.sold_to = None
+        p.sold_price = None
+        p.sold_at = None
+        p.status = PlayerStatus.AVAILABLE
+
+    # If captain player was assigned
+    if franchise.captain_id:
+        cap_player = db.session.get(Player, franchise.captain_id)
+        if cap_player:
+            cap_player.sold_to = None
+            cap_player.sold_price = None
+            cap_player.status = PlayerStatus.AVAILABLE
+
+    # 3. Dissociate users linked to this franchise
+    users_linked = User.query.filter_by(franchise_id=franchise.id).all()
+    for u in users_linked:
+        u.franchise_id = None
+
+    # 4. Clean up bids, transactions, and fixtures
+    for b in Bid.query.filter_by(franchise_id=franchise.id).all():
+        db.session.delete(b)
+
+    for t in Transaction.query.filter_by(franchise_id=franchise.id).all():
+        db.session.delete(t)
+
+    fixtures = Fixture.query.filter((Fixture.team_a_id == franchise.id) | (Fixture.team_b_id == franchise.id)).all()
+    for f in fixtures:
+        db.session.delete(f)
+
+    # 5. Clear auction state if this franchise was highest bidder
+    auction_state = AuctionState.query.first()
+    if auction_state and auction_state.highest_bidder_id == franchise.id:
+        auction_state.highest_bidder_id = None
+        auction_state.current_bid = 0.0
+
+    # 6. Delete the franchise
+    db.session.delete(franchise)
+    db.session.commit()
+
+    log_audit(current_user.id, 'DELETE_FRANCHISE', 'Franchise', id, name, f"Backup saved: {backup_file}")
+    flash(f'Franchise "{name}" deleted successfully. Squad released and backup saved ({backup_file}).', 'success')
     return redirect(url_for('admin.franchises'))
 
 @admin_bp.route('/franchises/<int:id>/remove-logo', methods=['POST'])
@@ -620,9 +739,13 @@ def admin_add_captain(id):
     photo_fname = None
     if 'captain_photo' in request.files:
         photo_file = request.files.get('captain_photo')
-        if photo_file and photo_file.filename and allowed_file(photo_file.filename):
-            photo_fname = secure_filename(f"captain_{franchise.short_name}_{photo_file.filename}")
-            photo_file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], photo_fname))
+        if photo_file and photo_file.filename and photo_file.filename.strip():
+            saved_cap, err = validate_and_save_image(photo_file, prefix=f"captain_{franchise.short_name}")
+            if err:
+                flash(f"Captain photo error: {err}", 'danger')
+                next_url = request.form.get('next') or request.referrer or url_for('admin.franchises')
+                return redirect(next_url)
+            photo_fname = saved_cap
 
     from app.services.team_service import add_team_captain
     try:
@@ -658,9 +781,13 @@ def admin_add_member(id):
     photo_fname = None
     if 'photo' in request.files:
         photo_file = request.files.get('photo')
-        if photo_file and photo_file.filename and allowed_file(photo_file.filename):
-            photo_fname = secure_filename(f"member_{franchise.short_name}_{photo_file.filename}")
-            photo_file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], photo_fname))
+        if photo_file and photo_file.filename and photo_file.filename.strip():
+            saved_mem, err = validate_and_save_image(photo_file, prefix=f"member_{franchise.short_name}")
+            if err:
+                flash(f"Player photo error: {err}", 'danger')
+                next_url = request.form.get('next') or request.referrer or url_for('admin.inspect_franchise', id=franchise.id)
+                return redirect(next_url)
+            photo_fname = saved_mem
 
     from app.services.team_service import add_team_member
     try:
@@ -1477,6 +1604,40 @@ def toggle_user_status(id):
     flash(f"User '{user.username}' status set to {'ACTIVE' if user.is_active else 'INACTIVE'}.", 'info')
     return redirect(url_for('admin.users_management'))
 
+@admin_bp.route('/users/<int:id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_user(id):
+    user = User.query.get_or_404(id)
+
+    if user.id == current_user.id:
+        flash('You cannot delete your own logged-in admin account.', 'danger')
+        return redirect(url_for('admin.users_management'))
+
+    if user.is_admin or user.role == 'ADMIN':
+        active_admins_count = User.query.filter(User.role == 'ADMIN', User.id != user.id, User.is_active == True).count()
+        if active_admins_count == 0:
+            flash('Cannot delete the last active administrator account.', 'danger')
+            return redirect(url_for('admin.users_management'))
+
+    username = user.username
+    user_data = user.to_dict()
+
+    # 1. Take database backup snapshot before deleting
+    backup_file = create_database_backup(current_user.id)
+    save_deleted_record('User', user_data, current_user.id, backup_file)
+
+    # 2. Detach franchise link if any
+    user.franchise_id = None
+
+    # 3. Delete user
+    db.session.delete(user)
+    db.session.commit()
+
+    log_audit(current_user.id, 'DELETE_USER', 'User', id, username, f"Backup saved: {backup_file}")
+    flash(f"User account '{username}' deleted successfully. Backup snapshot '{backup_file}' created.", 'success')
+    return redirect(url_for('admin.users_management'))
+
 # 3. AUCTION & PURSE INTEGRITY AUDIT
 @admin_bp.route('/system/auction-check', methods=['GET'])
 @login_required
@@ -1547,9 +1708,11 @@ def update_event_state():
 @admin_required
 def backup_dashboard():
     backups = list_backups()
+    deleted_records = list_deleted_records()
     return render_template(
         'admin/backup.html',
-        backups=backups
+        backups=backups,
+        deleted_records=deleted_records
     )
 
 @admin_bp.route('/backup/create', methods=['POST'])

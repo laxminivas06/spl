@@ -115,9 +115,15 @@
                 <a href="{{ url_for('admin.inspect_franchise', id=f.id) }}" class="btn btn-outline-primary btn-sm flex-grow-1">
                     <i class="fa-solid fa-users-viewfinder me-1"></i> View Squad ({{ f.squad_count }})
                 </a>
-                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#editFranchiseModal{{ f.id }}" title="Edit Franchisee">
+                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editFranchiseModal{{ f.id }}" title="Edit Franchisee">
                     <i class="fa-solid fa-pen-to-square"></i>
                 </button>
+                <form method="POST" action="{{ url_for('admin.delete_franchise', id=f.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete \'{{ f.name }}\'? This will release all squad players and save a database backup snapshot.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete Franchisee">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -186,7 +192,8 @@
                             <!-- Logo & Status -->
                             <div class="col-md-6">
                                 <label class="form-label text-muted small fw-semibold">UPLOAD NEW LOGO</label>
-                                <input type="file" class="form-control form-control-spl" name="logo_file" accept="image/*">
+                                <input type="file" class="form-control form-control-spl" name="logo_file" accept=".png,.jpg,.jpeg,.webp" onchange="validateImageFileSize(this, 100);">
+                                <div class="extra-small text-muted mt-1">Max logo file size: 100KB (PNG, JPG, WEBP)</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-muted small fw-semibold">OR LOGO URL</label>
@@ -291,6 +298,19 @@ function validateCaptainRule(idSuffix) {
             msg.className = 'extra-small mt-1 text-danger';
             msg.textContent = 'Validation lookup error.';
         });
+}
+
+function validateImageFileSize(input, maxKb = 100) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const maxBytes = maxKb * 1024;
+        if (file.size > maxBytes) {
+            alert(`File size exceeds ${maxKb}KB limit (${(file.size / 1024).toFixed(1)} KB). Please choose an image 100KB or smaller.`);
+            input.value = '';
+            return false;
+        }
+    }
+    return true;
 }
 </script>
 {% endblock %}
