@@ -258,7 +258,7 @@
                                         <div class="col-12">
                                             <label class="form-label text-muted small fw-semibold">PHOTO (URL OR UPLOAD)</label>
                                             <div class="mb-2">
-                                                <input type="url" class="form-control form-control-spl" name="photo_url" value="{{ p.photo if p.photo and p.photo.startswith('http') else '' }}" placeholder="Direct image URL (https://...)">
+                                                <input type="url" class="form-control form-control-spl" id="edit_photo_url_{{ p.id }}" name="photo_url" value="{{ p.photo if p.photo and p.photo.startswith('http') else '' }}" placeholder="Direct image URL (https://...)">
                                             </div>
                                             <div class="d-flex align-items-center gap-3">
                                                 <div class="border border-danger border-2 rounded-3 bg-light d-flex align-items-center justify-content-center overflow-hidden" 
@@ -271,8 +271,8 @@
                                                          onerror="this.src='/static/uploads/default_player.png'">
                                                 </div>
                                                 <div class="flex-grow-1">
-                                                    <input type="file" class="form-control form-control-spl" name="photo_file" accept=".png,.jpg,.jpeg,.webp" onchange="previewPlayerImage(this, 'edit_photo_preview_{{ p.id }}')">
-                                                    <small class="text-muted extra-small d-block mt-1">Or upload image file (JPG, PNG, WEBP, max 100KB)</small>
+                                                    <input type="file" class="form-control form-control-spl" name="photo_file" accept=".png,.jpg,.jpeg,.webp" onchange="previewPlayerImage(this, 'edit_photo_preview_{{ p.id }}', null, 'edit_photo_url_{{ p.id }}')">
+                                                    <small class="text-muted extra-small d-block mt-1">Upload image file (PNG, JPG, JPEG, WEBP &bull; Auto-optimized)</small>
                                                 </div>
                                             </div>
                                         </div>
@@ -386,8 +386,8 @@
                                     <i id="add_photo_preview_icon" class="fa-solid fa-camera text-danger fs-4"></i>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <input type="file" class="form-control form-control-spl" name="photo_file" accept=".png,.jpg,.jpeg,.webp" onchange="previewPlayerImage(this, 'add_photo_preview_img', 'add_photo_preview_icon')">
-                                    <small class="text-muted extra-small d-block mt-1">Or upload image file (JPG, PNG, WEBP, max 100KB)</small>
+                                    <input type="file" class="form-control form-control-spl" name="photo_file" accept=".png,.jpg,.jpeg,.webp" onchange="previewPlayerImage(this, 'add_photo_preview_img', 'add_photo_preview_icon', 'add_photo_url')">
+                                    <small class="text-muted extra-small d-block mt-1">Upload image file (PNG, JPG, JPEG, WEBP &bull; Auto-optimized)</small>
                                 </div>
                             </div>
                         </div>
@@ -517,12 +517,12 @@
 
 {% block extra_js %}
 <script>
-function validateImageFileSize(input, maxKb = 100) {
+function validateImageFileSize(input, maxKb = 10240) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
         const maxBytes = maxKb * 1024;
         if (file.size > maxBytes) {
-            alert(`File size exceeds ${maxKb}KB limit (${(file.size / 1024).toFixed(1)} KB). Please select an image 100KB or smaller.`);
+            alert(`File size exceeds ${(maxKb / 1024).toFixed(0)}MB limit (${(file.size / (1024 * 1024)).toFixed(1)} MB). Please select an image under ${(maxKb / 1024).toFixed(0)}MB.`);
             input.value = '';
             return false;
         }
@@ -530,11 +530,15 @@ function validateImageFileSize(input, maxKb = 100) {
     return true;
 }
 
-function previewPlayerImage(input, imgId, iconId) {
-    if (!validateImageFileSize(input, 100)) {
+function previewPlayerImage(input, imgId, iconId, urlInputId) {
+    if (!validateImageFileSize(input, 10240)) {
         return;
     }
     if (input.files && input.files[0]) {
+        if (urlInputId) {
+            const urlInput = document.getElementById(urlInputId);
+            if (urlInput) urlInput.value = '';
+        }
         const reader = new FileReader();
         reader.onload = function(e) {
             const img = document.getElementById(imgId);

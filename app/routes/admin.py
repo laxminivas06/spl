@@ -172,16 +172,16 @@ def add_player():
         return redirect(url_for('admin.players'))
 
     photo_filename = 'default_player.png'
-    file = request.files.get('photo_file')
-    if photo_url:
-        photo_filename = photo_url
-    elif file and file.filename and file.filename.strip():
+    file = request.files.get('photo_file') or request.files.get('photo')
+    if file and file.filename and file.filename.strip():
         saved_photo, err = validate_and_save_image(file, prefix=f"player_{roll_number}")
         if err:
             flash(f"Player photo error: {err}", 'danger')
             return redirect(url_for('admin.players'))
         if saved_photo:
             photo_filename = saved_photo
+    elif photo_url:
+        photo_filename = photo_url
 
     player = Player(
         roll_number=roll_number,
@@ -244,17 +244,24 @@ def edit_player(id):
     if new_cat:
         player.category = PlayerCategory.normalize(new_cat)
 
-    new_photo_url = normalize_photo_url(request.form.get('photo_url', '').strip())
-    file = request.files.get('photo_file')
-    if new_photo_url:
-        player.photo = new_photo_url
-    elif file and file.filename and file.filename.strip():
-        saved_photo, err = validate_and_save_image(file, prefix=f"player_{player.roll_number}")
+    raw_photo_url = request.form.get('photo_url', '').strip()
+    new_photo_url = normalize_photo_url(raw_photo_url) if raw_photo_url else None
+    file = request.files.get('photo_file') or request.files.get('photo')
+
+    # Priority 1: Newly uploaded photo file takes precedence over any pre-filled or entered URL
+    if file and file.filename and file.filename.strip():
+        safe_prefix = player.roll_number or str(player.id)
+        saved_photo, err = validate_and_save_image(file, prefix=f"player_{safe_prefix}")
         if err:
             flash(f"Player photo error: {err}", 'danger')
             return redirect(url_for('admin.players'))
         if saved_photo:
             player.photo = saved_photo
+    # Priority 2: Photo URL if no new file is uploaded
+    elif new_photo_url:
+        player.photo = new_photo_url
+    elif raw_photo_url == '' and player.photo and player.photo.startswith('http'):
+        player.photo = None
 
     db.session.commit()
     log_audit(current_user.id, 'EDIT_PLAYER', 'Player', player.id, old_data, player.to_dict())

@@ -86,13 +86,17 @@
                     {% endif %}
                 </div>
                 <div class="text-center">
-                    {% if franchise.captain_photo %}
-                        <img src="{{ url_for('static', filename='uploads/' + franchise.captain_photo) }}" alt="Captain Photo" class="rounded-3 border border-secondary-subtle shadow-sm mb-3" style="width: 110px; height: 110px; object-fit: cover;" onerror="this.src='/static/uploads/default_player.png'">
-                    {% elif franchise.captain and franchise.captain.photo %}
-                        <img src="{{ url_for('static', filename='uploads/' + franchise.captain.photo) if not franchise.captain.photo.startswith('http') else franchise.captain.photo }}" alt="Captain Photo" class="rounded-3 border border-secondary-subtle shadow-sm mb-3" style="width: 110px; height: 110px; object-fit: cover;" onerror="this.src='/static/uploads/default_player.png'">
-                    {% else %}
-                        <img src="{{ url_for('static', filename='uploads/default_player.png') }}" alt="Captain Photo" class="rounded-3 border border-secondary-subtle shadow-sm mb-3" style="width: 110px; height: 110px; object-fit: cover;">
-                    {% endif %}
+                    <div class="d-flex justify-content-center mb-3">
+                        <div class="border border-danger border-2 rounded-3 overflow-hidden bg-white shadow-xs position-relative" style="width: 110px; height: 110px; aspect-ratio: 1/1;">
+                            <img src="{{ url_for('static', filename='uploads/' + franchise.captain_photo) if franchise.captain_photo and not franchise.captain_photo.startswith('http') else (franchise.captain_photo or url_for('static', filename='uploads/default_player.png')) }}" 
+                                 alt="Captain Photo" 
+                                 class="w-100 h-100 object-fit-cover" 
+                                 style="aspect-ratio: 1/1; object-position: center top;"
+                                 referrerpolicy="no-referrer"
+                                 onerror="this.onerror=null; this.src='/static/uploads/default_player.png';">
+                            <span class="badge bg-danger position-absolute bottom-0 end-0 m-1 font-display fw-bold" style="font-size: 0.65rem;">(C)</span>
+                        </div>
+                    </div>
 
                     <h5 class="fw-bold text-dark mb-1">{{ franchise.captain_name or 'No Captain Set' }} <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1">C</span></h5>
                     <div class="mb-2"><span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold">RETAINED — ₹50,000</span></div>
@@ -124,14 +128,60 @@
                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle">TEAM SELF-SERVICE</span>
                 </div>
 
-                <form method="POST" action="{{ url_for('franchise.profile') }}" enctype="multipart/form-data">
+                <form method="POST" action="{{ url_for('franchise.profile') }}" enctype="multipart/form-data" onsubmit="return validateProfileCaptainForm(this);">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                     <!-- Section 1: Captain Information -->
                     <div class="mb-4">
-                        <h6 class="fw-bold text-primary mb-3 pb-2 border-bottom">
-                            <i class="fa-solid fa-user-shield me-2 text-danger"></i>Captain Information
-                        </h6>
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                            <h6 class="fw-bold text-primary mb-0">
+                                <i class="fa-solid fa-user-shield me-2 text-danger"></i>Captain Information
+                            </h6>
+                            <span class="badge bg-danger text-white extra-small"><i class="fa-solid fa-star me-1"></i>PHOTO MANDATORY</span>
+                        </div>
+                        <small class="text-muted extra-small d-block mb-3">Captain details are independent of the player database. Captain photo is strictly required.</small>
+
+                        <!-- Captain Photo Upload & Live Responsive Preview Box (Aspect Ratio 1:1, Never Distorted) -->
+                        <div class="p-3 bg-light border rounded-3 mb-3">
+                            <div class="d-flex flex-column flex-sm-row align-items-center gap-3">
+                                <div class="border border-danger border-2 rounded-3 overflow-hidden bg-white shadow-xs position-relative flex-shrink-0"
+                                     style="width: 84px; height: 84px; aspect-ratio: 1/1;">
+                                    <img id="profile_captain_preview" 
+                                         src="{{ url_for('static', filename='uploads/' + franchise.captain_photo) if franchise.captain_photo and not franchise.captain_photo.startswith('http') else (franchise.captain_photo or url_for('static', filename='uploads/default_player.png')) }}" 
+                                         alt="Captain Photo Preview" 
+                                         class="w-100 h-100 object-fit-cover"
+                                         style="aspect-ratio: 1/1; object-position: center top;"
+                                         onerror="this.onerror=null; this.src='/static/uploads/default_player.png';">
+                                    <span class="badge bg-danger position-absolute bottom-0 end-0 m-1 font-display fw-bold" style="font-size: 0.65rem;">(C)</span>
+                                </div>
+                                <div class="flex-grow-1 w-100">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="form-label text-dark small fw-bold mb-0">
+                                            <i class="fa-solid fa-camera text-danger me-1"></i>CAPTAIN PHOTO * <span class="text-danger fw-bold">(MANDATORY)</span>
+                                        </label>
+                                        {% if franchise.captain_photo %}
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle extra-small"><i class="fa-solid fa-check me-1"></i>Photo Active</span>
+                                        {% else %}
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle extra-small"><i class="fa-solid fa-triangle-exclamation me-1"></i>Photo Required</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-12 col-md-6">
+                                            <input type="file" class="form-control form-control-spl form-control-sm" name="captain_photo_file" accept=".png,.jpg,.jpeg,.webp" onchange="previewProfileCaptainImage(this, 'profile_captain_preview', 100);" title="Choose captain photo file">
+                                            <div class="extra-small text-muted mt-1">Upload File (JPG, PNG, WEBP &bull; Max 100KB)</div>
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            <input type="url" class="form-control form-control-spl form-control-sm" name="captain_photo_url" placeholder="Or Photo URL (Drive link / URL)" value="{{ franchise.captain_photo if franchise.captain_photo and franchise.captain_photo.startswith('http') else '' }}" oninput="previewProfileCaptainUrl(this.value, 'profile_captain_preview')">
+                                            <div class="extra-small text-muted mt-1">Or direct image / Drive URL</div>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="has_profile_captain_photo" value="{{ '1' if franchise.captain_photo else '0' }}">
+                                    <div id="profile_cap_photo_err" class="text-danger extra-small mt-1 d-none fw-bold">
+                                        <i class="fa-solid fa-circle-exclamation me-1"></i>Captain photo is mandatory. Please upload a photo or enter a photo URL.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -140,9 +190,8 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label text-muted small fw-semibold">CAPTAIN ROLL NUMBER *</label>
-                                <input type="text" class="form-control form-control-spl font-monospace" name="captain_rule_number" value="{{ franchise.captain_rule_number or '' }}" placeholder="e.g. SPL26A001X" maxlength="10" minlength="10" pattern="^[A-Za-z0-9]{10}$" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase();" required>
-                                <small class="text-muted extra-small">Exactly 10 alphanumeric characters</small>
+                                <label class="form-label text-muted small fw-semibold">CAPTAIN ROLL NUMBER</label>
+                                <input type="text" class="form-control form-control-spl font-monospace" name="captain_rule_number" value="{{ franchise.captain_rule_number or '' }}" placeholder="e.g. 23N81A66J9">
                             </div>
 
                             <div class="col-md-4">
@@ -167,14 +216,6 @@
                                     <option value="2" {% if franchise.captain_year == '2' %}selected{% endif %}>2</option>
                                     <option value="1" {% if franchise.captain_year == '1' %}selected{% endif %}>1</option>
                                 </select>
-                            </div>
-
-                            <div class="col-12">
-                                <label class="form-label text-muted small fw-semibold">UPLOAD CAPTAIN PHOTO</label>
-                                <div class="input-group">
-                                    <input type="file" class="form-control form-control-spl" name="captain_photo" accept=".png,.jpg,.jpeg,.webp" onchange="validateImageFileSize(this, 100);">
-                                </div>
-                                <small class="text-muted extra-small">Supported formats: JPG, PNG, WEBP. Max file size: 100KB.</small>
                             </div>
                         </div>
                     </div>
@@ -231,6 +272,55 @@ function validateImageFileSize(input, maxKb = 100) {
             return false;
         }
     }
+    return true;
+}
+
+function previewProfileCaptainImage(input, previewId, maxKb = 100) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        if (maxKb && file.size > maxKb * 1024) {
+            alert(`Captain photo exceeds ${maxKb}KB limit (${(file.size / 1024).toFixed(1)} KB). Please choose an image 100KB or smaller.`);
+            input.value = '';
+            return false;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = document.getElementById(previewId);
+            if (img) img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function previewProfileCaptainUrl(url, previewId) {
+    if (url && url.trim()) {
+        let cleanUrl = url.trim();
+        const m = cleanUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (m) {
+            cleanUrl = `https://lh3.googleusercontent.com/d/${m[1]}`;
+        }
+        const img = document.getElementById(previewId);
+        if (img) img.src = cleanUrl;
+    }
+}
+
+function validateProfileCaptainForm(form) {
+    const fileInput = form.querySelector('input[name="captain_photo_file"]');
+    const urlInput = form.querySelector('input[name="captain_photo_url"]');
+    const hasPhotoHidden = document.getElementById('has_profile_captain_photo');
+    const errBox = document.getElementById('profile_cap_photo_err');
+
+    const hasExistingPhoto = hasPhotoHidden && hasPhotoHidden.value === '1';
+    const hasNewFile = fileInput && fileInput.files && fileInput.files.length > 0;
+    const hasNewUrl = urlInput && urlInput.value && urlInput.value.trim().length > 0;
+
+    if (!hasExistingPhoto && !hasNewFile && !hasNewUrl) {
+        if (errBox) errBox.classList.remove('d-none');
+        alert('Captain photo is mandatory. A captain record cannot be saved or updated without a photo.');
+        if (fileInput) fileInput.focus();
+        return false;
+    }
+    if (errBox) errBox.classList.add('d-none');
     return true;
 }
 </script>

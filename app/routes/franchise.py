@@ -245,16 +245,26 @@ def profile():
 
         # Captain photo upload
         captain_photo = None
-        if 'captain_photo' in request.files:
-            captain_file = request.files.get('captain_photo')
-            if captain_file and captain_file.filename and captain_file.filename.strip():
-                saved_cap, err = validate_and_save_image(captain_file, prefix=f"captain_{franchise.short_name}")
-                if err:
-                    flash(f"Captain photo error: {err}", 'danger')
-                    return redirect(url_for('franchise.profile'))
-                if saved_cap:
-                    franchise.captain_photo = saved_cap
-                    captain_photo = saved_cap
+        cap_file = request.files.get('captain_photo_file') or request.files.get('captain_photo')
+        if cap_file and cap_file.filename and cap_file.filename.strip():
+            saved_cap, err = validate_and_save_image(cap_file, prefix=f"captain_{franchise.short_name}")
+            if err:
+                flash(f"Captain photo error: {err}", 'danger')
+                return redirect(url_for('franchise.profile'))
+            if saved_cap:
+                franchise.captain_photo = saved_cap
+                captain_photo = saved_cap
+        elif request.form.get('captain_photo_url'):
+            from app.models.player import normalize_photo_url
+            saved_url = normalize_photo_url(request.form.get('captain_photo_url').strip())
+            if saved_url:
+                franchise.captain_photo = saved_url
+                captain_photo = saved_url
+
+        effective_photo = captain_photo or franchise.captain_photo
+        if (captain_name or franchise.has_captain) and not effective_photo:
+            flash('Captain photo is mandatory. A captain record cannot be saved or updated without a photo.', 'danger')
+            return redirect(url_for('franchise.profile'))
 
         if captain_name:
             from app.services.team_service import add_team_captain
@@ -266,7 +276,7 @@ def profile():
                     department=captain_department,
                     year=captain_year,
                     category=captain_category,
-                    photo=captain_photo or franchise.captain_photo,
+                    photo=effective_photo,
                     actor_id=current_user.id
                 )
             except ValueError as e:
