@@ -57,6 +57,10 @@ def activate_player(player_id, admin_id=None):
         raise ValueError(f"Already Sold: Player '{player.name}' (#{player.roll_number}) has already been sold. This player cannot be auctioned again.")
 
     is_sc = SystemSettings.get_setting('second_chance_active') == 'true'
+    if not is_sc and player.status == PlayerStatus.UNSOLD and player.is_second_chance_eligible:
+        SystemSettings.set_setting('second_chance_active', 'true')
+        is_sc = True
+
     allowed_statuses = [PlayerStatus.AVAILABLE, PlayerStatus.UNSOLD] if is_sc else [PlayerStatus.AVAILABLE]
 
     if player.status not in allowed_statuses:

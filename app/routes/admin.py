@@ -1379,9 +1379,10 @@ def second_chance_dashboard():
     second_chance_sold = AuditLog.query.filter_by(action='SECOND_CHANCE_PLAYER_SOLD').count()
     is_active = SystemSettings.get_setting('second_chance_active') == 'true'
     eligible_players = Player.query.filter(Player.status == PlayerStatus.UNSOLD, Player.sold_to == None, Player.is_second_chance_eligible == True).order_by(Player.roll_number.asc()).all()
-    franchises = Franchise.query.order_by(Franchise.name.asc()).all()
+    franchises = Franchise.query.filter_by(is_active=True).order_by(Franchise.id.asc()).all()
 
     sc_completed = SystemSettings.get_setting('second_chance_completed') == 'true'
+    auction_timer_seconds = int(SystemSettings.get_setting('timer_seconds', 30))
 
     return render_template(
         'admin/second_chance.html',
@@ -1391,7 +1392,8 @@ def second_chance_dashboard():
         is_active=is_active,
         sc_completed=sc_completed,
         eligible_players=eligible_players,
-        franchises=franchises
+        franchises=franchises,
+        auction_timer_seconds=auction_timer_seconds
     )
 
 @admin_bp.route('/second-chance/complete', methods=['POST'])

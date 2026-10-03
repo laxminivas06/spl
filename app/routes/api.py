@@ -118,7 +118,7 @@ def get_state():
         'status': state.status,
         'current_bid': state.current_bid,
         'timer_seconds': int(SystemSettings.get_setting('timer_seconds', 30)),
-        'remaining_seconds': state.remaining_seconds,
+        'remaining_seconds': state.remaining_seconds if state.status in [AuctionStatus.BIDDING, AuctionStatus.PAUSED] else None,
         'event_name': SystemSettings.get_setting('event_name', 'SPL'),
         'event_subtitle': SystemSettings.get_setting('event_subtitle', 'Sphoorthy Premier League'),
         'version': version_ts,
