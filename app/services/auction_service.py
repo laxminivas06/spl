@@ -62,8 +62,8 @@ def activate_player(player_id, admin_id=None):
         raise ValueError(f"Player '{player.name}' is currently {player.status} and cannot be activated.")
 
     state = get_auction_state()
-    if state.status not in [AuctionStatus.WAITING, AuctionStatus.SOLD, AuctionStatus.UNSOLD, AuctionStatus.SECOND_CHANCE]:
-        raise ValueError("Auction must be in WAITING, SOLD, UNSOLD, or SECOND_CHANCE state to activate a player.")
+    if state.status == AuctionStatus.BIDDING and state.highest_bidder_id is not None:
+        raise ValueError("An active bid has already been placed for the current player. Please mark sold/unsold or reset before switching players.")
 
     state.status = AuctionStatus.PLAYER_PREVIEW
     state.active_player_id = player.id
@@ -80,10 +80,10 @@ def activate_player(player_id, admin_id=None):
     return state
 
 def start_bidding(admin_id=None):
-    """Transition auction from PLAYER_PREVIEW to BIDDING state."""
+    """Transition auction from PLAYER_PREVIEW/WAITING to BIDDING state."""
     state = get_auction_state()
-    if state.status != AuctionStatus.PLAYER_PREVIEW or not state.active_player_id:
-        raise ValueError("No player currently in preview to start bidding.")
+    if not state.active_player_id:
+        raise ValueError("No player currently selected to start bidding.")
 
     timer_duration = int(SystemSettings.get_setting('timer_seconds', 10))
     state.status = AuctionStatus.BIDDING
@@ -99,6 +99,8 @@ def start_bidding(admin_id=None):
 def pause_auction(admin_id=None):
     """Pause live bidding."""
     state = get_auction_state()
+    if state.status == AuctionStatus.PAUSED:
+        return state
     if state.status != AuctionStatus.BIDDING:
         raise ValueError("Auction must be in BIDDING state to pause.")
 
@@ -111,8 +113,12 @@ def pause_auction(admin_id=None):
     return state
 
 def resume_auction(admin_id=None):
-    """Resume live bidding from PAUSED state."""
+    """Resume live bidding from PAUSED state, or start bidding from PREVIEW."""
     state = get_auction_state()
+    if state.status in [AuctionStatus.PLAYER_PREVIEW, AuctionStatus.WAITING] and state.active_player_id:
+        return start_bidding(admin_id)
+    if state.status == AuctionStatus.BIDDING:
+        return state
     if state.status != AuctionStatus.PAUSED:
         raise ValueError("Auction must be in PAUSED state to resume.")
 
