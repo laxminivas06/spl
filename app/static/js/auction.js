@@ -296,6 +296,47 @@ function updateAuctionUi(data) {
 
 // ==================== 5. PROJECTOR UI UPDATER ====================
 
+let lastSoldProjectorData = null;
+
+function renderProjectorSoldCard(soldData) {
+    const soldCard = document.getElementById('projector-sold-card');
+    if (!soldCard || !soldData) return;
+
+    soldCard.classList.remove('d-none');
+    soldCard.className = 'spl-card border-success p-3 p-md-4 p-lg-5 d-flex flex-column justify-content-center shadow-2xl animate-sold-celebration my-auto text-center position-relative overflow-hidden w-100';
+
+    const p = soldData.player || {};
+    const winningF = soldData.winning_franchise;
+
+    const soldName = document.getElementById('sold-player-name');
+    if (soldName) soldName.innerText = p.name || 'Player';
+
+    const soldRole = document.getElementById('sold-player-role');
+    if (soldRole) soldRole.innerText = p.role || 'BATSMAN';
+
+    const soldRule = document.getElementById('sold-player-rule');
+    if (soldRule) soldRule.innerText = p.rule_number || p.roll_number || '--';
+
+    const soldPrice = document.getElementById('sold-final-price');
+    if (soldPrice) soldPrice.innerText = formatCurrencyJs(soldData.sold_price || 0);
+
+    const soldWinTeam = document.getElementById('sold-winning-franchise');
+    if (soldWinTeam) soldWinTeam.innerText = winningF ? winningF.name : 'AIVONTRAA FC';
+
+    const soldWinLogo = document.getElementById('sold-winning-logo');
+    if (soldWinLogo) {
+        const wLogo = (winningF && winningF.logo) ? (winningF.logo.startsWith('http') ? winningF.logo : `/static/uploads/${winningF.logo}`) : '/static/uploads/default_logo.png';
+        soldWinLogo.src = wLogo;
+    }
+
+    const soldPhoto = document.getElementById('sold-player-photo');
+    if (soldPhoto) {
+        soldPhoto.src = resolvePlayerPhotoSrc(p.photo);
+    }
+
+    startSoldConfetti();
+}
+
 function updateProjectorUi(data) {
     const statusWaiting = document.getElementById('projector-status-waiting');
     const playerCard = document.getElementById('projector-player-card');
@@ -312,65 +353,53 @@ function updateProjectorUi(data) {
 
     const status = data.status;
 
-    if (status === 'WAITING' || !data.active_player) {
-        statusWaiting.classList.remove('d-none');
-        document.getElementById('projector-waiting-text').innerText = 'WAITING FOR NEXT PLAYER';
+    // Cache last sold data if available from server
+    if (data.last_sold && !lastSoldProjectorData) {
+        lastSoldProjectorData = data.last_sold;
+    }
+
+    // 1. SOLD State: Display celebration screen persistently (Requirements 3, 4, 6)
+    if (status === 'SOLD') {
+        const winningF = data.winning_franchise || data.highest_bidder;
+        lastSoldProjectorData = {
+            player: data.active_player,
+            winning_franchise: winningF,
+            sold_price: data.sold_price || data.current_bid
+        };
+        renderProjectorSoldCard(lastSoldProjectorData);
         return;
     }
 
-    const p = data.active_player;
-
-    if (status === 'SOLD' && soldCard) {
-        // Calculate remaining seconds based on server sold_display_until timestamp (Requirements 1 & 8)
-        let remainingSec = 10;
-        if (data.sold_until_timestamp) {
-            remainingSec = Math.max(0, Math.ceil((data.sold_until_timestamp - Date.now()) / 1000));
-        } else if (data.sold_remaining_seconds !== undefined && data.sold_remaining_seconds !== null) {
-            remainingSec = data.sold_remaining_seconds;
-        }
-
-        // Exactly 10 seconds completed: automatically clear sold screen (Requirements 1, 7, 8)
-        if (remainingSec <= 0) {
-            stopSoldConfetti();
-            soldCard.classList.add('d-none');
-            statusWaiting.classList.remove('d-none');
-            const waitText = document.getElementById('projector-waiting-text');
-            if (waitText) waitText.innerText = 'WAITING FOR NEXT PLAYER';
-            fetch('/api/auction/clear-sold', { method: 'POST' }).catch(() => {});
+    // 2. WAITING / IDLE State: Continue showing sold player screen until next player is loaded (Requirements 3 & 4)
+    if (status === 'WAITING' || !data.active_player) {
+        if (lastSoldProjectorData) {
+            renderProjectorSoldCard(lastSoldProjectorData);
             return;
         }
-
-        soldCard.classList.remove('d-none');
-        soldCard.className = 'spl-card border-success p-4 p-md-5 d-flex flex-column justify-content-center shadow-2xl animate-sold-celebration my-auto text-center position-relative overflow-hidden';
-        
-        const soldTimerEl = document.getElementById('sold-timer-seconds');
-        if (soldTimerEl) soldTimerEl.innerText = remainingSec;
-
-        const soldName = document.getElementById('sold-player-name');
-        if (soldName) soldName.innerText = p.name;
-        
-        const soldPrice = document.getElementById('sold-final-price');
-        if (soldPrice) soldPrice.innerText = formatCurrencyJs(data.sold_price || data.current_bid);
-        
-        const winningF = data.winning_franchise || data.highest_bidder;
-        const soldWinTeam = document.getElementById('sold-winning-franchise');
-        if (soldWinTeam) soldWinTeam.innerText = winningF ? winningF.name : 'AIVONTRAA FC';
-        
-        const soldWinLogo = document.getElementById('sold-winning-logo');
-        if (soldWinLogo) {
-            const wLogo = (winningF && winningF.logo) ? (winningF.logo.startsWith('http') ? winningF.logo : `/static/uploads/${winningF.logo}`) : '/static/uploads/default_logo.png';
-            soldWinLogo.src = wLogo;
-        }
-
-        const soldPhoto = document.getElementById('sold-player-photo');
-        if (soldPhoto) {
-            soldPhoto.src = resolvePlayerPhotoSrc(p ? p.photo : null);
-        }
-
-        startSoldConfetti();
-        return;
-    } else {
+        // If no player has ever been sold yet in this session, show initial standby screen
+        statusWaiting.classList.remove('d-none');
+        const waitText = document.getElementById('projector-waiting-text');
+        if (waitText) waitText.innerText = 'WAITING FOR NEXT PLAYER';
         stopSoldConfetti();
+        return;
+    }
+
+    // When next player is actually loaded (PLAYER_PREVIEW or BIDDING), stop sold celebration and transition
+    stopSoldConfetti();
+
+    if (status === 'UNSOLD' && unsoldCard) {
+        const p = data.active_player;
+        unsoldCard.classList.remove('d-none');
+        unsoldCard.className = 'spl-card border-danger p-4 p-md-5 shadow-lg animate-sold my-auto text-center';
+        const unsoldName = document.getElementById('unsold-player-name');
+        if (unsoldName) unsoldName.innerText = p.name;
+        const unsoldPrice = document.getElementById('unsold-base-price');
+        if (unsoldPrice) unsoldPrice.innerText = formatCurrencyJs(p.base_price);
+        const unsoldPhoto = document.getElementById('unsold-player-photo');
+        if (unsoldPhoto) {
+            unsoldPhoto.src = resolvePlayerPhotoSrc(p ? p.photo : null);
+        }
+        return;
     }
 
     if (status === 'UNSOLD' && unsoldCard) {
@@ -439,11 +468,11 @@ function updateProjectorUi(data) {
     const incBadge = document.getElementById('projector-increment-badge');
     if (incBadge) incBadge.innerText = `+${formatCurrencyJs(data.increment || 2000)}`;
 
-    // 10-Second Digital Countdown Timer
+    // Configurable Digital Countdown Timer
     const timerEl = document.getElementById('projector-timer');
     if (timerEl) {
         if (status === 'BIDDING') {
-            const sec = data.remaining_seconds != null ? data.remaining_seconds : 10;
+            const sec = data.remaining_seconds != null ? data.remaining_seconds : (data.timer_seconds || 30);
             timerEl.innerText = `${sec}s`;
             if (sec <= 3) {
                 timerEl.className = 'display-6 font-display fw-black text-danger font-monospace';

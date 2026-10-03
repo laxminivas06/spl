@@ -14,7 +14,7 @@
         <h2 class="fw-bold text-dark mb-0 font-display">
             <i class="fa-solid fa-gavel text-danger me-2"></i>Primary Auction Console
         </h2>
-        <small class="text-muted">Select player &rarr; Tap Start Auction &rarr; 10s live timer &rarr; Click team buttons to bid</small>
+        <small class="text-muted">Select player &rarr; Tap Start Auction &rarr; Live timer countdown &rarr; Click team buttons to bid</small>
     </div>
     <div class="d-flex align-items-center gap-2 flex-wrap">
         <a href="{{ url_for('live.auction_live') }}" target="_blank" class="btn btn-outline-danger btn-sm fw-semibold shadow-xs">
@@ -103,10 +103,10 @@
         <div class="fs-5 text-dark mb-2">Sold to <strong id="admin-sold-winner-team" class="text-primary">--</strong>
             for <strong id="admin-sold-final-price" class="text-danger font-monospace">₹ 0</strong></div>
         <div class="d-flex justify-content-center align-items-center gap-3">
-            <span class="badge bg-light border border-danger text-danger fs-6 px-4 py-2 rounded-pill shadow-xs">
-                <i class="fa-solid fa-clock me-2"></i>Clearing in <span id="admin-sold-timer-seconds">10</span>s
+            <span class="badge bg-success-subtle text-success border border-success fs-6 px-4 py-2 rounded-pill shadow-xs">
+                <i class="fa-solid fa-circle-check me-2"></i>SUCCESSFULLY SOLD
             </span>
-            <button type="button" class="btn btn-danger btn-sm fw-bold px-3 py-1.5 rounded-pill shadow-sm" onclick="clearSoldPlayerImmediately()">
+            <button type="button" class="btn btn-danger btn-sm fw-bold px-3 py-1.5 rounded-pill shadow-sm" onclick="scrollToAvailablePlayers()">
                 <i class="fa-solid fa-forward-step me-1"></i> Auction Next Player Now
             </button>
         </div>
@@ -116,7 +116,7 @@
     <div id="unsold-banner"
         class="alert alert-danger text-danger bg-danger-subtle border border-danger d-none py-3 px-4 rounded-4 text-center shadow-sm mb-3">
         <h4 class="fw-bold mb-1 font-display"><i class="fa-solid fa-ban me-1"></i> PLAYER UNSOLD</h4>
-        <p class="mb-2 small">No bids placed within 10 seconds. Player has been marked UNSOLD and moved to second-chance pool.</p>
+        <p class="mb-2 small">No bids placed within the allotted timer duration. Player has been marked UNSOLD and moved to second-chance pool.</p>
         <button type="button" class="btn btn-outline-danger btn-sm fw-bold px-3 py-1.5 rounded-pill bg-white shadow-xs" onclick="clearUnsoldPlayerImmediately()">
             <i class="fa-solid fa-forward-step me-1"></i> Clear &amp; Select Next Player
         </button>
@@ -218,7 +218,7 @@
                                     <i class="fa-solid fa-user-check me-1 text-success"></i> Player Ready: <span id="prompt-player-name" class="text-dark">--</span>
                                     <span class="badge bg-danger ms-1 font-monospace" id="prompt-player-rule">--</span>
                                 </div>
-                                <div class="text-muted extra-small">Verify details above, then tap button to start 10s live bidding timer</div>
+                                <div class="text-muted extra-small">Verify details above, then tap button to start live bidding timer</div>
                             </div>
                             <button type="button" id="btn-start-auction-now" class="btn btn-success fw-black px-4 py-2 shadow-sm font-display d-flex align-items-center gap-2 text-uppercase text-nowrap" onclick="startBiddingForActivePlayer()">
                                 <i class="fa-solid fa-play fs-6"></i>
@@ -236,7 +236,7 @@
                             <!-- 10-Second Timer -->
                             <div class="spl-timer-ring-container">
                                 <span class="spl-timer-badge text-danger bg-white border border-danger shadow-sm"
-                                    id="auction-timer-display">10s</span>
+                                    id="auction-timer-display">--</span>
                             </div>
                         </div>
 
@@ -364,7 +364,7 @@
             <h5 class="fw-bold text-dark mb-0 font-display">
                 <i class="fa-solid fa-shield-halved text-danger me-2"></i>Franchise Teams Bidding Pad
             </h5>
-            <small class="text-muted">Click any team button below to place the next valid bid and reset 10s timer</small>
+            <small class="text-muted">Click any team button below to place the next valid bid and reset the live timer</small>
         </div>
         <div>
             <span class="badge bg-light border border-secondary-subtle text-dark px-3 py-1.5 font-monospace">
@@ -588,7 +588,8 @@
     let nextValidBidVal = 10000;
     let highestBidderId = null;
     let auctionStatus = 'WAITING';
-    let timerSeconds = 10;
+    let configuredTimerSeconds = 30;
+    let timerSeconds = 30;
     let timerRunning = false;
     let autoFinalizing = false;
     let isSubmittingBid = false;
@@ -832,10 +833,10 @@
                 return;
             }
 
-            // Timer sits ready at 10s without ticking
-            timerSeconds = 10;
+            // Timer sits ready at configured timer duration without ticking
+            timerSeconds = configuredTimerSeconds;
             timerRunning = false;
-            renderTimer(10);
+            renderTimer(configuredTimerSeconds);
             await pollState();
 
             // Smooth scroll up to console arena
@@ -865,9 +866,9 @@
                 return;
             }
 
-            timerSeconds = 10;
+            timerSeconds = configuredTimerSeconds;
             timerRunning = true;
-            renderTimer(10);
+            renderTimer(configuredTimerSeconds);
             await pollState();
         } catch (err) {
             alert('Error starting auction: ' + err.message);
@@ -962,9 +963,9 @@
                 alert(data.message || 'Bid rejected');
             } else {
                 // Immediate client-side reset to 10s on valid bid
-                timerSeconds = 10;
+                timerSeconds = configuredTimerSeconds;
                 timerRunning = true;
-                renderTimer(10);
+                renderTimer(configuredTimerSeconds);
                 pollState();
             }
         } catch (err) {
@@ -1049,6 +1050,10 @@
         if (priceEl) priceEl.textContent = `₹ ${Number(price || 0).toLocaleString()}`;
         banner.classList.remove('d-none');
         document.getElementById('unsold-banner')?.classList.add('d-none');
+    }
+
+    function scrollToAvailablePlayers() {
+        document.getElementById('available-players-section')?.scrollIntoView({ behavior: 'smooth' });
     }
 
     function showUnsoldBanner() {
@@ -1403,25 +1408,12 @@
                 }
             }
 
-            // Status Banners
+            // Status Banners (Requirements 3, 4, 6: Persist sold result on screen until next player loaded)
             if (state.status === 'SOLD') {
                 const winner = state.winning_franchise || state.highest_bidder;
                 const winnerName = winner ? winner.name : 'Unknown';
                 const pName = state.active_player ? state.active_player.name : 'Player';
                 showCelebrationBanner(pName, winnerName, state.sold_price || currentBidVal);
-
-                let remainingSec = 10;
-                if (state.sold_until_timestamp) {
-                    remainingSec = Math.max(0, Math.ceil((state.sold_until_timestamp - Date.now()) / 1000));
-                } else if (state.sold_remaining_seconds !== undefined && state.sold_remaining_seconds !== null) {
-                    remainingSec = state.sold_remaining_seconds;
-                }
-                const secEl = document.getElementById('admin-sold-timer-seconds');
-                if (secEl) secEl.textContent = remainingSec;
-
-                if (remainingSec <= 0) {
-                    clearSoldPlayerImmediately();
-                }
             } else if (state.status === 'UNSOLD') {
                 showUnsoldBanner();
             } else {
@@ -1429,14 +1421,17 @@
                 document.getElementById('unsold-banner')?.classList.add('d-none');
             }
 
-            // Timer Countdown Sync
+            // Timer Countdown Sync using dynamic configured duration
+            if (state.timer_seconds) {
+                configuredTimerSeconds = state.timer_seconds;
+            }
             if (state.status === 'BIDDING') {
                 timerRunning = true;
-                timerSeconds = state.remaining_seconds != null ? state.remaining_seconds : 10;
+                timerSeconds = state.remaining_seconds != null ? state.remaining_seconds : configuredTimerSeconds;
                 renderTimer(Math.ceil(timerSeconds));
             } else {
                 timerRunning = false;
-                renderTimer(state.remaining_seconds || 10);
+                renderTimer(state.remaining_seconds != null ? state.remaining_seconds : configuredTimerSeconds);
             }
 
             // 5. Franchise Team Cards Update

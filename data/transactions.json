@@ -7,5 +7,14 @@
     "type": "PLAYER_PURCHASE",
     "created_at": "2026-10-03T02:35:00.371571",
     "admin_id": 1
+  },
+  {
+    "id": 4,
+    "player_id": 76,
+    "franchise_id": 2,
+    "amount": 70000.0,
+    "type": "PLAYER_PURCHASE",
+    "created_at": "2026-10-03T03:04:54.827209",
+    "admin_id": 1
   }
 ]

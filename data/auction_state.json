@@ -1,16 +1,16 @@
 [
   {
     "id": 1,
-    "status": "WAITING",
-    "active_player_id": null,
-    "current_bid": 0.0,
-    "highest_bidder_id": null,
-    "timer_seconds": 30,
+    "status": "SOLD",
+    "active_player_id": 76,
+    "current_bid": 70000.0,
+    "highest_bidder_id": 2,
+    "timer_seconds": 20,
     "timer_end": null,
     "sold_display_until": null,
     "paused_seconds_left": null,
-    "last_bid_at": "2026-10-03T02:34:56.851584",
-    "started_at": "2026-10-03T02:34:45.935980",
-    "updated_at": "2026-10-03T02:35:00.422324"
+    "last_bid_at": "2026-10-03T03:04:52.336950",
+    "started_at": "2026-10-03T03:04:25.119470",
+    "updated_at": "2026-10-03T03:04:54.850478"
   }
 ]

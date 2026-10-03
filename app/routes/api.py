@@ -7,7 +7,8 @@ from app.services.auction_service import (
     get_auction_state, find_player_by_roll, activate_player, start_bidding,
     pause_auction, resume_auction, extend_timer, place_bid, finalize_sold, finalize_unsold, reset_to_waiting,
     clear_sold_player, update_player_rule_number,
-    find_second_chance_player_by_roll, start_second_chance_auction, end_second_chance_auction, get_next_bid_increment
+    find_second_chance_player_by_roll, start_second_chance_auction, end_second_chance_auction, get_next_bid_increment,
+    get_bid_increment_rules, add_bid_increment_rule, edit_bid_increment_rule, delete_bid_increment_rule
 )
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
@@ -45,16 +46,7 @@ def get_state():
             except Exception:
                 pass
         state = get_auction_state()
-
-    # Auto-clear sold player when 10-second post-sale timer expires (Requirements 1, 7, 8)
-    if state.status == AuctionStatus.SOLD and state.sold_display_until:
-        if datetime.utcnow() >= state.sold_display_until:
-            admin_id = current_user.id if current_user.is_authenticated and hasattr(current_user, 'is_admin') and current_user.is_admin else 1
-            try:
-                clear_sold_player(admin_id)
-            except Exception:
-                pass
-            state = get_auction_state()
+    # Do not auto-clear sold player: Maintain sold result on screen until next player is loaded (Requirements 3, 4, 6)
 
     player = Player.query.get(state.active_player_id) if state.active_player_id else None
     highest_bidder = Franchise.query.get(state.highest_bidder_id) if state.highest_bidder_id else None
@@ -105,10 +97,27 @@ def get_state():
             'logo': highest_bidder.logo
         }
 
+    # Last sold player lookup for persistent sold display between rounds (Requirements 3, 4)
+    last_sold_player_rec = Player.query.filter_by(status=PlayerStatus.SOLD).order_by(Player.sold_at.desc(), Player.id.desc()).first()
+    last_sold_data = None
+    if last_sold_player_rec:
+        w_f = Franchise.query.get(last_sold_player_rec.sold_to) if last_sold_player_rec.sold_to else None
+        last_sold_data = {
+            'player': last_sold_player_rec.to_dict(),
+            'sold_price': last_sold_player_rec.sold_price,
+            'winning_franchise': {
+                'id': w_f.id,
+                'name': w_f.name,
+                'short_name': w_f.short_name,
+                'logo': w_f.logo
+            } if w_f else None
+        }
+
     # Base Public State
     res = {
         'status': state.status,
         'current_bid': state.current_bid,
+        'timer_seconds': int(SystemSettings.get_setting('timer_seconds', 30)),
         'remaining_seconds': state.remaining_seconds,
         'event_name': SystemSettings.get_setting('event_name', 'SPL'),
         'event_subtitle': SystemSettings.get_setting('event_subtitle', 'Sphoorthy Premier League'),
@@ -116,6 +125,7 @@ def get_state():
         'increment': increment,
         'next_valid_bid': next_valid_bid,
         'active_player': player.to_dict() if player else None,
+        'last_sold': last_sold_data,
         'highest_bidder': {
             'id': highest_bidder.id,
             'name': highest_bidder.name,
@@ -665,5 +675,63 @@ def api_update_rule_number():
         return jsonify({'success': False, 'message': str(e)}), 400
     except Exception as e:
         return jsonify({'success': False, 'message': f"Failed to update Rule Number: {str(e)}"}), 500
+
+
+@api_bp.route('/auction/bid-rules', methods=['GET'])
+@login_required
+def api_get_bid_rules():
+    """Get all configured bid increment rules."""
+    rules = get_bid_increment_rules()
+    return jsonify({'success': True, 'rules': rules})
+
+
+@api_bp.route('/admin/bid-rules/add', methods=['POST'])
+@login_required
+@admin_required
+def api_add_bid_rule():
+    """Add a new bid increment condition."""
+    data = request.get_json() or request.form
+    try:
+        min_p = data.get('min_price')
+        max_p = data.get('max_price')
+        inc = data.get('increment')
+        rules, new_rule = add_bid_increment_rule(min_p, max_p, inc)
+        return jsonify({'success': True, 'message': 'Condition added successfully.', 'rules': rules, 'rule': new_rule})
+    except ValueError as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'message': f"Failed to add condition: {str(e)}"}), 500
+
+
+@api_bp.route('/admin/bid-rules/<int:rule_id>/edit', methods=['POST'])
+@login_required
+@admin_required
+def api_edit_bid_rule(rule_id):
+    """Edit an existing bid increment condition."""
+    data = request.get_json() or request.form
+    try:
+        min_p = data.get('min_price')
+        max_p = data.get('max_price')
+        inc = data.get('increment')
+        rules = edit_bid_increment_rule(rule_id, min_p, max_p, inc)
+        return jsonify({'success': True, 'message': 'Condition updated successfully.', 'rules': rules})
+    except ValueError as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'message': f"Failed to edit condition: {str(e)}"}), 500
+
+
+@api_bp.route('/admin/bid-rules/<int:rule_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def api_delete_bid_rule(rule_id):
+    """Delete a bid increment condition."""
+    try:
+        rules = delete_bid_increment_rule(rule_id)
+        return jsonify({'success': True, 'message': 'Condition deleted successfully.', 'rules': rules})
+    except ValueError as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'message': f"Failed to delete condition: {str(e)}"}), 500
 
 

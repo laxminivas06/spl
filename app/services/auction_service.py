@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timedelta
 from app.extensions import db
 from app.models import Player, PlayerStatus, Franchise, AuctionState, AuctionStatus, Bid, Transaction, SystemSettings
@@ -85,12 +86,13 @@ def start_bidding(admin_id=None):
     if not state.active_player_id:
         raise ValueError("No player currently selected to start bidding.")
 
-    timer_duration = int(SystemSettings.get_setting('timer_seconds', 10))
+    timer_duration = int(SystemSettings.get_setting('timer_seconds', 30))
     state.status = AuctionStatus.BIDDING
     state.timer_seconds = timer_duration
     state.timer_end = datetime.utcnow() + timedelta(seconds=timer_duration)
     state.paused_seconds_left = None
     state.started_at = datetime.utcnow()
+    state.sold_display_until = None
 
     db.session.commit()
     log_audit(admin_id, 'BIDDING_STARTED', 'Player', state.active_player_id, None, f"Timer: {timer_duration}s")
@@ -149,21 +151,151 @@ def extend_timer(additional_seconds, admin_id=None):
     log_audit(admin_id, 'TIMER_EXTENDED', 'AuctionState', state.id, None, f"+{additional_seconds}s")
     return state
 
+def get_bid_increment_rules():
+    """
+    Retrieve configured payment / bid increment conditions from SystemSettings.
+    Returns sorted list by min_price ascending.
+    """
+    raw = SystemSettings.get_setting('bid_increment_rules', None)
+    if raw:
+        try:
+            rules = json.loads(raw)
+            if isinstance(rules, list) and len(rules) > 0:
+                valid_rules = []
+                for idx, r in enumerate(rules, start=1):
+                    min_p = float(r.get('min_price', 0))
+                    max_p = float(r.get('max_price', 0))
+                    inc = float(r.get('increment', 0))
+                    valid_rules.append({
+                        'id': int(r.get('id', idx)),
+                        'min_price': int(min_p) if min_p.is_integer() else min_p,
+                        'max_price': int(max_p) if max_p.is_integer() else max_p,
+                        'increment': int(inc) if inc.is_integer() else inc
+                    })
+                return sorted(valid_rules, key=lambda x: x['min_price'])
+        except Exception:
+            pass
+
+    # Default rules: ₹10,000–₹20,000 (+₹2,000), ₹20,000–₹50,000 (+₹5,000), ₹50,000–₹1,00,000 (+₹10,000), Above ₹1,00,000 (+₹10,000)
+    return [
+        {"id": 1, "min_price": 10000, "max_price": 20000, "increment": 2000},
+        {"id": 2, "min_price": 20000, "max_price": 50000, "increment": 5000},
+        {"id": 3, "min_price": 50000, "max_price": 100000, "increment": 10000},
+        {"id": 4, "min_price": 100000, "max_price": 10000000, "increment": 10000}
+    ]
+
+def save_bid_increment_rules(rules):
+    """Save bid increment rules list to SystemSettings."""
+    sorted_rules = sorted(rules, key=lambda x: x['min_price'])
+    SystemSettings.set_setting('bid_increment_rules', json.dumps(sorted_rules))
+    return sorted_rules
+
+def validate_bid_increment_rule(min_price, max_price, increment, exclude_id=None):
+    """
+    Validate a bid increment condition:
+    - min_price >= 0
+    - max_price > min_price
+    - increment > 0
+    - No overlapping ranges with other rules
+    """
+    try:
+        min_p = float(min_price)
+        max_p = float(max_price)
+        inc = float(increment)
+    except (ValueError, TypeError):
+        raise ValueError("Minimum Price, Maximum Price, and Increment must be valid numbers.")
+
+    if min_p < 0:
+        raise ValueError("Minimum price cannot be negative.")
+    if max_p <= min_p:
+        raise ValueError(f"Maximum price (₹{max_p:,.0f}) must be strictly greater than minimum price (₹{min_p:,.0f}).")
+    if inc <= 0:
+        raise ValueError("Increment amount must be a positive number greater than 0.")
+
+    existing_rules = get_bid_increment_rules()
+    for rule in existing_rules:
+        if exclude_id is not None and int(rule['id']) == int(exclude_id):
+            continue
+        r_min = float(rule['min_price'])
+        r_max = float(rule['max_price'])
+        # Half-open interval overlap check [min, max):
+        if max(min_p, r_min) < min(max_p, r_max):
+            raise ValueError(
+                f"Price range ₹{min_p:,.0f} – ₹{max_p:,.0f} overlaps with existing condition "
+                f"₹{r_min:,.0f} – ₹{r_max:,.0f} (Increment: ₹{rule['increment']:,.0f})."
+            )
+
+    min_val = int(min_p) if min_p.is_integer() else min_p
+    max_val = int(max_p) if max_p.is_integer() else max_p
+    inc_val = int(inc) if inc.is_integer() else inc
+    return min_val, max_val, inc_val
+
+def add_bid_increment_rule(min_price, max_price, increment):
+    """Add a new price range bid increment condition."""
+    min_p, max_p, inc = validate_bid_increment_rule(min_price, max_price, increment)
+    rules = get_bid_increment_rules()
+    next_id = max([int(r['id']) for r in rules], default=0) + 1
+    new_rule = {
+        'id': next_id,
+        'min_price': min_p,
+        'max_price': max_p,
+        'increment': inc
+    }
+    rules.append(new_rule)
+    return save_bid_increment_rules(rules), new_rule
+
+def edit_bid_increment_rule(rule_id, min_price, max_price, increment):
+    """Update an existing bid increment condition."""
+    rule_id = int(rule_id)
+    min_p, max_p, inc = validate_bid_increment_rule(min_price, max_price, increment, exclude_id=rule_id)
+    rules = get_bid_increment_rules()
+    found = False
+    for r in rules:
+        if int(r['id']) == rule_id:
+            r['min_price'] = min_p
+            r['max_price'] = max_p
+            r['increment'] = inc
+            found = True
+            break
+    if not found:
+        raise ValueError(f"Rule #{rule_id} not found.")
+    return save_bid_increment_rules(rules)
+
+def delete_bid_increment_rule(rule_id):
+    """Delete a bid increment condition."""
+    rule_id = int(rule_id)
+    rules = get_bid_increment_rules()
+    new_rules = [r for r in rules if int(r['id']) != rule_id]
+    if len(new_rules) == len(rules):
+        raise ValueError(f"Rule #{rule_id} not found.")
+    return save_bid_increment_rules(new_rules)
+
 def get_next_bid_increment(current_bid):
     """
-    Calculate bid increment step according to official SPL Section 44 business rules:
-    - ₹10,000 – ₹20,000: +₹2,000
-    - Above ₹20,000 – ₹50,000: +₹5,000
-    - Above ₹50,000 – ₹1,00,000: +₹10,000
-    - Above ₹1,00,000: +₹10,000
+    Calculate bid increment dynamically from configured rules in SystemSettings.
+    Handles boundaries unambiguously using half-open intervals [min_price, max_price).
     """
     bid = float(current_bid or 0.0)
-    if bid <= 20000.0:
-        return 2000.0
-    elif bid <= 50000.0:
+    rules = get_bid_increment_rules()
+    if not rules:
         return 5000.0
-    else:
-        return 10000.0
+
+    for rule in rules:
+        min_p = float(rule.get('min_price', 0))
+        max_p = float(rule.get('max_price', float('inf')))
+        if min_p <= bid < max_p:
+            return float(rule.get('increment', 5000.0))
+
+    # Boundary handling:
+    # If bid is at or above highest configured range, use highest rule's increment
+    if bid >= float(rules[-1].get('max_price', float('inf'))):
+        return float(rules[-1].get('increment', 10000.0))
+
+    # If bid is below lowest configured range, use lowest rule's increment
+    if bid < float(rules[0].get('min_price', 0)):
+        return float(rules[0].get('increment', 2000.0))
+
+    return float(rules[-1].get('increment', 5000.0))
 
 def place_bid(franchise_id, bid_amount):
     """
@@ -240,7 +372,7 @@ def place_bid(franchise_id, bid_amount):
     state.last_bid_at = datetime.utcnow()
 
     # Reset timer on every valid bid
-    timer_duration = int(SystemSettings.get_setting('timer_seconds', 10))
+    timer_duration = int(SystemSettings.get_setting('timer_seconds', 30))
     state.timer_seconds = timer_duration
     state.timer_end = datetime.utcnow() + timedelta(seconds=timer_duration)
     state.paused_seconds_left = None
@@ -331,11 +463,11 @@ def finalize_sold(admin_id=None):
         else:
             transaction_record.amount = sold_price
 
-        # Set Auction State to SOLD with 10-second display timer (Requirements 1, 7, 8)
+        # Set Auction State to SOLD (Requirements 3, 4, 6: Persist on screen until next player loaded)
         state.status = AuctionStatus.SOLD
         state.timer_end = None
         state.paused_seconds_left = None
-        state.sold_display_until = now + timedelta(seconds=10)
+        state.sold_display_until = None
 
         db.session.commit()
         action_name = 'SECOND_CHANCE_PLAYER_SOLD' if is_sc else 'PLAYER_SOLD'

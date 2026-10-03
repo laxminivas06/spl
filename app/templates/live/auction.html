@@ -283,41 +283,76 @@ body.is-fullscreen #btn-fullscreen-toggle {
         </div>
 
         <!-- ==========================================
-             STATE 3: SOLD CELEBRATION SCREEN
+             STATE 3: SOLD CELEBRATION SCREEN (REQUIREMENTS 3, 4, 5, 6)
              ========================================== -->
-        <div id="projector-sold-card" class="spl-card border-success p-4 p-md-5 d-none my-auto shadow-sm bg-white animate-sold-celebration text-center position-relative overflow-hidden" style="max-width: 950px; margin: 0 auto;">
+        <div id="projector-sold-card" class="spl-card border-success p-3 p-md-4 p-lg-5 d-none my-auto shadow-sm bg-white animate-sold-celebration text-center position-relative overflow-hidden w-100" style="max-width: 1050px; margin: 0 auto;">
             <!-- Confetti Canvas for Smooth Particle Celebration -->
             <canvas id="sold-confetti-canvas" class="sold-confetti-canvas position-absolute top-0 start-0 w-100 h-100"></canvas>
 
-            <div class="sold-celebration-inner position-relative" style="z-index: 5;">
-                <div class="celebration-badge-title display-4 fw-black text-danger font-display mb-2">
+            <div class="sold-celebration-inner position-relative w-100" style="z-index: 5;">
+                <!-- Requirement 3 & 5: Clear, prominent CONGRATULATIONS! SUCCESSFULLY SOLD banner -->
+                <div class="display-4 fw-black text-danger font-display mb-1 text-uppercase tracking-wider">
                     🎉 CONGRATULATIONS! 🎉
                 </div>
-                <div class="badge bg-success-subtle text-success border border-success fs-3 px-5 py-2 rounded-pill text-uppercase tracking-widest font-display mb-3 shadow-sm">
-                    PLAYER SOLD
+                <div class="mb-4">
+                    <span class="badge bg-success text-white border border-success fs-3 px-4 px-md-5 py-2 rounded-pill text-uppercase tracking-widest font-display shadow-sm">
+                        <i class="fa-solid fa-circle-check me-2"></i>SUCCESSFULLY SOLD
+                    </span>
                 </div>
 
-                <!-- Player Photo & Details (STRICT SQUARE FRAME) -->
-                <div class="my-3">
-                    <div class="d-inline-block border border-danger border-3 rounded-3 shadow mb-3 overflow-hidden bg-white" style="width: 140px; height: 140px; aspect-ratio: 1/1;">
-                        <img id="sold-player-photo" src="/static/uploads/default_player.png" class="w-100 h-100 object-fit-cover" alt="Sold Player Photo" referrerpolicy="no-referrer" onerror="this.src='/static/uploads/default_player.png'">
-                    </div>
-                    <h1 class="display-4 fw-black text-dark font-display mb-2" id="sold-player-name">Player Name</h1>
-                    <div class="text-muted fs-4 fw-bold font-display text-uppercase tracking-wider mb-2">SOLD TO</div>
+                <!-- Responsive 2-Column Main Arena for Sold Player Details & Winning Team -->
+                <div class="row g-4 align-items-stretch justify-content-center my-2 text-center text-md-start">
                     
-                    <div class="p-3 rounded-4 bg-light border border-danger border-2 d-inline-flex align-items-center justify-content-center gap-3 px-4 shadow-sm mb-3">
-                        <img id="sold-winning-logo" src="/static/uploads/default_logo.png" class="rounded-3 border border-danger p-1 bg-white" style="width: 68px; height: 68px; object-fit: contain;" alt="Winning Franchise Logo" onerror="this.src='/static/uploads/default_logo.png'">
-                        <div class="text-start">
-                            <h2 class="display-6 fw-black text-danger font-display mb-0" id="sold-winning-franchise">AIVONTRAA FC</h2>
+                    <!-- Col 1: Prominent Player Photo & Info (Square, Undistorted) -->
+                    <div class="col-12 col-md-5 d-flex flex-column align-items-center">
+                        <div class="p-3 p-lg-4 rounded-4 bg-light border border-secondary-subtle w-100 h-100 d-flex flex-column align-items-center justify-content-center shadow-xs text-center">
+                            <!-- Player Photo Frame: Strict Square Aspect Ratio, Never Distorted -->
+                            <div class="border border-danger border-3 rounded-3 shadow mb-3 overflow-hidden bg-white"
+                                 style="width: 200px; height: 200px; max-width: 100%; aspect-ratio: 1/1;">
+                                <img id="sold-player-photo" src="/static/uploads/default_player.png"
+                                     class="w-100 h-100 object-fit-cover" alt="Sold Player Photo"
+                                     referrerpolicy="no-referrer"
+                                     onerror="this.src='/static/uploads/default_player.png'">
+                            </div>
+                            <h2 class="display-6 fw-black text-dark font-display mb-1 text-uppercase text-truncate w-100" id="sold-player-name">Player Name</h2>
+                            <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-3 bg-white border border-secondary-subtle my-1">
+                                <span id="sold-player-role" class="fw-bold text-dark font-display fs-6">BATSMAN</span>
+                                <span class="text-muted">&bull;</span>
+                                <span id="sold-player-rule" class="badge bg-danger text-white font-monospace">--</span>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="display-4 fw-black font-display mb-2 text-danger font-monospace" id="sold-final-price">₹ 0</div>
-                    <div class="mt-3">
-                        <span class="badge bg-light border border-danger text-danger fs-6 px-4 py-2 rounded-pill shadow-sm font-display">
-                            <i class="fa-solid fa-clock me-2"></i>Screen clearing in <span id="sold-timer-seconds">10</span>s
-                        </span>
+
+                    <!-- Col 2: Winning Team & Final Purchase Price -->
+                    <div class="col-12 col-md-7 d-flex flex-column justify-content-between gap-3">
+                        <!-- Winning Franchise Container -->
+                        <div class="p-3 p-lg-4 rounded-4 bg-light border-2 border-danger shadow-xs">
+                            <span class="text-muted extra-small text-uppercase fw-bold font-display d-block mb-2 tracking-wider">
+                                <i class="fa-solid fa-trophy text-warning me-1"></i> SOLD TO FRANCHISE
+                            </span>
+                            <div class="p-3 rounded-3 bg-white border border-secondary-subtle d-flex align-items-center gap-3 shadow-xs">
+                                <img id="sold-winning-logo" src="/static/uploads/default_logo.png"
+                                     class="rounded-3 border border-danger p-1 bg-white flex-shrink-0"
+                                     style="width: 64px; height: 64px; object-fit: contain;"
+                                     alt="Winning Franchise Logo" onerror="this.src='/static/uploads/default_logo.png'">
+                                <div class="overflow-hidden">
+                                    <h3 class="display-6 fw-black text-dark font-display mb-0 text-truncate" id="sold-winning-franchise">AIVONTRAA FC</h3>
+                                    <span class="badge bg-success-subtle text-success border border-success extra-small fw-bold">WINNING TEAM</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Final Purchase Price Container -->
+                        <div class="p-3 p-lg-4 rounded-4 bg-light border-2 border-success shadow-xs">
+                            <span class="text-muted extra-small text-uppercase fw-bold font-display d-block mb-1 tracking-wider">
+                                <i class="fa-solid fa-receipt text-success me-1"></i> FINAL SOLD PRICE
+                            </span>
+                            <div class="display-4 fw-black font-display text-danger font-monospace mb-0" id="sold-final-price">
+                                ₹ 0
+                            </div>
+                        </div>
                     </div>
+
                 </div>
             </div>
         </div>

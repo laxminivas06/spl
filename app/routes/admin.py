@@ -18,7 +18,10 @@ from app.services.csv_service import (
     is_valid_image_url
 )
 from app.services.audit_service import log_audit
-from app.services.auction_service import validate_squads_integrity, confirm_and_lock_squads, unlock_squads_override
+from app.services.auction_service import (
+    validate_squads_integrity, confirm_and_lock_squads, unlock_squads_override,
+    get_bid_increment_rules, add_bid_increment_rule, edit_bid_increment_rule, delete_bid_increment_rule
+)
 from app.services.fixture_service import generate_fixtures, validate_fixtures, publish_fixtures, unpublish_fixtures
 from app.services.backup_service import create_database_backup, list_backups, restore_database_backup, save_deleted_record, list_deleted_records
 from app.services.health_service import run_deep_auction_check
@@ -1125,6 +1128,16 @@ def settings():
         squad_limit = request.form.get('squad_limit', '15').strip()
         base_price = request.form.get('base_price', '10000').strip()
         timer_seconds = request.form.get('timer_seconds', '30').strip()
+
+        # Validate timer_seconds is a positive integer
+        try:
+            timer_int = int(timer_seconds)
+            if timer_int <= 0:
+                raise ValueError()
+        except (ValueError, TypeError):
+            flash('Auction Bid Timer must be a positive integer number of seconds (e.g. 20, 30, 45, 60).', 'danger')
+            return redirect(url_for('admin.settings'))
+
         theme_default = request.form.get('theme_default', 'dark').strip()
         show_price_public = 'true' if 'show_purchase_price_publicly' in request.form or request.form.get('show_purchase_price_publicly') == 'true' else 'false'
 
@@ -1168,7 +1181,8 @@ def settings():
         starting_purse=SystemSettings.get_setting('starting_purse', '300000'),
         squad_limit=SystemSettings.get_setting('squad_limit', '15'),
         base_price=SystemSettings.get_setting('base_price', '10000'),
-        timer_seconds=SystemSettings.get_setting('timer_seconds', '10'),
+        timer_seconds=SystemSettings.get_setting('timer_seconds', '30'),
+        bid_rules=get_bid_increment_rules(),
         theme_default=SystemSettings.get_setting('theme_default', 'dark'),
         show_purchase_price_publicly=SystemSettings.get_setting('SHOW_PURCHASE_PRICE_PUBLICLY', 'true'),
         max_elite_per_team=SystemSettings.get_setting('max_elite_per_team', '3'),
@@ -1180,6 +1194,83 @@ def settings():
         audit_log_level=SystemSettings.get_setting('audit_log_level', 'ALL'),
         audit_track_ip=SystemSettings.get_setting('audit_track_ip', 'true')
     )
+
+@admin_bp.route('/settings/bid-rules/add', methods=['POST'])
+@login_required
+@admin_required
+def add_bid_rule():
+    data = request.get_json() if request.is_json else request.form
+    min_p = data.get('min_price')
+    max_p = data.get('max_price')
+    inc = data.get('increment')
+    try:
+        rules, new_rule = add_bid_increment_rule(min_p, max_p, inc)
+        log_audit(current_user.id, 'ADD_BID_RULE', 'SystemSettings', None, None, f"₹{float(min_p):,.0f}–₹{float(max_p):,.0f}: +₹{float(inc):,.0f}")
+        msg = f'Payment condition ₹{float(min_p):,.0f} – ₹{float(max_p):,.0f} (Increment: ₹{float(inc):,.0f}) added successfully.'
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': True, 'message': msg, 'rules': rules, 'rule': new_rule})
+        flash(msg, 'success')
+    except ValueError as e:
+        msg = f'Failed to add condition: {str(e)}'
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': msg}), 400
+        flash(msg, 'danger')
+    except Exception as e:
+        msg = f'Error adding condition: {str(e)}'
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': msg}), 500
+        flash(msg, 'danger')
+    return redirect(url_for('admin.settings'))
+
+@admin_bp.route('/settings/bid-rules/<int:rule_id>/edit', methods=['POST'])
+@login_required
+@admin_required
+def edit_bid_rule(rule_id):
+    data = request.get_json() if request.is_json else request.form
+    min_p = data.get('min_price')
+    max_p = data.get('max_price')
+    inc = data.get('increment')
+    try:
+        rules = edit_bid_increment_rule(rule_id, min_p, max_p, inc)
+        log_audit(current_user.id, 'EDIT_BID_RULE', 'SystemSettings', None, None, f"Rule #{rule_id}: ₹{float(min_p):,.0f}–₹{float(max_p):,.0f}: +₹{float(inc):,.0f}")
+        msg = f'Payment condition updated successfully to ₹{float(min_p):,.0f} – ₹{float(max_p):,.0f} (Increment: ₹{float(inc):,.0f}).'
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': True, 'message': msg, 'rules': rules})
+        flash(msg, 'success')
+    except ValueError as e:
+        msg = f'Failed to update condition: {str(e)}'
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': msg}), 400
+        flash(msg, 'danger')
+    except Exception as e:
+        msg = f'Error updating condition: {str(e)}'
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': msg}), 500
+        flash(msg, 'danger')
+    return redirect(url_for('admin.settings'))
+
+@admin_bp.route('/settings/bid-rules/<int:rule_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_bid_rule(rule_id):
+    try:
+        rules = delete_bid_increment_rule(rule_id)
+        log_audit(current_user.id, 'DELETE_BID_RULE', 'SystemSettings', None, None, f"Deleted rule #{rule_id}")
+        msg = 'Payment condition deleted successfully.'
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': True, 'message': msg, 'rules': rules})
+        flash(msg, 'success')
+    except ValueError as e:
+        msg = f'Failed to delete condition: {str(e)}'
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': msg}), 400
+        flash(msg, 'danger')
+    except Exception as e:
+        msg = f'Error deleting condition: {str(e)}'
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': msg}), 500
+        flash(msg, 'danger')
+    return redirect(url_for('admin.settings'))
 
 # ==================== LIVE AUCTION CONTROL ====================
 
