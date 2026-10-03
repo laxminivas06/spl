@@ -294,9 +294,12 @@ def api_find_player():
 def api_activate_player():
     data = request.get_json() or request.form
     player_id = data.get('player_id')
+    auto_start = bool(data.get('auto_start', False))
     try:
         state = activate_player(player_id, current_user.id)
-        return jsonify({'success': True, 'status': state.status})
+        if auto_start:
+            state = start_bidding(current_user.id)
+        return jsonify({'success': True, 'status': state.status, 'player_id': state.active_player_id})
     except ValueError as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
@@ -491,6 +494,17 @@ def api_clear_sold():
     """Immediately clear sold player from live projection and console after 10 seconds (Requirements 1, 7, 8)."""
     try:
         state = clear_sold_player(current_user.id)
+        return jsonify({'success': True, 'status': state.status})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+@api_bp.route('/auction/clear-unsold', methods=['POST'])
+@login_required
+@admin_required
+def api_clear_unsold():
+    """Immediately clear unsold player from live projection and console."""
+    try:
+        state = reset_to_waiting(current_user.id)
         return jsonify({'success': True, 'status': state.status})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400

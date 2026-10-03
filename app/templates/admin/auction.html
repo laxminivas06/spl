@@ -6,55 +6,57 @@
 {% block admin_content %}
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
-<!-- Page Title Header -->
-<div
-    class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 pb-3 border-bottom border-secondary-subtle gap-3">
+<!-- ==========================================
+     PAGE TITLE HEADER
+     ========================================== -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 pb-3 border-bottom border-secondary-subtle gap-3">
     <div>
-        <h2 class="fw-bold text-dark mb-0"><i class="fa-solid fa-gavel text-danger me-2"></i>Primary Auction Console
+        <h2 class="fw-bold text-dark mb-0 font-display">
+            <i class="fa-solid fa-gavel text-danger me-2"></i>Primary Auction Console
         </h2>
-        <small class="text-muted">Enter player roll number → 10s live bidding timer → Click team cards to bid</small>
+        <small class="text-muted">Select player &rarr; Tap Start Auction &rarr; 10s live timer &rarr; Click team buttons to bid</small>
     </div>
-    <div class="d-flex align-items-center gap-2">
-        <a href="{{ url_for('live.auction_live') }}" target="_blank" class="btn btn-outline-danger btn-sm fw-semibold">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <a href="{{ url_for('live.auction_live') }}" target="_blank" class="btn btn-outline-danger btn-sm fw-semibold shadow-xs">
             <i class="fa-solid fa-tv me-1"></i> Open Projector View
         </a>
-        <button type="button" class="btn btn-outline-secondary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#freshAuctionResetModal" title="Reset auction to clean starting state">
+        <button type="button" class="btn btn-outline-secondary btn-sm fw-semibold shadow-xs" data-bs-toggle="modal" data-bs-target="#freshAuctionResetModal" title="Reset auction to clean starting state">
             <i class="fa-solid fa-rotate-left me-1"></i> Fresh Auction Reset
         </button>
-        <span id="auction-state-badge" class="badge bg-secondary fs-6 px-3 py-2">
+        <span id="auction-state-badge" class="badge bg-secondary fs-6 px-3 py-2 font-display">
             WAITING
         </span>
     </div>
 </div>
 
 <!-- ==========================================
-     DEDICATED ALWAYS-VISIBLE RULE NUMBER SECTION (Requirement 1)
+     DEDICATED ALWAYS-VISIBLE ROLL NUMBER SEARCH BAR
      ========================================== -->
-<div class="spl-rule-number-bar spl-card mb-4 p-3 border-2 border-danger shadow-sm bg-white"
-    id="spl-always-visible-rule-bar">
+<div class="spl-card mb-3 p-3 border-2 border-danger shadow-sm bg-white" id="spl-always-visible-rule-bar">
     <div class="row g-2 align-items-center justify-content-between">
         <div class="col-12 col-md-auto d-flex align-items-center gap-2">
             <span class="badge bg-danger-subtle text-danger border border-danger p-2 rounded-3 me-1">
-                <i class="fa-solid fa-gavel fs-6"></i>
+                <i class="fa-solid fa-id-card fs-6"></i>
             </span>
             <div>
                 <label for="rule-input-dedicated" class="fw-bold text-dark font-display fs-6 mb-0 text-uppercase">
-                    Roll Number:
+                    Roll Number Selector:
                 </label>
-                <div class="text-muted extra-small">Always-visible primary auction player selector</div>
+                <div class="text-muted extra-small">Search player by Roll Number or Name to load into console</div>
             </div>
         </div>
 
         <div class="col-12 col-md-6 col-lg-5 position-relative">
             <div class="input-group">
-                <span class="input-group-text bg-light text-danger fw-bold border-secondary-subtle"><i
-                        class="fa-solid fa-magnifying-glass"></i></span>
+                <span class="input-group-text bg-light text-danger fw-bold border-secondary-subtle">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </span>
                 <input type="text" id="rule-input-dedicated"
                     class="form-control font-monospace fw-bold border-secondary-subtle"
-                    placeholder="ROLL NUMBER OR PLAYER NAME" autocomplete="off" style="text-transform: uppercase;"
+                    placeholder="ENTER ROLL NUMBER (e.g. 26N81A05W5) OR NAME" autocomplete="off" style="text-transform: uppercase;"
                     oninput="this.value = this.value.toUpperCase(); syncRuleInput(this.value); handleLiveSuggestions(this.value, 'dedicated-suggestions');"
                     onkeypress="if(event.key==='Enter') searchPlayerByRuleDedicated();">
-                <button type="button" class="btn btn-danger fw-bold px-3 d-flex align-items-center gap-1"
+                <button type="button" class="btn btn-danger fw-bold px-3 d-flex align-items-center gap-1 shadow-xs"
                     onclick="searchPlayerByRuleDedicated()">
                     <i class="fa-solid fa-magnifying-glass"></i>
                     <span>Search</span>
@@ -70,220 +72,167 @@
         <div class="col-12 col-md-auto d-flex align-items-center gap-2 justify-content-md-end">
             <div class="p-2 rounded bg-light border border-secondary-subtle d-flex align-items-center gap-2">
                 <span class="text-muted extra-small fw-bold text-uppercase">Active Player:</span>
-                <span class="badge bg-danger fs-6 font-monospace" id="dedicated-rule-active-pill">None (Waiting)</span>
+                <span class="badge bg-secondary-subtle text-dark border border-secondary-subtle fs-6 font-monospace" id="dedicated-rule-active-pill">None (Waiting)</span>
             </div>
+        </div>
+    </div>
+
+    <!-- Recent Searches Section -->
+    <div id="recent-searches-box" class="mt-2 pt-2 border-top border-secondary-subtle text-start">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+            <span class="text-dark extra-small fw-bold font-display text-uppercase">
+                <i class="fa-solid fa-clock-rotate-left me-1 text-danger"></i> Recent Searches:
+            </span>
+            <button type="button" class="btn btn-link p-0 text-muted extra-small text-decoration-none"
+                onclick="clearRecentSearches()">Clear All</button>
+        </div>
+        <div class="d-flex flex-wrap gap-1.5" id="recent-searches-pills">
+            <span class="text-muted extra-small fst-italic">No recent searches yet</span>
         </div>
     </div>
 </div>
 
 <!-- ==========================================
-     1. RULE NUMBER / PLAYER NAME SEARCH & VERIFICATION CARD (Requirements 6, 7, 8, 9)
+     CORE PRIMARY AUCTION CONSOLE (ALWAYS VISIBLE)
      ========================================== -->
-<div class="spl-card mb-4 border-2 border-danger shadow-sm bg-white" id="player-entry-card">
-    <div class="p-3 p-md-4">
-        <div class="text-center mb-3">
-            <h4 class="fw-bold text-dark mb-1"><i class="fa-solid fa-magnifying-glass text-danger me-2"></i>Search by
-                Player Name or Roll Number</h4>
-            <p class="text-muted small mb-0">Enter a player's Roll Number or Player Name to view
-                details, update roll number, or start bidding</p>
-        </div>
-
-        <div class="row justify-content-center">
-            <div class="col-12 col-md-8 col-lg-7">
-                <!-- Search Alert -->
-                <div id="rule-lookup-error" class="alert alert-danger py-2 small d-none mb-3"></div>
-
-                <div class="position-relative">
-                    <div class="input-group input-group-lg shadow-sm">
-                        <span class="input-group-text bg-light border-secondary-subtle text-danger fw-bold"><i
-                                class="fa-solid fa-magnifying-glass"></i></span>
-                        <input type="text" id="rule-input"
-                            class="form-control bg-white text-dark border-secondary-subtle font-monospace fw-bold"
-                            placeholder="e.g. R01 or RAHUL KUMAR" autocomplete="off" style="text-transform: uppercase;"
-                            oninput="this.value = this.value.toUpperCase(); syncRuleInput(this.value); handleLiveSuggestions(this.value, 'main-suggestions');"
-                            onkeypress="if(event.key==='Enter') searchPlayerByRule();">
-                        <button type="button" id="btn-search-player" class="btn btn-danger px-4 fw-bold"
-                            onclick="searchPlayerByRule()">
-                            <i class="fa-solid fa-magnifying-glass me-1"></i> Search
-                        </button>
-                    </div>
-                    <!-- Live Autocomplete Suggestions Box (Requirement 8) -->
-                    <div id="main-suggestions"
-                        class="position-absolute w-100 bg-white border border-danger shadow-lg rounded-3 p-1 d-none z-3 mt-1 text-start"
-                        style="top: 100%; left: 0; max-height: 260px; overflow-y: auto;"></div>
-                </div>
-
-                <!-- Recent Searches Section (Requirement 9) -->
-                <div id="recent-searches-box" class="mt-3 text-start">
-                    <div class="d-flex align-items-center justify-content-between mb-1.5">
-                        <span class="text-dark extra-small fw-bold font-display text-uppercase">
-                            <i class="fa-solid fa-clock-rotate-left me-1 text-danger"></i> Recent Searches:
-                        </span>
-                        <button type="button" class="btn btn-link p-0 text-muted extra-small text-decoration-none"
-                            onclick="clearRecentSearches()">Clear All</button>
-                    </div>
-                    <div class="d-flex flex-wrap gap-1.5" id="recent-searches-pills">
-                        <span class="text-muted extra-small fst-italic">No recent searches yet</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Player Search Result Details Box (Requirements 3 & 4) -->
-        <div id="player-search-result"
-            class="d-none mt-4 p-3 p-md-4 rounded bg-light border border-secondary-subtle shadow-sm">
-            <div class="row g-3 align-items-center">
-                <!-- Col 1: Photo & Status (SQUARE PHOTO FRAME, STRICT NO CIRCLE) -->
-                <div class="col-12 col-sm-3 col-md-3 text-center">
-                    <div class="d-inline-block border border-danger border-2 rounded-3 shadow-sm overflow-hidden mb-2"
-                        style="width: 110px; height: 110px; aspect-ratio: 1/1;">
-                        <img id="search-res-photo" src="/static/uploads/default_player.png" alt="Player Photo"
-                            class="w-100 h-100 object-fit-cover"
-                            referrerpolicy="no-referrer"
-                            onerror="this.src='/static/uploads/default_player.png'">
-                    </div>
-                    <div>
-                        <span class="badge bg-danger font-monospace fs-6 px-3 py-1 mb-1 d-inline-block"
-                            id="search-res-rule">--</span>
-                    </div>
-                    <div>
-                        <span class="badge bg-success fs-7 px-2.5 py-1" id="search-res-status">AVAILABLE</span>
-                    </div>
-                </div>
-
-                <!-- Col 2: Player Information (Requirement 3) -->
-                <div class="col-12 col-sm-9 col-md-5">
-                    <h3 class="fw-bold text-dark mb-1" id="search-res-name">--</h3>
-                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                        <span
-                            class="badge bg-light border border-danger text-dark fs-7 d-inline-flex align-items-center gap-1.5 py-1 px-2.5">
-                            <img id="search-res-role-icon"
-                                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4saHQo4zw7BjytkA_qmWEUs8QViHyauRwpwqzANrRrQ&s=10"
-                                class="category-icon-img" style="width: 18px; height: 18px; object-fit: contain;">
-                            <span id="search-res-role">BATSMAN</span>
-                        </span>
-                        <span class="badge bg-secondary fs-7" id="search-res-category">NORMAL</span>
-                    </div>
-                    <div class="small text-muted">
-                        <div><strong class="text-secondary">Branch:</strong> <span class="text-dark"
-                                id="search-res-branch">--</span> &bull; <strong class="text-secondary">Year:</strong>
-                            <span class="text-dark" id="search-res-year">--</span></div>
-                        <div id="search-res-sold-info" class="text-danger small d-none mt-1 fw-bold"></div>
-                    </div>
-                </div>
-
-                <!-- Col 3: Update Rule Number & Start Action (Requirements 2 & 4) -->
-                <div class="col-12 col-md-4 border-start-md border-secondary-subtle ps-md-3">
-                    <!-- Update Rule Number Section -->
-                    <div class="p-2.5 rounded bg-white border border-secondary-subtle mb-3 shadow-sm">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="text-muted extra-small fw-bold text-uppercase">Current Roll Number</span>
-                            <span class="badge bg-danger font-monospace" id="curr-rule-display">--</span>
-                        </div>
-
-                <label class="text-muted extra-small fw-semibold d-block mb-1">New Roll Number</label>
-                <div class="input-group input-group-sm mb-1">
-                    <input type="text" id="new-rule-input"
-                        class="form-control bg-white text-dark border-secondary-subtle font-monospace"
-                        placeholder="e.g. 23-0789" onkeypress="if(event.key==='Enter') updateCurrentPlayerRule();">
-                    <button type="button" class="btn btn-outline-danger fw-bold px-3"
-                        onclick="updateCurrentPlayerRule()">
-                        Update
-                    </button>
-                </div>
-                <div id="update-rule-feedback" class="extra-small d-none"></div>
-            </div>
-
-            <!-- Start Bidding Button / Sold Warning (Requirement 2) -->
-            <div id="search-start-auction-wrap">
-                <button type="button" id="btn-start-searched-auction"
-                    class="btn btn-success w-100 py-2.5 fw-bold shadow-sm" onclick="startAuctionForSearchedPlayer()">
-                    <i class="fa-solid fa-play me-1"></i> Start 10s Bidding
-                </button>
-            </div>
-            <div id="search-sold-warning" class="alert alert-danger py-2 small mb-0 d-none text-center fw-bold">
-                <i class="fa-solid fa-ban me-1"></i> Already Sold. This player cannot be auctioned again.
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Quick Select Pills for Available Players -->
-<div class="mt-4 pt-3 border-top border-secondary-subtle text-center" id="quick-players-container">
-    <small class="text-muted d-block mb-2 fw-semibold">QUICK SELECT FROM AVAILABLE PLAYERS:</small>
-    <div class="d-flex flex-wrap justify-content-center gap-1.5" id="quick-players-pills"
-        style="max-height: 90px; overflow-y: auto;">
-        {% for p in available_players %}
-        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 extra-small"
-            onclick="quickSelectPlayer('{{ p.rule_number or p.roll_number }}')">
-            <strong class="text-danger">{{ p.rule_number or p.roll_number }}</strong> {{ p.name }}
-        </button>
-        {% else %}
-        <span class="text-muted extra-small">No available players remaining in primary pool.</span>
-        {% endfor %}
-    </div>
-</div>
-</div>
-</div>
-
-<!-- ==========================================
-     2. ACTIVE PLAYER BIDDING ARENA
-     ========================================== -->
-<div id="bidding-arena" class="d-none">
-    <!-- Sold Player 10-Second Celebration Banner (Requirements 1, 7, 8) -->
+<div id="primary-auction-console-arena" class="mb-4">
+    <!-- Sold Player 10-Second Celebration Banner -->
     <div id="admin-sold-alert-banner"
-        class="alert alert-success d-none py-3 px-4 rounded-4 border-2 border-danger shadow text-center mb-4 bg-white">
-        <div class="display-6 fw-black text-danger mb-1">🎉 CONGRATULATIONS! PLAYER SOLD! 🎉</div>
+        class="alert alert-success d-none py-3 px-4 rounded-4 border-2 border-danger shadow text-center mb-3 bg-white">
+        <div class="display-6 fw-black text-danger mb-1 font-display">🎉 CONGRATULATIONS! PLAYER SOLD! 🎉</div>
         <div class="fs-5 text-dark mb-2">Sold to <strong id="admin-sold-winner-team" class="text-primary">--</strong>
             for <strong id="admin-sold-final-price" class="text-danger font-monospace">₹ 0</strong></div>
-        <div>
-            <span class="badge bg-light border border-danger text-danger fs-6 px-4 py-2 rounded-pill shadow-sm">
+        <div class="d-flex justify-content-center align-items-center gap-3">
+            <span class="badge bg-light border border-danger text-danger fs-6 px-4 py-2 rounded-pill shadow-xs">
                 <i class="fa-solid fa-clock me-2"></i>Clearing in <span id="admin-sold-timer-seconds">10</span>s
             </span>
+            <button type="button" class="btn btn-danger btn-sm fw-bold px-3 py-1.5 rounded-pill shadow-sm" onclick="clearSoldPlayerImmediately()">
+                <i class="fa-solid fa-forward-step me-1"></i> Auction Next Player Now
+            </button>
         </div>
     </div>
 
-    <div class="row g-4 mb-4">
-        <!-- Player Details Card -->
+    <!-- Unsold Banner -->
+    <div id="unsold-banner"
+        class="alert alert-danger text-danger bg-danger-subtle border border-danger d-none py-3 px-4 rounded-4 text-center shadow-sm mb-3">
+        <h4 class="fw-bold mb-1 font-display"><i class="fa-solid fa-ban me-1"></i> PLAYER UNSOLD</h4>
+        <p class="mb-2 small">No bids placed within 10 seconds. Player has been marked UNSOLD and moved to second-chance pool.</p>
+        <button type="button" class="btn btn-outline-danger btn-sm fw-bold px-3 py-1.5 rounded-pill bg-white shadow-xs" onclick="clearUnsoldPlayerImmediately()">
+            <i class="fa-solid fa-forward-step me-1"></i> Clear &amp; Select Next Player
+        </button>
+    </div>
+
+    <div class="row g-3">
+        <!-- 1. ACTIVE PLAYER PROFILE & ROLL NUMBER CONTROLLER -->
         <div class="col-12 col-lg-5">
-            <div class="spl-card h-100 bg-white border border-secondary-subtle shadow-sm">
-                <div
-                    class="spl-card-header d-flex justify-content-between align-items-center bg-light border-bottom border-secondary-subtle">
-                    <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-id-card text-danger me-2"></i>Active Player Profile</h5>
-                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle font-monospace fw-bold" id="card-rule-number">--</span>
-                </div>
-                <div class="p-3 text-center">
-                    <img id="card-player-photo" src="" alt="Player"
-                        class="rounded-3 border border-danger border-2 shadow-sm mb-3 object-fit-cover" width="115"
-                        height="115" referrerpolicy="no-referrer" onerror="this.src='/static/uploads/default_player.png'">
-                    <h3 class="fw-bold text-dark mb-1" id="card-player-name">--</h3>
-                    <div class="d-flex justify-content-center gap-2 mb-3">
-                        <span class="badge bg-light border border-primary text-primary fs-7"
-                            id="card-player-role">BATSMAN</span>
-                        <span class="badge bg-secondary fs-7" id="card-player-category">NORMAL</span>
+            <div class="spl-card h-100 bg-white border border-secondary-subtle shadow-sm d-flex flex-column justify-content-between">
+                <div>
+                    <div class="spl-card-header d-flex justify-content-between align-items-center bg-light border-bottom border-secondary-subtle">
+                        <h5 class="fw-bold text-dark mb-0">
+                            <i class="fa-solid fa-user-tag text-danger me-2"></i>Active Player Profile
+                        </h5>
+                        <div class="d-flex align-items-center gap-1.5">
+                            <span class="text-muted extra-small fw-bold text-uppercase">ROLL NO:</span>
+                            <span class="badge bg-danger font-monospace fs-6 px-2.5 py-1" id="card-rule-number">--</span>
+                        </div>
                     </div>
 
-                    <div class="p-3 bg-light rounded border border-secondary-subtle text-start mb-3 small">
-                        <div class="row g-2">
-                            <div class="col-6"><span class="text-muted">Branch:</span> <strong class="text-dark"
-                                    id="card-player-branch">--</strong></div>
-                            <div class="col-6"><span class="text-muted">Year:</span> <strong class="text-dark"
-                                    id="card-player-year">--</strong></div>
+                    <div class="p-3 text-center">
+                        <!-- Square Photo Frame (STRICT SQUARE, NO CIRCLE) -->
+                        <div class="d-inline-block border border-danger border-2 rounded-3 shadow-sm overflow-hidden mb-2 bg-white"
+                            style="width: 120px; height: 120px; aspect-ratio: 1/1;">
+                            <img id="card-player-photo" src="/static/uploads/default_player.png" alt="Player Photo"
+                                class="w-100 h-100 object-fit-cover" referrerpolicy="no-referrer"
+                                onerror="this.src='/static/uploads/default_player.png'">
+                        </div>
+
+                        <h3 class="fw-bold text-dark mb-1 font-display" id="card-player-name">No Active Player</h3>
+                        <p class="text-muted extra-small mb-2" id="card-player-instruction">
+                            Tap any player roll number from the roster below or search above to auction
+                        </p>
+
+                        <!-- Role & Category Badges -->
+                        <div class="d-flex justify-content-center align-items-center gap-2 mb-2">
+                            <span class="badge bg-light border border-danger text-dark fs-7 d-inline-flex align-items-center gap-1.5 py-1 px-2.5" id="card-player-role-badge">
+                                <img id="card-player-role-icon"
+                                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4saHQo4zw7BjytkA_qmWEUs8QViHyauRwpwqzANrRrQ&s=10"
+                                    class="category-icon-img" style="width: 16px; height: 16px; object-fit: contain;">
+                                <span id="card-player-role">BATSMAN</span>
+                            </span>
+                            <span class="badge bg-secondary fs-7" id="card-player-category">NORMAL</span>
+                            <span class="badge bg-success-subtle text-success border border-success extra-small" id="card-player-status">AVAILABLE</span>
+                        </div>
+
+                        <!-- Player Academic Info -->
+                        <div class="p-2.5 bg-light rounded border border-secondary-subtle text-start mb-3 small">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <span class="text-muted extra-small d-block">Branch:</span>
+                                    <strong class="text-dark font-display" id="card-player-branch">--</strong>
+                                </div>
+                                <div class="col-6">
+                                    <span class="text-muted extra-small d-block">Year:</span>
+                                    <strong class="text-dark font-display" id="card-player-year">--</strong>
+                                </div>
+                                <div class="col-12 mt-1 pt-1 border-top border-secondary-subtle d-flex justify-content-between align-items-center">
+                                    <span class="text-muted extra-small">Base Price:</span>
+                                    <strong class="text-danger font-monospace" id="card-player-base-price">₹ 10,000</strong>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                </div>
+
+                <!-- ROLL NUMBER UPDATER TOOL -->
+                <div class="p-3 bg-light border-top border-secondary-subtle rounded-bottom">
+                    <div class="d-flex justify-content-between align-items-center mb-1.5">
+                        <span class="text-muted extra-small fw-bold text-uppercase">
+                            <i class="fa-solid fa-pen-to-square text-danger me-1"></i>Update Roll Number:
+                        </span>
+                        <span class="badge bg-secondary font-monospace" id="curr-rule-display">--</span>
+                    </div>
+                    <div class="input-group input-group-sm mb-1">
+                        <input type="text" id="new-rule-input"
+                            class="form-control bg-white text-dark border-secondary-subtle font-monospace fw-bold"
+                            placeholder="e.g. 26N81A05W5" style="text-transform: uppercase;"
+                            onkeypress="if(event.key==='Enter') updateCurrentPlayerRule();">
+                        <button type="button" class="btn btn-outline-danger fw-bold px-3 shadow-xs"
+                            onclick="updateCurrentPlayerRule()">
+                            Update
+                        </button>
+                    </div>
+                    <div id="update-rule-feedback" class="extra-small d-none"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Live Bidding Board & Timer Display -->
+        <!-- 2. LIVE BIDDING BOARD & AUCTION CONTROLS -->
         <div class="col-12 col-lg-7">
-            <div
-                class="spl-card h-100 d-flex flex-column justify-content-between bg-white border border-secondary-subtle shadow-sm">
+            <div class="spl-card h-100 d-flex flex-column justify-content-between bg-white border border-secondary-subtle shadow-sm">
                 <div>
+                    <!-- PROMINENT "START AUCTION" BANNER / BUTTON (Requirement: Tap to Start Auction) -->
+                    <div id="start-auction-prompt-banner" class="p-2.5 mb-2 rounded-3 bg-danger-subtle border border-danger shadow-xs d-none">
+                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
+                            <div class="text-start">
+                                <div class="fw-bold text-danger font-display small">
+                                    <i class="fa-solid fa-user-check me-1 text-success"></i> Player Ready: <span id="prompt-player-name" class="text-dark">--</span>
+                                    <span class="badge bg-danger ms-1 font-monospace" id="prompt-player-rule">--</span>
+                                </div>
+                                <div class="text-muted extra-small">Verify details above, then tap button to start 10s live bidding timer</div>
+                            </div>
+                            <button type="button" id="btn-start-auction-now" class="btn btn-success fw-black px-4 py-2 shadow-sm font-display d-flex align-items-center gap-2 text-uppercase text-nowrap" onclick="startBiddingForActivePlayer()">
+                                <i class="fa-solid fa-play fs-6"></i>
+                                <span>Start Auction</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Current Bid Display & 10s Timer Banner -->
                     <div class="p-3 rounded bg-light border border-danger-subtle mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="text-muted extra-small text-uppercase fw-bold"><i
-                                    class="fa-solid fa-gavel me-1 text-danger"></i>LIVE AUCTION BOARD</span>
+                            <span class="text-muted extra-small text-uppercase fw-bold font-display">
+                                <i class="fa-solid fa-gavel me-1 text-danger"></i>LIVE BIDDING BOARD
+                            </span>
                             <!-- 10-Second Timer -->
                             <div class="spl-timer-ring-container">
                                 <span class="spl-timer-badge text-danger bg-white border border-danger shadow-sm"
@@ -291,26 +240,26 @@
                             </div>
                         </div>
 
-                        <div class="text-center py-2">
-                            <span class="text-muted extra-small d-block text-uppercase fw-bold">CURRENT HIGHEST
-                                BID</span>
-                            <h1 class="fw-black text-danger display-4 my-1 font-monospace" id="current-bid-display">₹
-                                10,000</h1>
-                            <div class="d-flex justify-content-center align-items-center gap-2 mt-2"
-                                id="highest-bidder-info">
+                        <div class="text-center py-1">
+                            <span class="text-muted extra-small d-block text-uppercase fw-bold">CURRENT HIGHEST BID</span>
+                            <h1 class="fw-black text-danger display-4 my-1 font-monospace" id="current-bid-display">
+                                ₹ 10,000
+                            </h1>
+                            <div class="d-flex justify-content-center align-items-center gap-2 mt-2" id="highest-bidder-info">
                                 <span class="text-muted small">Leading Team:</span>
-                                <span class="badge bg-secondary fs-6 px-3 py-1.5" id="highest-bidder-name">No Bids
-                                    Placed Yet</span>
+                                <span class="badge bg-secondary fs-6 px-3 py-1.5 font-display" id="highest-bidder-name">
+                                    No Bids Placed Yet (Opening Base Price)
+                                </span>
                             </div>
                         </div>
 
-                        <div class="text-center mt-2 pt-2 border-top border-secondary-subtle">
+                        <div class="text-center mt-2 pt-2 border-top border-secondary-subtle d-flex justify-content-center align-items-center gap-2 flex-wrap">
                             <small class="text-muted">
-                                Next Minimum Bid: <strong class="text-dark font-monospace fs-6"
-                                    id="next-valid-bid-display">₹ 10,000</strong>
-                                <span class="badge bg-white border border-secondary-subtle text-dark ms-2"
-                                    id="bid-increment-step-badge">+₹2,000</span>
+                                Next Minimum Bid: <strong class="text-dark font-monospace fs-6" id="next-valid-bid-display">₹ 10,000</strong>
                             </small>
+                            <span class="badge bg-white border border-secondary-subtle text-dark font-monospace" id="bid-increment-step-badge">
+                                +₹2,000
+                            </span>
                         </div>
                     </div>
 
@@ -318,10 +267,8 @@
                     <div class="row g-2 mb-3" id="admin-top-two-bidders">
                         <!-- 🥇 Highest Bidder -->
                         <div class="col-6">
-                            <div class="p-2.5 rounded bg-white border border-danger shadow-sm position-relative text-center h-100"
-                                id="admin-lead-card">
-                                <span
-                                    class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold px-2 py-0.5 extra-small position-absolute top-0 start-50 translate-middle shadow-sm">
+                            <div class="p-2.5 rounded bg-white border border-danger shadow-sm position-relative text-center h-100" id="admin-lead-card">
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold px-2 py-0.5 extra-small position-absolute top-0 start-50 translate-middle shadow-xs">
                                     🥇 HIGHEST BID
                                 </span>
                                 <div class="d-flex align-items-center justify-content-center gap-2 mt-2">
@@ -330,10 +277,8 @@
                                         style="width: 38px; height: 38px; object-fit: contain;"
                                         onerror="this.src='/static/uploads/default_logo.png'">
                                     <div class="text-start overflow-hidden">
-                                        <div class="fw-bold text-dark small text-truncate" id="admin-lead-name"
-                                            style="max-width: 140px;">No Bids Yet</div>
-                                        <span class="text-danger fw-bold font-monospace small" id="admin-lead-amount">₹
-                                            0</span>
+                                        <div class="fw-bold text-dark small text-truncate" id="admin-lead-name" style="max-width: 140px;">No Bids Yet</div>
+                                        <span class="text-danger fw-bold font-monospace small" id="admin-lead-amount">₹ 0</span>
                                     </div>
                                 </div>
                             </div>
@@ -341,10 +286,8 @@
 
                         <!-- 🥈 Second Highest Bidder -->
                         <div class="col-6">
-                            <div class="p-2.5 rounded bg-white border border-secondary-subtle shadow-sm position-relative text-center h-100"
-                                id="admin-second-card">
-                                <span
-                                    class="badge bg-primary-subtle text-primary border border-primary-subtle fw-bold px-2 py-0.5 extra-small position-absolute top-0 start-50 translate-middle shadow-sm">
+                            <div class="p-2.5 rounded bg-white border border-secondary-subtle shadow-sm position-relative text-center h-100" id="admin-second-card">
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-bold px-2 py-0.5 extra-small position-absolute top-0 start-50 translate-middle shadow-xs">
                                     🥈 2ND HIGHEST
                                 </span>
                                 <div class="d-flex align-items-center justify-content-center gap-2 mt-2">
@@ -353,75 +296,39 @@
                                         style="width: 38px; height: 38px; object-fit: contain;"
                                         onerror="this.src='/static/uploads/default_logo.png'">
                                     <div class="text-start overflow-hidden">
-                                        <div class="fw-bold text-muted small text-truncate" id="admin-second-name"
-                                            style="max-width: 140px;">No Challenger</div>
-                                        <span class="text-primary fw-bold font-monospace small"
-                                            id="admin-second-amount">—</span>
+                                        <div class="fw-bold text-muted small text-truncate" id="admin-second-name" style="max-width: 140px;">No Challenger</div>
+                                        <span class="text-primary fw-bold font-monospace small" id="admin-second-amount">—</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Flash / Celebration Status Banner -->
-                    <div id="sold-celebration-banner"
-                        class="alert alert-success d-none py-3 text-center shadow border border-2 border-success bg-white">
-                        <div class="badge bg-success-subtle text-success border border-success fs-6 px-3 py-1 mb-2 text-uppercase tracking-wide fw-bold">
-                            <i class="fa-solid fa-trophy me-1"></i> PLAYER SOLD!
-                        </div>
-                        <div class="d-flex align-items-center justify-content-center gap-3 my-2">
-                            <img id="sold-banner-player-photo" src="/static/uploads/default_player.png"
-                                class="rounded-3 border border-2 border-danger shadow-sm" width="60" height="60"
-                                style="object-fit:cover;" onerror="this.src='/static/uploads/default_player.png'">
-                            <div class="text-start">
-                                <h4 class="fw-bold mb-0 text-dark" id="sold-banner-player-name">Player Name</h4>
-                                <div class="text-danger fw-black fs-4 font-monospace" id="sold-banner-price">₹ 0</div>
-                            </div>
-                        </div>
-                        <div
-                            class="p-2 rounded bg-light border border-success d-inline-flex align-items-center justify-content-center gap-2 px-3 mt-1">
-                            <img id="sold-banner-winner-logo" src="/static/uploads/default_logo.png"
-                                class="rounded-circle border border-danger p-0.5 bg-white" width="40" height="40"
-                                style="object-fit:contain;" onerror="this.src='/static/uploads/default_logo.png'">
-                            <div class="text-start">
-                                <small class="text-muted extra-small d-block text-uppercase fw-bold">WINNING
-                                    FRANCHISE</small>
-                                <strong class="text-primary fs-6" id="sold-banner-winner-name">Team Name</strong>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="unsold-banner"
-                        class="alert alert-danger text-danger bg-danger-subtle border border-danger d-none py-3 text-center shadow-sm">
-                        <h4 class="fw-bold mb-1"><i class="fa-solid fa-ban me-1"></i> UNSOLD</h4>
-                        <p class="mb-0 small">No bids placed within 10 seconds. Player marked UNSOLD.</p>
-                    </div>
                 </div>
 
-                <!-- Admin Action Controls -->
-                <div class="pt-3 border-top border-secondary-subtle">
+                <!-- Admin Action Controls (Pause, Resume / Start Auction, +10s, Reset, MARK SOLD, MARK UNSOLD) -->
+                <div class="p-3 bg-light border-top border-secondary-subtle rounded-bottom">
                     <div class="row g-2 mb-2">
                         <div class="col-6 col-md-3">
-                            <button type="button" class="btn btn-danger w-100 fw-bold btn-sm py-2 shadow-sm"
-                                onclick="pauseAuctionAction()">
+                            <button type="button" id="btn-pause-auction" class="btn btn-warning text-dark w-100 fw-bold btn-sm py-2 shadow-xs"
+                                onclick="pauseAuctionAction()" title="Pause countdown timer">
                                 <i class="fa-solid fa-pause me-1"></i> Pause
                             </button>
                         </div>
                         <div class="col-6 col-md-3">
-                            <button type="button" class="btn btn-primary w-100 fw-bold btn-sm py-2 shadow-sm"
-                                onclick="resumeAuctionAction()">
-                                <i class="fa-solid fa-forward me-1"></i> Resume
+                            <button type="button" id="btn-resume-auction" class="btn btn-success w-100 fw-bold btn-sm py-2 shadow-xs"
+                                onclick="resumeAuctionAction()" title="Start Auction / Resume Live Bidding">
+                                <i class="fa-solid fa-play me-1"></i> <span id="resume-btn-label">Start Auction</span>
                             </button>
                         </div>
                         <div class="col-6 col-md-3">
-                            <button type="button" class="btn btn-outline-danger w-100 fw-bold btn-sm py-2"
-                                onclick="extendTimerAction(10)">
+                            <button type="button" class="btn btn-outline-danger w-100 fw-bold btn-sm py-2 shadow-xs"
+                                onclick="extendTimerAction(10)" title="Add 10 seconds to clock">
                                 <i class="fa-solid fa-clock-rotate-left me-1"></i> +10s
                             </button>
                         </div>
                         <div class="col-6 col-md-3">
-                            <button type="button" class="btn btn-outline-secondary w-100 fw-bold btn-sm py-2"
-                                onclick="resetToWaitingAction()">
+                            <button type="button" class="btn btn-outline-secondary w-100 fw-bold btn-sm py-2 shadow-xs"
+                                onclick="resetToWaitingAction()" title="Reset current player auction to WAITING">
                                 <i class="fa-solid fa-arrow-rotate-left me-1"></i> Reset
                             </button>
                         </div>
@@ -436,7 +343,7 @@
                         </div>
                         <div class="col-12 col-md-5">
                             <button type="button" id="btn-unsold-player"
-                                class="btn btn-outline-danger btn-lg w-100 fw-bold" onclick="finalizeUnsoldAction()">
+                                class="btn btn-outline-danger btn-lg w-100 fw-bold shadow-sm" onclick="finalizeUnsoldAction()">
                                 <i class="fa-solid fa-xmark me-2"></i> MARK UNSOLD
                             </button>
                         </div>
@@ -445,94 +352,230 @@
             </div>
         </div>
     </div>
+</div>
 
-    <!-- ==========================================
-         3. CLICKABLE FRANCHISE TEAM CARDS (ALL 6 TEAMS)
-         ========================================== -->
-    <div class="spl-card border-top border-danger border-3 mb-4 bg-white shadow-sm">
-        <div
-            class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3 pb-2 border-bottom border-secondary-subtle">
-            <div>
-                <h5 class="fw-bold text-dark mb-0">
-                    <i class="fa-solid fa-shield-halved text-danger me-2"></i>Registered Franchise Teams — Click Team to
-                    Bid
-                </h5>
-                <small class="text-muted">Clicking any team automatically places the next valid bid for that team and
-                    resets the 10s timer</small>
-            </div>
-            <div>
-                <span class="badge bg-light border border-secondary-subtle text-dark px-3 py-1.5 font-monospace">
-                    Next Bid: <strong id="header-next-bid-pill" class="text-danger">₹ 10,000</strong>
-                </span>
-            </div>
+<!-- ==========================================
+     CLICKABLE FRANCHISE TEAM CARDS (ALL 6 TEAMS IN COMPACT RESPONSIVE ROW)
+     Requirement: On desktop, display all 6 franchises small like compact buttons, easy to click
+     ========================================== -->
+<div class="spl-card border-top border-danger border-3 mb-4 bg-white shadow-sm">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 p-3 pb-2 border-bottom border-secondary-subtle">
+        <div>
+            <h5 class="fw-bold text-dark mb-0 font-display">
+                <i class="fa-solid fa-shield-halved text-danger me-2"></i>Franchise Teams Bidding Pad
+            </h5>
+            <small class="text-muted">Click any team button below to place the next valid bid and reset 10s timer</small>
         </div>
+        <div>
+            <span class="badge bg-light border border-secondary-subtle text-dark px-3 py-1.5 font-monospace">
+                Next Bid: <strong id="header-next-bid-pill" class="text-danger">₹ 10,000</strong>
+            </span>
+        </div>
+    </div>
 
-        <div class="row g-3" id="franchise-cards-container">
+    <!-- Desktop: Exactly 6 columns in 1 single row (col-lg-2) | Tablet: 3 columns (col-md-4) | Mobile: 2 columns (col-6) -->
+    <div class="p-2 p-md-3">
+        <div class="row g-2" id="franchise-cards-container">
             {% for f in franchises %}
-            <div class="col-12 col-sm-6 col-md-4">
-                <div class="team-bid-card p-2.5 text-center h-100 position-relative bg-white" id="team-card-{{ f.id }}"
-                    data-franchise-id="{{ f.id }}">
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="team-bid-card p-2 text-center h-100 position-relative bg-white shadow-xs rounded-3 d-flex flex-column justify-content-between"
+                    id="team-card-{{ f.id }}" data-franchise-id="{{ f.id }}" style="cursor: pointer;">
+                    
                     <!-- Current Leader Crown Badge -->
-                    <div class="team-leader-badge badge bg-danger-subtle text-danger border border-danger fw-bold position-absolute top-0 start-50 translate-middle shadow-sm d-none"
-                        id="leader-badge-{{ f.id }}">
-                        <i class="fa-solid fa-crown me-1"></i> LEADER
+                    <div class="team-leader-badge badge bg-danger text-white border border-danger fw-bold position-absolute top-0 start-50 translate-middle shadow-xs d-none py-0.5 px-2"
+                        id="leader-badge-{{ f.id }}" style="font-size: 0.65rem; z-index: 5;">
+                        <i class="fa-solid fa-crown me-1 text-warning"></i> LEADER
                     </div>
 
-                    <!-- Team Logo -->
-                    <div class="team-logo-wrapper mb-2 mt-1">
-                        <img src="{{ url_for('static', filename='uploads/' + f.logo) if f.logo and not f.logo.startswith('http') else (f.logo or url_for('static', filename='uploads/default_logo.png')) }}"
-                            alt="{{ f.name }}" class="rounded-circle border border-2 team-logo" width="56" height="56"
-                            onerror="this.src='/static/uploads/default_logo.png'">
+                    <div>
+                        <!-- Team Logo (Compact 38x38px) -->
+                        <div class="team-logo-wrapper mb-1 mt-1">
+                            <img src="{{ url_for('static', filename='uploads/' + f.logo) if f.logo and not f.logo.startswith('http') else (f.logo or url_for('static', filename='uploads/default_logo.png')) }}"
+                                alt="{{ f.name }}" class="rounded-circle border border-2 team-logo" width="38" height="38"
+                                style="object-fit: cover;" onerror="this.src='/static/uploads/default_logo.png'">
+                        </div>
+
+                        <!-- Team Name & Short Name (Compact) -->
+                        <div class="fw-bold text-dark extra-small text-truncate font-display mb-0" title="{{ f.name }}">{{ f.name }}</div>
+                        <span class="badge bg-secondary font-monospace mb-1" style="font-size: 0.65rem; padding: 2px 5px;">{{ f.short_name }}</span>
+
+                        <!-- Purse Balance -->
+                        <div class="bg-light p-1 rounded border border-secondary-subtle mb-1">
+                            <span class="text-muted text-uppercase fw-bold d-block" style="font-size: 0.6rem;">Purse</span>
+                            <strong class="text-success extra-small font-monospace" id="team-purse-{{ f.id }}">₹ {{ f.remaining_purse | currency }}</strong>
+                        </div>
+
+                        <!-- Squad Count & Elite Quota -->
+                        <div class="text-muted mb-1 d-flex justify-content-between align-items-center" style="font-size: 0.65rem;">
+                            <span>Sq: <strong class="text-dark" id="team-squad-{{ f.id }}">{{ f.squad_count }}</strong>/{{ f.squad_limit }}</span>
+                            <span>El: <strong class="{% if f.auction_elite_count >= f.max_auction_elite_allowed %}text-primary{% elif f.auction_elite_count >= f.min_auction_elite_required %}text-success{% else %}text-danger{% endif %}" id="team-elite-{{ f.id }}">{{ f.auction_elite_count }}/{{ f.max_auction_elite_allowed }}</strong></span>
+                        </div>
+
+                        <!-- Eligibility Status Badge -->
+                        <div class="mb-1.5" style="min-height: 18px;">
+                            {% if f.has_captain %}
+                            <span class="badge bg-success-subtle text-success border border-success" style="font-size: 0.6rem; padding: 1px 4px;" id="team-status-{{ f.id }}">
+                                <i class="fa-solid fa-check me-0.5"></i>Eligible &check;
+                            </span>
+                            {% else %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger" style="font-size: 0.6rem; padding: 1px 4px;" id="team-status-{{ f.id }}">
+                                <i class="fa-solid fa-ban me-0.5"></i>Captain Req
+                            </span>
+                            {% endif %}
+                        </div>
                     </div>
 
-                    <!-- Team Name & Short Name -->
-                    <div class="fw-bold text-dark small text-truncate" title="{{ f.name }}">{{ f.name }}</div>
-                    <span class="badge bg-secondary extra-small font-monospace mb-1">{{ f.short_name }}</span>
-
-                    <!-- Captain / Eligibility Status -->
-                    <div class="mb-2">
-                        {% if f.has_captain %}
-                        <span class="badge bg-success-subtle text-success border border-success extra-small"
-                            id="team-status-{{ f.id }}">
-                            <i class="fa-solid fa-check me-1"></i>Eligible for Bidding ✓
-                        </span>
-                        {% else %}
-                        <span class="badge bg-danger-subtle text-danger border border-danger extra-small"
-                            id="team-status-{{ f.id }}">
-                            <i class="fa-solid fa-ban me-1"></i>Not Eligible (Captain Required)
-                        </span>
-                        {% endif %}
-                    </div>
-
-                    <!-- Purse Balance -->
-                    <div class="bg-light p-1.5 rounded border border-secondary-subtle mb-2">
-                        <span class="text-muted extra-small d-block text-uppercase fw-bold">Purse</span>
-                        <strong class="text-success small font-monospace" id="team-purse-{{ f.id }}">₹ {{
-                            f.remaining_purse | currency }}</strong>
-                    </div>
-
-                    <!-- Squad Count & Elite Quota -->
-                    <div class="extra-small text-muted mb-2 d-flex justify-content-between align-items-center">
-                        <span>Squad: <strong class="text-dark" id="team-squad-{{ f.id }}">{{ f.squad_count }}</strong>/{{ f.squad_limit }}</span>
-                        <span>Auction Elites: <strong class="{% if f.auction_elite_count >= f.max_auction_elite_allowed %}text-primary{% elif f.auction_elite_count >= f.min_auction_elite_required %}text-success{% else %}text-danger{% endif %}" id="team-elite-{{ f.id }}" title="Auction Slots: {{ f.auction_elite_count }}/{{ f.max_auction_elite_allowed }} (Req: 1–3) | Captain: 1 Retained (Total: {{ f.elite_count }}/{{ f.max_elite_allowed }})">{{ f.auction_elite_count }}/{{ f.max_auction_elite_allowed }} <span class="extra-small font-normal text-muted">(Req: 1–3)</span></strong></span>
-                    </div>
-
-                    <!-- Action Button (Click to Bid) -->
+                    <!-- Compact Easy-To-Click Bid Button -->
                     {% if not f.has_captain %}
                     <button type="button"
                         class="btn btn-sm btn-outline-danger w-100 extra-small py-1 disabled team-bid-btn"
-                        id="team-btn-{{ f.id }}" title="Team Captain Required">
-                        <i class="fa-solid fa-ban me-1"></i> Captain Required
+                        id="team-btn-{{ f.id }}" style="font-size: 0.7rem;" title="Team Captain Required">
+                        <i class="fa-solid fa-ban me-1"></i> Captain
                     </button>
                     {% else %}
-                    <button type="button" class="btn btn-sm btn-danger w-100 fw-bold py-1 team-bid-btn shadow-sm"
-                        id="team-btn-{{ f.id }}">
+                    <button type="button" class="btn btn-sm btn-danger w-100 fw-bold py-1 team-bid-btn shadow-xs"
+                        id="team-btn-{{ f.id }}" style="font-size: 0.75rem;">
                         <i class="fa-solid fa-gavel me-1"></i> BID
                     </button>
                     {% endif %}
                 </div>
             </div>
             {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     AVAILABLE PLAYERS ROSTER & DIRECT TAP SELECTOR
+     ========================================== -->
+<div class="spl-card bg-white border border-secondary-subtle shadow-sm mb-4" id="available-players-section">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 p-3 pb-2 border-bottom border-secondary-subtle">
+        <div>
+            <h5 class="fw-bold text-dark mb-0 font-display">
+                <i class="fa-solid fa-users text-danger me-2"></i>Available Players for Primary Auction
+                <span class="badge bg-danger ms-2 font-monospace fs-7" id="available-count-badge">{{ available_players | length }} Available</span>
+            </h5>
+            <small class="text-muted">Tap any Roll Number or click &ldquo;Select Player&rdquo; to load into console, then click &ldquo;Start Auction&rdquo;</small>
+        </div>
+        <div class="d-flex gap-2">
+            <input type="text" id="roster-table-search"
+                class="form-control form-control-sm bg-white text-dark border-secondary-subtle font-monospace"
+                placeholder="Filter by roll no, name, role...">
+        </div>
+    </div>
+
+    <!-- Quick Select Roll Number Pills -->
+    <div class="p-3 bg-light border-bottom border-secondary-subtle">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="text-muted extra-small fw-bold text-uppercase font-display">
+                <i class="fa-solid fa-hand-pointer text-danger me-1"></i>QUICK SELECT ROLL NUMBERS (TAP TO SELECT &amp; PREVIEW):
+            </span>
+            <small class="text-muted extra-small">Tapping loads player &rarr; tap Start Auction to begin</small>
+        </div>
+        <div class="d-flex flex-wrap gap-1.5" id="quick-players-pills" style="max-height: 120px; overflow-y: auto;">
+            {% for p in available_players %}
+            <button type="button"
+                class="btn btn-sm btn-outline-danger bg-white font-monospace py-1 px-2.5 extra-small shadow-xs d-inline-flex align-items-center gap-1.5"
+                onclick="selectPlayerForAuction({{ p.id }}, '{{ p.roll_number }}')">
+                <strong class="text-danger">{{ p.roll_number }}</strong>
+                <span class="text-dark">{{ p.name }}</span>
+            </button>
+            {% else %}
+            <span class="text-muted extra-small">No available players remaining in primary pool.</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Searchable Roster Table -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 font-sans" id="roster-players-table">
+            <thead class="text-dark small text-uppercase bg-light border-bottom border-secondary-subtle font-display">
+                <tr>
+                    <th class="ps-3 py-2">Photo</th>
+                    <th class="py-2">Roll Number</th>
+                    <th class="py-2">Player Name</th>
+                    <th class="py-2">Role</th>
+                    <th class="py-2">Branch / Year</th>
+                    <th class="py-2">Category</th>
+                    <th class="py-2 text-end pe-3">Action</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white" id="roster-table-body">
+                {% for p in available_players %}
+                <tr class="roster-table-row" data-roll="{{ p.roll_number | lower }}" data-name="{{ p.name | lower }}" data-role="{{ p.role | lower }}">
+                    <td class="ps-3 py-2">
+                        <img src="{{ url_for('static', filename='uploads/' + p.photo) if p.photo and not p.photo.startswith('http') else (p.photo or url_for('static', filename='uploads/default_player.png')) }}"
+                            alt="{{ p.name }}" class="rounded-2 object-fit-cover border border-danger shadow-xs"
+                            width="40" height="40" style="aspect-ratio: 1/1;" referrerpolicy="no-referrer"
+                            onerror="this.src='/static/uploads/default_player.png'">
+                    </td>
+                    <td class="py-2 font-monospace fw-bold text-danger">{{ p.roll_number }}</td>
+                    <td class="py-2 fw-bold text-dark">{{ p.name }}</td>
+                    <td class="py-2"><span class="badge bg-light border border-danger text-dark extra-small">{{ p.role }}</span></td>
+                    <td class="py-2 small text-muted">{{ p.branch or '-' }} / Yr {{ p.year or '-' }}</td>
+                    <td class="py-2"><span class="badge {% if p.category == 'Elite' %}bg-warning text-dark{% else %}bg-secondary{% endif %} extra-small">{{ p.category }}</span></td>
+                    <td class="py-2 text-end pe-3">
+                        <button type="button" class="btn btn-outline-danger btn-sm fw-bold shadow-xs py-1 px-3"
+                            onclick="selectPlayerForAuction({{ p.id }}, '{{ p.roll_number }}')">
+                            <i class="fa-solid fa-user-check me-1"></i> Select Player
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-circle-check text-success fa-2x mb-1 d-block"></i>
+                        No available players waiting.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ==========================================
+     FRESH AUCTION RESET MODAL
+     ========================================== -->
+<div class="modal fade" id="freshAuctionResetModal" tabindex="-1" aria-labelledby="freshAuctionResetModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-2 border-danger shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-danger text-white py-3">
+                <h5 class="modal-title font-display fw-black" id="freshAuctionResetModalLabel">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i> FRESH AUCTION RESET
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.fresh_auction_reset') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body p-4 text-start">
+                    <p class="fw-bold text-dark mb-2 fs-6">Are you sure you want to reset the auction to a fresh starting state?</p>
+                    <div class="p-3 bg-light rounded-3 border border-secondary-subtle small mb-3">
+                        <div class="fw-bold text-success mb-1"><i class="fa-solid fa-shield-halved me-1"></i> PERMANENT DATA PRESERVED:</div>
+                        <ul class="mb-2 ps-3 text-muted">
+                            <li>All <strong>Franchises</strong> (names, owners, emails, logos, settings)</li>
+                            <li>All <strong>Final Squads &amp; Captains</strong> (retained roles, categories)</li>
+                            <li>All <strong>Players in database</strong> (profiles, photos, roles, categories)</li>
+                        </ul>
+                        <div class="fw-bold text-danger mb-1"><i class="fa-solid fa-rotate-left me-1"></i> AUCTION DATA RESET:</div>
+                        <ul class="mb-0 ps-3 text-muted">
+                            <li>All previous bids, auction transactions &amp; audit logs cleared</li>
+                            <li>Franchise spent purse reset to ₹0; remaining purse restored</li>
+                            <li>All players reset to <strong>AVAILABLE</strong> for bidding</li>
+                            <li>Auction console status reset to <strong>WAITING</strong></li>
+                        </ul>
+                    </div>
+                    <div class="text-danger extra-small font-display fw-bold">
+                        <i class="fa-solid fa-circle-info me-1"></i> This action cannot be undone. Bidding will restart from Player #1.
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2.5 px-4 d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-sm px-4 fw-bold shadow-sm">
+                        <i class="fa-solid fa-rotate-left me-1"></i> Confirm Fresh Reset
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -550,71 +593,7 @@
     let autoFinalizing = false;
     let isSubmittingBid = false;
 
-    document.addEventListener('DOMContentLoaded', () => {
-        // Restore persisted Rule Number across navigations/refreshes (Requirement 1)
-        const savedRule = sessionStorage.getItem('spl_entered_rule');
-        if (savedRule) {
-            const dedInput = document.getElementById('rule-input-dedicated');
-            const mainInput = document.getElementById('rule-input');
-            if (dedInput) dedInput.value = savedRule;
-            if (mainInput) mainInput.value = savedRule;
-        }
-
-        renderRecentSearches();
-
-        // Close suggestions on outside click
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('#rule-input') && !e.target.closest('#main-suggestions')) {
-                document.getElementById('main-suggestions')?.classList.add('d-none');
-            }
-            if (!e.target.closest('#rule-input-dedicated') && !e.target.closest('#dedicated-suggestions')) {
-                document.getElementById('dedicated-suggestions')?.classList.add('d-none');
-            }
-        });
-
-        // Start fast timer tick (100ms) for high precision countdown
-        setInterval(tickTimer, 100);
-        // Poll server state every 1.2 seconds
-        pollState();
-        setInterval(pollState, 1200);
-
-        // Delegated click on team cards
-        const container = document.getElementById('franchise-cards-container');
-        if (container) {
-            container.addEventListener('click', (e) => {
-                const card = e.target.closest('.team-bid-card');
-                if (card && card.dataset.franchiseId) {
-                    placeTeamBid(parseInt(card.dataset.franchiseId, 10));
-                }
-            });
-        }
-    });
-
-    let searchedPlayerObj = null;
-
-    // Synchronize Rule Number inputs across the page and persist to sessionStorage (Requirement 1)
-    function syncRuleInput(val) {
-        if (val !== undefined && val !== null) {
-            sessionStorage.setItem('spl_entered_rule', val);
-            const dedInput = document.getElementById('rule-input-dedicated');
-            const mainInput = document.getElementById('rule-input');
-            if (dedInput && dedInput.value !== val) dedInput.value = val;
-            if (mainInput && mainInput.value !== val) mainInput.value = val;
-        }
-    }
-
-    function searchPlayerByRuleDedicated() {
-        const dedInput = document.getElementById('rule-input-dedicated');
-        const rule = dedInput ? dedInput.value.trim() : '';
-        searchPlayerByRule(rule);
-    }
-
-    function quickSelectPlayer(ruleNo) {
-        syncRuleInput(ruleNo);
-        searchPlayerByRule(ruleNo);
-    }
-
-    // Category Icons JS mapping (Requirement 1)
+    // Category Icons JS mapping
     const CATEGORY_ICONS_JS = {
         'BATSMAN': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4saHQo4zw7BjytkA_qmWEUs8QViHyauRwpwqzANrRrQ&s=10',
         'BOWLER': 'https://media.istockphoto.com/id/2026855771/vector/cricket-ball-icon-isolated-on-white-background.jpg?s=612x612&w=0&k=20&c=PITZXH3lkWfkNfsYtFqVajAWKntdiXteyTZEOr-o90I=',
@@ -630,9 +609,66 @@
         return CATEGORY_ICONS_JS.BATSMAN;
     }
 
-    // Live Autocomplete Suggestions (Requirement 8)
+    document.addEventListener('DOMContentLoaded', () => {
+        // Restore persisted Roll Number across navigations/refreshes
+        const savedRule = sessionStorage.getItem('spl_entered_rule');
+        if (savedRule) {
+            const dedInput = document.getElementById('rule-input-dedicated');
+            if (dedInput) dedInput.value = savedRule;
+        }
+
+        renderRecentSearches();
+
+        // Close suggestions on outside click
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#rule-input-dedicated') && !e.target.closest('#dedicated-suggestions')) {
+                document.getElementById('dedicated-suggestions')?.classList.add('d-none');
+            }
+        });
+
+        // Search filter for available players table
+        const searchInput = document.getElementById('roster-table-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase().trim();
+                document.querySelectorAll('.roster-table-row').forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(term) ? '' : 'none';
+                });
+            });
+        }
+
+        // Delegated click on franchise team cards
+        const container = document.getElementById('franchise-cards-container');
+        if (container) {
+            container.addEventListener('click', (e) => {
+                const card = e.target.closest('.team-bid-card');
+                if (card && card.dataset.franchiseId) {
+                    placeTeamBid(parseInt(card.dataset.franchiseId, 10));
+                }
+            });
+        }
+
+        // Start fast timer tick (100ms) for high precision countdown
+        setInterval(tickTimer, 100);
+
+        // Initial state poll & recurring 1.2s poll
+        pollState();
+        setInterval(pollState, 1200);
+    });
+
+    // Synchronize Roll Number input and persist to sessionStorage
+    function syncRuleInput(val) {
+        if (val !== undefined && val !== null) {
+            sessionStorage.setItem('spl_entered_rule', val);
+            const dedInput = document.getElementById('rule-input-dedicated');
+            if (dedInput && dedInput.value !== val) dedInput.value = val;
+        }
+    }
+
+    // Live Autocomplete Suggestions
     let suggestionDebounceTimer = null;
-    function handleLiveSuggestions(val, dropdownId = 'main-suggestions') {
+    function handleLiveSuggestions(val, dropdownId = 'dedicated-suggestions') {
         clearTimeout(suggestionDebounceTimer);
         const box = document.getElementById(dropdownId);
         if (!box) return;
@@ -655,7 +691,7 @@
                     <div class="px-2.5 py-2 border-bottom border-secondary-subtle hover-bg-light cursor-pointer d-flex align-items-center justify-content-between"
                          onclick="selectSuggestion('${s.rule_number || s.name}')" style="cursor: pointer;">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-secondary font-monospace">${s.rule_number || '--'}</span>
+                            <span class="badge bg-danger font-monospace">${s.rule_number || '--'}</span>
                             <strong class="text-dark font-display">${s.name}</strong>
                         </div>
                         <span class="badge ${s.is_captain ? 'bg-danger' : (s.status === 'AVAILABLE' ? 'bg-success' : 'bg-secondary')} extra-small">
@@ -673,12 +709,11 @@
     function selectSuggestion(term) {
         term = String(term).toUpperCase();
         syncRuleInput(term);
-        document.getElementById('main-suggestions')?.classList.add('d-none');
         document.getElementById('dedicated-suggestions')?.classList.add('d-none');
-        searchPlayerByRule(term);
+        searchPlayerByRuleDedicated(term);
     }
 
-    // Recent Searches Management (Requirement 9)
+    // Recent Searches Management
     function getRecentSearches() {
         try {
             return JSON.parse(localStorage.getItem('spl_recent_searches') || '[]');
@@ -721,113 +756,142 @@
         `).join('');
     }
 
-    // Requirement 6 & 7: Search by Player Name + Rule Number (Auto-uppercase)
-    async function searchPlayerByRule(overrideRule) {
-        const input = document.getElementById('rule-input');
-        const errBox = document.getElementById('rule-lookup-error');
-        const errBoxDed = document.getElementById('rule-lookup-error-dedicated');
-        const resBox = document.getElementById('player-search-result');
-        const rule = (overrideRule !== undefined ? overrideRule : (input ? input.value : '')).trim().toUpperCase();
+    // Search player by Roll Number or Name and load into console (NO auto-start)
+    async function searchPlayerByRuleDedicated(overrideTerm) {
+        const input = document.getElementById('rule-input-dedicated');
+        const errBox = document.getElementById('rule-lookup-error-dedicated');
+        const term = (overrideTerm !== undefined ? overrideTerm : (input ? input.value : '')).trim().toUpperCase();
 
-        syncRuleInput(rule);
-
-        document.getElementById('main-suggestions')?.classList.add('d-none');
+        syncRuleInput(term);
         document.getElementById('dedicated-suggestions')?.classList.add('d-none');
+        if (errBox) { errBox.classList.add('d-none'); errBox.textContent = ''; }
 
-        if (errBox) errBox.classList.add('d-none');
-        if (errBoxDed) errBoxDed.classList.add('d-none');
-        if (resBox) resBox.classList.add('d-none');
-        searchedPlayerObj = null;
-
-        if (!rule) {
-            const msg = 'Please enter a Player Name or Rule Number.';
-            if (errBox) { errBox.classList.remove('d-none'); errBox.textContent = msg; }
-            if (errBoxDed) { errBoxDed.classList.remove('d-none'); errBoxDed.textContent = msg; }
+        if (!term) {
+            if (errBox) { errBox.classList.remove('d-none'); errBox.textContent = 'Please enter a Roll Number or Player Name.'; }
             return;
         }
 
+        saveRecentSearch(term);
+
         try {
-            const res = await fetch(`/api/auction/search-player?query=${encodeURIComponent(rule)}&mode=PRIMARY`);
+            const res = await fetch(`/api/auction/search-player?query=${encodeURIComponent(term)}&mode=PRIMARY`);
             const data = await res.json();
 
             if (!data.success || !data.player) {
-                const msg = data.message || `Player with Rule Number or Name '${rule}' not found.`;
-                if (errBox) { errBox.classList.remove('d-none'); errBox.textContent = msg; }
-                if (errBoxDed) { errBoxDed.classList.remove('d-none'); errBoxDed.textContent = msg; }
+                if (errBox) {
+                    errBox.classList.remove('d-none');
+                    errBox.textContent = data.message || `Player with Roll Number or Name '${term}' not found.`;
+                }
                 return;
             }
 
             const p = data.player;
-            searchedPlayerObj = p;
-            saveRecentSearch(rule);
 
-            // Display player attributes (Requirement 3 & 10)
-            document.getElementById('search-res-photo').src = (p.photo && !p.photo.startsWith('http')) ? `/static/uploads/${p.photo}` : (p.photo || '/static/uploads/default_player.png');
-            document.getElementById('search-res-name').textContent = p.name;
-            document.getElementById('search-res-rule').textContent = p.rule_number || p.roll_number;
-            document.getElementById('search-res-role').textContent = p.role || 'BATSMAN';
-            
-            const roleIcon = document.getElementById('search-res-role-icon');
-            if (roleIcon) roleIcon.src = getCategoryIconJs(p.role);
-
-            document.getElementById('search-res-category').textContent = p.category || 'NORMAL';
-            document.getElementById('search-res-branch').textContent = p.branch || '-';
-            document.getElementById('search-res-year').textContent = p.year ? `${p.year}` : '-';
-            document.getElementById('curr-rule-display').textContent = p.rule_number || p.roll_number;
-            document.getElementById('new-rule-input').value = '';
-            document.getElementById('update-rule-feedback').className = 'extra-small d-none';
-
-            const statusBadge = document.getElementById('search-res-status');
-            const soldInfo = document.getElementById('search-res-sold-info');
-            const startWrap = document.getElementById('search-start-auction-wrap');
-            const soldWarn = document.getElementById('search-sold-warning');
-
-            // Captain Protection & Sold Check (Requirement 2 & 6)
             if (p.is_captain || data.is_captain || p.status === 'RETAINED') {
-                statusBadge.className = 'badge bg-danger fs-7 px-2.5 py-1';
-                statusBadge.textContent = 'RETAINED (C)';
-                soldInfo.classList.remove('d-none');
-                soldInfo.innerHTML = `<i class="fa-solid fa-crown me-1"></i> Retained Captain for <strong>${p.franchise_name || 'a team'}</strong> (₹ 50,000)`;
-                startWrap.classList.add('d-none');
-                soldWarn.classList.remove('d-none');
-                soldWarn.innerHTML = `<i class="fa-solid fa-ban me-1"></i> Captain Retained. Captains cannot enter the normal auction bidding pool.`;
-            } else if (p.is_sold || data.is_sold || p.status === 'SOLD' || p.sold_to) {
-                statusBadge.className = 'badge bg-danger fs-7 px-2.5 py-1';
-                statusBadge.textContent = 'SOLD';
-                soldInfo.classList.remove('d-none');
-                soldInfo.innerHTML = `<i class="fa-solid fa-lock me-1"></i> Sold to <strong>${p.franchise_name || 'a team'}</strong> for <strong>₹ ${Number(p.sold_price || 0).toLocaleString()}</strong> (${p.auction_type || 'PRIMARY'})`;
-                startWrap.classList.add('d-none');
-                soldWarn.classList.remove('d-none');
-                soldWarn.innerHTML = `<i class="fa-solid fa-ban me-1"></i> Already Sold. This player cannot be auctioned again.`;
-            } else {
-                statusBadge.className = 'badge bg-success fs-7 px-2.5 py-1';
-                statusBadge.textContent = p.status || 'AVAILABLE';
-                soldInfo.classList.add('d-none');
-                startWrap.classList.remove('d-none');
-                soldWarn.classList.add('d-none');
+                alert(`Captain Retained: Player '${p.name} (C)' is a Team Captain and already RETAINED. Captains cannot be auctioned.`);
+                return;
             }
 
-            resBox.classList.remove('d-none');
+            if (p.is_sold || data.is_sold || p.status === 'SOLD' || p.sold_to) {
+                alert(`Already Sold: Player '${p.name}' has already been sold. This player cannot be auctioned again.`);
+                return;
+            }
+
+            // Load player into console in preview/ready state (NO auto-start!)
+            await selectPlayerForAuction(p.id, p.roll_number);
         } catch (err) {
-            errBox.classList.remove('d-none');
-            errBox.textContent = 'Error connecting to search service: ' + err.message;
+            if (errBox) {
+                errBox.classList.remove('d-none');
+                errBox.textContent = 'Error connecting to search service: ' + err.message;
+            }
         }
     }
 
+    // Select and load player into console in PREVIEW/READY state (Requirement: Do NOT start until "Start Auction" tapped)
+    async function selectPlayerForAuction(playerId, rollNumber) {
+        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const errBox = document.getElementById('rule-lookup-error-dedicated');
+        if (errBox) { errBox.classList.add('d-none'); errBox.textContent = ''; }
 
-    // Requirement 4: Update Player Rule Number
+        if (rollNumber) {
+            syncRuleInput(rollNumber);
+            saveRecentSearch(rollNumber);
+        }
+
+        try {
+            // Activate player with auto_start: false
+            const res = await fetch('/api/auction/activate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+                body: JSON.stringify({ player_id: playerId, auto_start: false })
+            });
+            const data = await res.json();
+
+            if (!data.success) {
+                alert(data.message || 'Failed to select player for auction.');
+                return;
+            }
+
+            // Timer sits ready at 10s without ticking
+            timerSeconds = 10;
+            timerRunning = false;
+            renderTimer(10);
+            await pollState();
+
+            // Smooth scroll up to console arena
+            document.getElementById('primary-auction-console-arena')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch (err) {
+            alert('Error selecting player: ' + err.message);
+        }
+    }
+
+    // Explicit Start Auction Action (Requirement: Only starts bidding when tapped)
+    async function startBiddingForActivePlayer() {
+        if (!activePlayerObj) {
+            alert('Please select a player to auction first.');
+            return;
+        }
+
+        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        try {
+            const res = await fetch('/api/auction/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+            });
+            const data = await res.json();
+
+            if (!data.success) {
+                alert(data.message || 'Failed to start bidding.');
+                return;
+            }
+
+            timerSeconds = 10;
+            timerRunning = true;
+            renderTimer(10);
+            await pollState();
+        } catch (err) {
+            alert('Error starting auction: ' + err.message);
+        }
+    }
+
+    // Update Player Roll Number
     async function updateCurrentPlayerRule() {
-        if (!searchedPlayerObj) return;
+        if (!activePlayerObj) {
+            alert('No active player selected to update roll number.');
+            return;
+        }
 
         const newRuleInput = document.getElementById('new-rule-input');
         const feedback = document.getElementById('update-rule-feedback');
-        const newRule = newRuleInput.value.trim();
+        const newRule = (newRuleInput ? newRuleInput.value : '').trim().toUpperCase();
 
-        feedback.className = 'extra-small d-none';
+        if (feedback) feedback.className = 'extra-small d-none';
 
         if (!newRule) {
-            feedback.className = 'extra-small text-danger mt-1 d-block';
-            feedback.textContent = 'Please enter a new Rule Number.';
+            if (feedback) {
+                feedback.className = 'extra-small text-danger mt-1 d-block fw-bold';
+                feedback.textContent = 'Please enter a valid new Roll Number.';
+            }
             return;
         }
 
@@ -838,73 +902,39 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
                 body: JSON.stringify({
-                    player_id: searchedPlayerObj.id,
+                    player_id: activePlayerObj.id,
                     new_rule_number: newRule
                 })
             });
 
             const data = await res.json();
             if (!data.success) {
-                feedback.className = 'extra-small text-danger mt-1 d-block';
-                feedback.textContent = data.message || 'Failed to update Rule Number.';
+                if (feedback) {
+                    feedback.className = 'extra-small text-danger mt-1 d-block fw-bold';
+                    feedback.textContent = data.message || 'Failed to update Roll Number.';
+                }
                 return;
             }
 
             // Successfully updated
-            searchedPlayerObj.rule_number = data.player.rule_number;
-            searchedPlayerObj.roll_number = data.player.roll_number;
-            document.getElementById('curr-rule-display').textContent = data.player.rule_number;
-            document.getElementById('search-res-rule').textContent = data.player.rule_number;
-            document.getElementById('rule-input').value = data.player.rule_number;
+            activePlayerObj.roll_number = data.player.roll_number;
+            document.getElementById('curr-rule-display').textContent = data.player.roll_number;
+            document.getElementById('card-rule-number').textContent = data.player.roll_number;
+            syncRuleInput(data.player.roll_number);
 
-            feedback.className = 'extra-small text-success mt-1 d-block';
-            feedback.textContent = `✓ Rule Number updated to '${data.player.rule_number}'.`;
-        } catch (err) {
-            feedback.className = 'extra-small text-danger mt-1 d-block';
-            feedback.textContent = 'Error updating rule number: ' + err.message;
-        }
-    }
+            if (newRuleInput) newRuleInput.value = '';
 
-    // Load and start 10s bidding for searched player
-    async function startAuctionForSearchedPlayer() {
-        if (!searchedPlayerObj) return;
-
-        const errBox = document.getElementById('rule-lookup-error');
-        errBox.classList.add('d-none');
-
-        // Strict validation
-        if (searchedPlayerObj.is_sold || searchedPlayerObj.status === 'SOLD' || searchedPlayerObj.sold_to) {
-            errBox.classList.remove('d-none');
-            errBox.textContent = `Already Sold: Player '${searchedPlayerObj.name}' cannot be auctioned again.`;
-            return;
-        }
-
-        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-        try {
-            // Step 1: Activate player
-            const actRes = await fetch('/api/auction/activate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
-                body: JSON.stringify({ player_id: searchedPlayerObj.id })
-            });
-            const actData = await actRes.json();
-            if (!actData.success) {
-                errBox.classList.remove('d-none');
-                errBox.textContent = actData.message || 'Failed to activate player.';
-                return;
+            if (feedback) {
+                feedback.className = 'extra-small text-success mt-1 d-block fw-bold';
+                feedback.textContent = `✓ Roll Number updated to '${data.player.roll_number}'.`;
             }
 
-            // Step 2: Start 10s bidding timer
-            const startRes = await fetch('/api/auction/start', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
-            });
-            await startRes.json();
             pollState();
         } catch (err) {
-            errBox.classList.remove('d-none');
-            errBox.textContent = 'Error starting auction: ' + err.message;
+            if (feedback) {
+                feedback.className = 'extra-small text-danger mt-1 d-block fw-bold';
+                feedback.textContent = 'Error updating roll number: ' + err.message;
+            }
         }
     }
 
@@ -919,7 +949,6 @@
         const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         isSubmittingBid = true;
 
-        // Visual feedback
         if (card) card.style.transform = 'scale(0.96)';
 
         try {
@@ -981,7 +1010,6 @@
         const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         if (highestBidderId) {
-            // Player is marked SOLD automatically
             try {
                 const res = await fetch('/api/auction/sold', {
                     method: 'POST',
@@ -995,7 +1023,6 @@
                 console.error('Auto-sold error:', e);
             }
         } else {
-            // Player is marked UNSOLD automatically
             try {
                 await fetch('/api/auction/unsold', {
                     method: 'POST',
@@ -1010,31 +1037,16 @@
         setTimeout(() => {
             autoFinalizing = false;
             pollState();
-        }, 1500);
+        }, 1200);
     }
 
-    function showCelebrationBanner(playerName, franchiseName, price, winningLogo, playerPhoto) {
-        const banner = document.getElementById('sold-celebration-banner');
+    function showCelebrationBanner(playerName, franchiseName, price) {
+        const banner = document.getElementById('admin-sold-alert-banner');
         if (!banner) return;
-        const nameEl = document.getElementById('sold-banner-player-name');
-        if (nameEl) nameEl.textContent = playerName || 'Active Player';
-        const priceEl = document.getElementById('sold-banner-price');
+        const winTeamEl = document.getElementById('admin-sold-winner-team');
+        const priceEl = document.getElementById('admin-sold-final-price');
+        if (winTeamEl) winTeamEl.textContent = franchiseName || 'Franchise';
         if (priceEl) priceEl.textContent = `₹ ${Number(price || 0).toLocaleString()}`;
-        const winNameEl = document.getElementById('sold-banner-winner-name');
-        if (winNameEl) winNameEl.textContent = franchiseName || 'Team';
-
-        const winLogoEl = document.getElementById('sold-banner-winner-logo');
-        if (winLogoEl) {
-            const wLogo = (winningLogo && !winningLogo.startsWith('http')) ? `/static/uploads/${winningLogo}` : (winningLogo || '/static/uploads/default_logo.png');
-            winLogoEl.src = wLogo;
-        }
-
-        const playerPhotoEl = document.getElementById('sold-banner-player-photo');
-        if (playerPhotoEl) {
-            const pPhoto = (playerPhoto && !playerPhoto.startsWith('http')) ? `/static/uploads/${playerPhoto}` : (playerPhoto || '/static/uploads/default_player.png');
-            playerPhotoEl.src = pPhoto;
-        }
-
         banner.classList.remove('d-none');
         document.getElementById('unsold-banner')?.classList.add('d-none');
     }
@@ -1043,79 +1055,170 @@
         const banner = document.getElementById('unsold-banner');
         if (!banner) return;
         banner.classList.remove('d-none');
-        document.getElementById('sold-celebration-banner')?.classList.add('d-none');
+        document.getElementById('admin-sold-alert-banner')?.classList.add('d-none');
     }
 
-    // Manual Override Actions
-    async function finalizeSoldAction() {
-        if (!confirm('Mark active player as SOLD to highest bidder?')) return;
+    // Immediately clear sold banner and move to next player
+    async function clearSoldPlayerImmediately() {
         const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        const res = await fetch('/api/auction/sold', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
-        });
-        const data = await res.json();
-        if (data.success) {
-            showCelebrationBanner(data.player_name, data.franchise_name, data.sold_price);
+        try {
+            await fetch('/api/auction/clear-sold', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+            });
+            document.getElementById('admin-sold-alert-banner')?.classList.add('d-none');
+            activePlayerObj = null;
             pollState();
-        } else {
-            alert(data.message || 'Error finalizing sale.');
+        } catch (e) {
+            console.error('Clear sold error:', e);
+        }
+    }
+
+    // Immediately clear unsold banner and return to waiting
+    async function clearUnsoldPlayerImmediately() {
+        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        try {
+            await fetch('/api/auction/clear-unsold', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+            });
+            document.getElementById('unsold-banner')?.classList.add('d-none');
+            activePlayerObj = null;
+            pollState();
+        } catch (e) {
+            console.error('Clear unsold error:', e);
+        }
+    }
+
+    // Manual Admin Actions: SOLD, UNSOLD, PAUSE, RESUME, EXTEND, RESET
+    async function finalizeSoldAction() {
+        if (!activePlayerObj) {
+            alert('No active player currently selected.');
+            return;
+        }
+        if (!highestBidderId) {
+            alert('Cannot mark player as SOLD without a winning bid. Please click a franchise team card below to place a bid first, or mark as UNSOLD.');
+            return;
+        }
+        if (!confirm(`Mark ${activePlayerObj.name} as SOLD to highest bidder?`)) return;
+
+        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        try {
+            const res = await fetch('/api/auction/sold', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+            });
+            const data = await res.json();
+            if (data.success) {
+                showCelebrationBanner(data.player_name, data.franchise_name, data.sold_price);
+                pollState();
+            } else {
+                alert(data.message || 'Error finalizing sale.');
+            }
+        } catch (err) {
+            alert('Error marking sold: ' + err.message);
         }
     }
 
     async function finalizeUnsoldAction() {
-        if (!confirm('Mark active player as UNSOLD?')) return;
+        if (!activePlayerObj) {
+            alert('No active player currently selected.');
+            return;
+        }
+        if (!confirm(`Mark ${activePlayerObj.name} as UNSOLD?`)) return;
+
         const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        const res = await fetch('/api/auction/unsold', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
-        });
-        const data = await res.json();
-        if (data.success) {
-            showUnsoldBanner();
-            pollState();
-        } else {
-            alert(data.message || 'Error finalizing unsold.');
+        try {
+            const res = await fetch('/api/auction/unsold', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+            });
+            const data = await res.json();
+            if (data.success) {
+                showUnsoldBanner();
+                pollState();
+            } else {
+                alert(data.message || 'Error finalizing unsold.');
+            }
+        } catch (err) {
+            alert('Error marking unsold: ' + err.message);
         }
     }
 
     async function pauseAuctionAction() {
         const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        await fetch('/api/auction/pause', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
-        });
-        timerRunning = false;
-        pollState();
+        try {
+            const res = await fetch('/api/auction/pause', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+            });
+            const data = await res.json();
+            if (!data.success && data.message) {
+                console.warn('Pause notice:', data.message);
+            }
+            timerRunning = false;
+            pollState();
+        } catch (err) {
+            console.error('Pause error:', err);
+        }
     }
 
     async function resumeAuctionAction() {
-        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        await fetch('/api/auction/resume', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
-        });
-        pollState();
+        if (auctionStatus === 'PAUSED') {
+            const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            try {
+                const res = await fetch('/api/auction/resume', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+                });
+                const data = await res.json();
+                if (!data.success && data.message) {
+                    alert(data.message);
+                } else {
+                    timerRunning = true;
+                }
+                pollState();
+            } catch (err) {
+                console.error('Resume error:', err);
+            }
+        } else if (activePlayerObj && (auctionStatus === 'PLAYER_PREVIEW' || auctionStatus === 'WAITING')) {
+            await startBiddingForActivePlayer();
+        }
     }
 
-    async function extendTimerAction(seconds) {
+    async function extendTimerAction(seconds = 10) {
         const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        await fetch('/api/auction/extend', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
-            body: JSON.stringify({ seconds: seconds })
-        });
-        pollState();
+        try {
+            await fetch('/api/auction/extend', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+                body: JSON.stringify({ seconds: seconds })
+            });
+            timerSeconds = Math.min(60, timerSeconds + seconds);
+            renderTimer(Math.ceil(timerSeconds));
+            pollState();
+        } catch (err) {
+            console.error('Extend error:', err);
+        }
     }
 
     async function resetToWaitingAction() {
-        if (!confirm('Reset current auction to WAITING?')) return;
+        if (!confirm('Reset current auction state back to WAITING?')) return;
         const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        await fetch('/api/auction/reset', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
-        });
-        window.location.reload();
+        try {
+            await fetch('/api/auction/reset', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+            });
+            activePlayerObj = null;
+            auctionStatus = 'WAITING';
+            timerRunning = false;
+            document.getElementById('admin-sold-alert-banner')?.classList.add('d-none');
+            document.getElementById('unsold-banner')?.classList.add('d-none');
+            pollState();
+        } catch (err) {
+            console.error('Reset error:', err);
+        }
     }
 
     // Master Server State Polling
@@ -1126,100 +1229,107 @@
             const state = await res.json();
 
             auctionStatus = state.status;
+
+            // 1. Status Badge
             const badge = document.getElementById('auction-state-badge');
             if (badge) {
                 badge.textContent = state.status;
-                if (state.status === 'BIDDING') badge.className = 'badge bg-success-subtle text-success border border-success fs-6 px-3 py-2';
-                else if (state.status === 'PAUSED') badge.className = 'badge bg-danger-subtle text-danger border border-danger fs-6 px-3 py-2';
-                else if (state.status === 'SOLD') badge.className = 'badge bg-primary-subtle text-primary border border-primary fs-6 px-3 py-2';
-                else if (state.status === 'UNSOLD') badge.className = 'badge bg-danger-subtle text-danger border border-danger fs-6 px-3 py-2';
-                else badge.className = 'badge bg-secondary-subtle text-dark border border-secondary-subtle fs-6 px-3 py-2';
+                if (state.status === 'BIDDING') badge.className = 'badge bg-success-subtle text-success border border-success fs-6 px-3 py-2 font-display';
+                else if (state.status === 'PAUSED') badge.className = 'badge bg-warning-subtle text-dark border border-warning fs-6 px-3 py-2 font-display';
+                else if (state.status === 'SOLD') badge.className = 'badge bg-primary-subtle text-primary border border-primary fs-6 px-3 py-2 font-display';
+                else if (state.status === 'UNSOLD') badge.className = 'badge bg-danger-subtle text-danger border border-danger fs-6 px-3 py-2 font-display';
+                else if (state.status === 'PLAYER_PREVIEW') badge.className = 'badge bg-info-subtle text-dark border border-info fs-6 px-3 py-2 font-display';
+                else badge.className = 'badge bg-secondary-subtle text-dark border border-secondary-subtle fs-6 px-3 py-2 font-display';
             }
 
-            // Dedicated Always-Visible Rule Bar Active Pill (Requirement 1)
+            // 2. Dedicated Top Bar Active Player Pill
             const activePill = document.getElementById('dedicated-rule-active-pill');
             if (activePill) {
                 if (state.active_player) {
-                    const rNo = state.active_player.rule_number || state.active_player.roll_number || '--';
-                    activePill.textContent = `${rNo} - ${state.active_player.name}`;
-                    activePill.className = 'badge bg-danger-subtle text-danger border border-danger fs-6 font-monospace';
+                    const rNo = state.active_player.roll_number || state.active_player.rule_number || '--';
+                    activePill.textContent = `${rNo} — ${state.active_player.name} (${state.status})`;
+                    activePill.className = 'badge bg-danger fs-6 font-monospace';
                 } else {
                     activePill.textContent = 'None (Waiting)';
                     activePill.className = 'badge bg-secondary-subtle text-dark border border-secondary-subtle fs-6 font-monospace';
                 }
             }
 
-            // Active Player Visibility
-            const entryCard = document.getElementById('player-entry-card');
-            const arena = document.getElementById('bidding-arena');
-
+            // 3. Active Player Profile Card Rendering
+            const promptBanner = document.getElementById('start-auction-prompt-banner');
             if (state.active_player) {
-                // Requirements 1, 7, 8: 10-Second Sold Display & Auto-Removal
-                if (state.status === 'SOLD') {
-                    let remainingSec = 10;
-                    if (state.sold_until_timestamp) {
-                        remainingSec = Math.max(0, Math.ceil((state.sold_until_timestamp - Date.now()) / 1000));
-                    } else if (state.sold_remaining_seconds !== undefined && state.sold_remaining_seconds !== null) {
-                        remainingSec = state.sold_remaining_seconds;
-                    }
-
-                    if (remainingSec <= 0) {
-                        // Exactly 10 seconds completed: automatically remove sold player profile
-                        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                        if (csrf) {
-                            fetch('/api/auction/clear-sold', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
-                            }).catch(() => { });
-                        }
-                        activePlayerObj = null;
-                        entryCard?.classList.remove('d-none');
-                        arena?.classList.add('d-none');
-                        return;
-                    }
-
-                    const soldBanner = document.getElementById('admin-sold-alert-banner');
-                    if (soldBanner) {
-                        soldBanner.classList.remove('d-none');
-                        const winTeam = state.winning_franchise || state.highest_bidder;
-                        document.getElementById('admin-sold-winner-team').textContent = winTeam ? winTeam.name : 'Winning Franchise';
-                        document.getElementById('admin-sold-final-price').textContent = `₹ ${Number(state.sold_price || state.current_bid).toLocaleString()}`;
-                        document.getElementById('admin-sold-timer-seconds').textContent = remainingSec;
-                    }
-                } else {
-                    const soldBanner = document.getElementById('admin-sold-alert-banner');
-                    if (soldBanner) soldBanner.classList.add('d-none');
-                }
-
                 activePlayerObj = state.active_player;
-                entryCard?.classList.add('d-none');
-                arena?.classList.remove('d-none');
+                const p = state.active_player;
+                const rNo = p.roll_number || p.rule_number || '--';
 
-                document.getElementById('card-rule-number').textContent = state.active_player.rule_number || state.active_player.roll_number;
-                document.getElementById('card-player-name').textContent = state.active_player.name;
+                document.getElementById('card-rule-number').textContent = rNo;
+                document.getElementById('card-player-name').textContent = p.name;
+                document.getElementById('card-player-instruction').textContent = `Playing as ${p.role || 'BATSMAN'} • Base Price: ₹ ${Number(p.base_price || 10000).toLocaleString()}`;
+                document.getElementById('card-player-branch').textContent = p.branch || '-';
+                document.getElementById('card-player-year').textContent = p.year ? `Year ${p.year}` : '-';
+                document.getElementById('card-player-base-price').textContent = `₹ ${Number(p.base_price || 10000).toLocaleString()}`;
+                document.getElementById('curr-rule-display').textContent = rNo;
+
+                const photoUrl = (p.photo && !p.photo.startsWith('http')) ? `/static/uploads/${p.photo}` : (p.photo || '/static/uploads/default_player.png');
+                document.getElementById('card-player-photo').src = photoUrl;
+
+                const roleBadgeText = document.getElementById('card-player-role');
+                if (roleBadgeText) roleBadgeText.textContent = p.role || 'BATSMAN';
+                const roleIcon = document.getElementById('card-player-role-icon');
+                if (roleIcon) roleIcon.src = getCategoryIconJs(p.role);
+
                 const catBadge = document.getElementById('card-player-category');
                 if (catBadge) {
-                    if ((state.active_player.category || '').toLowerCase() === 'elite') {
+                    if ((p.category || '').toLowerCase() === 'elite') {
                         catBadge.className = 'badge bg-warning text-dark border border-warning-subtle fs-7 fw-bold shadow-xs';
-                        catBadge.innerHTML = '<i class="fa-solid fa-star me-1 text-dark"></i>ELITE (Req: 1–3)';
+                        catBadge.innerHTML = '<i class="fa-solid fa-star me-1 text-dark"></i>ELITE';
                     } else {
                         catBadge.className = 'badge bg-secondary fs-7';
-                        catBadge.textContent = state.active_player.category || 'Normal';
+                        catBadge.textContent = p.category || 'Normal';
                     }
                 }
-                document.getElementById('card-player-branch').textContent = state.active_player.branch || '-';
-                document.getElementById('card-player-year').textContent = state.active_player.year ? `Year ${state.active_player.year}` : '-';
 
-                const photoUrl = (state.active_player.photo && !state.active_player.photo.startsWith('http')) ? `/static/uploads/${state.active_player.photo}` : (state.active_player.photo || '/static/uploads/default_player.png');
-                document.getElementById('card-player-photo').src = photoUrl;
+                const statusBadge = document.getElementById('card-player-status');
+                if (statusBadge) {
+                    statusBadge.textContent = state.status;
+                    if (state.status === 'BIDDING') statusBadge.className = 'badge bg-success fs-7';
+                    else if (state.status === 'PAUSED') statusBadge.className = 'badge bg-warning text-dark fs-7';
+                    else if (state.status === 'SOLD') statusBadge.className = 'badge bg-primary fs-7';
+                    else if (state.status === 'UNSOLD') statusBadge.className = 'badge bg-danger fs-7';
+                    else statusBadge.className = 'badge bg-info text-dark fs-7';
+                }
+
+                // Show Prompt Banner when player is selected in PREVIEW/WAITING
+                if (promptBanner) {
+                    if (state.status === 'PLAYER_PREVIEW' || state.status === 'WAITING') {
+                        document.getElementById('prompt-player-name').textContent = p.name;
+                        document.getElementById('prompt-player-rule').textContent = rNo;
+                        promptBanner.classList.remove('d-none');
+                    } else {
+                        promptBanner.classList.add('d-none');
+                    }
+                }
             } else {
                 activePlayerObj = null;
-                entryCard?.classList.remove('d-none');
-                arena?.classList.add('d-none');
+                document.getElementById('card-rule-number').textContent = '--';
+                document.getElementById('card-player-name').textContent = 'No Active Player';
+                document.getElementById('card-player-instruction').textContent = 'Tap any player roll number from the roster below or search above to auction';
+                document.getElementById('card-player-branch').textContent = '--';
+                document.getElementById('card-player-year').textContent = '--';
+                document.getElementById('card-player-base-price').textContent = '₹ 10,000';
+                document.getElementById('curr-rule-display').textContent = '--';
+                document.getElementById('card-player-photo').src = '/static/uploads/default_player.png';
+                document.getElementById('card-player-role').textContent = 'READY';
+                document.getElementById('card-player-role-icon').src = CATEGORY_ICONS_JS.BATSMAN;
+                document.getElementById('card-player-category').textContent = 'NORMAL';
+                document.getElementById('card-player-status').className = 'badge bg-secondary extra-small';
+                document.getElementById('card-player-status').textContent = 'WAITING';
+
+                if (promptBanner) promptBanner.classList.add('d-none');
             }
 
-            // Bidding Numbers
-            currentBidVal = state.current_bid || 0;
+            // 4. Bidding Board Numbers & Timer Display
+            currentBidVal = state.current_bid || 10000;
             nextValidBidVal = state.next_valid_bid || currentBidVal;
             highestBidderId = state.highest_bidder ? state.highest_bidder.id : null;
 
@@ -1230,14 +1340,14 @@
 
             const bidderNameEl = document.getElementById('highest-bidder-name');
             if (state.highest_bidder) {
-                bidderNameEl.className = 'badge bg-danger-subtle text-danger border border-danger fs-6 px-3 py-1.5 fw-bold shadow-sm';
+                bidderNameEl.className = 'badge bg-danger-subtle text-danger border border-danger fs-6 px-3 py-1.5 fw-bold shadow-xs font-display';
                 bidderNameEl.innerHTML = `<i class="fa-solid fa-crown me-1"></i> ${state.highest_bidder.name} (${state.highest_bidder.short_name})`;
             } else {
-                bidderNameEl.className = 'badge bg-secondary fs-6 px-3 py-1.5';
+                bidderNameEl.className = 'badge bg-secondary fs-6 px-3 py-1.5 font-display';
                 bidderNameEl.textContent = 'No Bids Placed Yet (Opening Base Price)';
             }
 
-            // Top Two Bidders Overview
+            // Top Two Bidders Card Update
             const leadLogo = document.getElementById('admin-lead-logo');
             const leadName = document.getElementById('admin-lead-name');
             const leadAmount = document.getElementById('admin-lead-amount');
@@ -1270,32 +1380,66 @@
                 if (secLogo) secLogo.src = '/static/uploads/default_logo.png';
             }
 
+            // Dynamic Action Button (Resume / Start Bidding)
+            const resumeBtnLabel = document.getElementById('resume-btn-label');
+            const resumeBtn = document.getElementById('btn-resume-auction');
+            if (resumeBtnLabel && resumeBtn) {
+                if (state.status === 'PAUSED') {
+                    resumeBtnLabel.textContent = 'Resume';
+                    resumeBtn.className = 'btn btn-primary w-100 fw-bold btn-sm py-2 shadow-xs';
+                    resumeBtn.innerHTML = '<i class="fa-solid fa-forward me-1"></i> Resume';
+                } else if (state.status === 'BIDDING') {
+                    resumeBtnLabel.textContent = 'Bidding Live';
+                    resumeBtn.className = 'btn btn-outline-success w-100 fw-bold btn-sm py-2 shadow-xs disabled';
+                    resumeBtn.innerHTML = '<i class="fa-solid fa-bolt me-1"></i> Bidding Live';
+                } else if (state.active_player) {
+                    resumeBtnLabel.textContent = 'Start Auction';
+                    resumeBtn.className = 'btn btn-success w-100 fw-bold btn-sm py-2 shadow-xs';
+                    resumeBtn.innerHTML = '<i class="fa-solid fa-play me-1"></i> Start Auction';
+                } else {
+                    resumeBtnLabel.textContent = 'Start Auction';
+                    resumeBtn.className = 'btn btn-secondary w-100 fw-bold btn-sm py-2 shadow-xs disabled';
+                    resumeBtn.innerHTML = '<i class="fa-solid fa-play me-1"></i> Start Auction';
+                }
+            }
+
             // Status Banners
             if (state.status === 'SOLD') {
                 const winner = state.winning_franchise || state.highest_bidder;
                 const winnerName = winner ? winner.name : 'Unknown';
-                const winnerLogo = winner ? winner.logo : null;
                 const pName = state.active_player ? state.active_player.name : 'Player';
-                const pPhoto = state.active_player ? state.active_player.photo : null;
-                showCelebrationBanner(pName, winnerName, state.sold_price || currentBidVal, winnerLogo, pPhoto);
+                showCelebrationBanner(pName, winnerName, state.sold_price || currentBidVal);
+
+                let remainingSec = 10;
+                if (state.sold_until_timestamp) {
+                    remainingSec = Math.max(0, Math.ceil((state.sold_until_timestamp - Date.now()) / 1000));
+                } else if (state.sold_remaining_seconds !== undefined && state.sold_remaining_seconds !== null) {
+                    remainingSec = state.sold_remaining_seconds;
+                }
+                const secEl = document.getElementById('admin-sold-timer-seconds');
+                if (secEl) secEl.textContent = remainingSec;
+
+                if (remainingSec <= 0) {
+                    clearSoldPlayerImmediately();
+                }
             } else if (state.status === 'UNSOLD') {
                 showUnsoldBanner();
             } else {
-                document.getElementById('sold-celebration-banner')?.classList.add('d-none');
+                document.getElementById('admin-sold-alert-banner')?.classList.add('d-none');
                 document.getElementById('unsold-banner')?.classList.add('d-none');
             }
 
-            // Timer Sync
+            // Timer Countdown Sync
             if (state.status === 'BIDDING') {
                 timerRunning = true;
                 timerSeconds = state.remaining_seconds != null ? state.remaining_seconds : 10;
                 renderTimer(Math.ceil(timerSeconds));
             } else {
                 timerRunning = false;
-                renderTimer(state.remaining_seconds || 0);
+                renderTimer(state.remaining_seconds || 10);
             }
 
-            // Render & Update Franchise Team Cards (Requirements 3, 4, 5)
+            // 5. Franchise Team Cards Update
             if (state.franchises && state.franchises.length > 0) {
                 state.franchises.forEach(f => {
                     const card = document.getElementById(`team-card-${f.id}`);
@@ -1310,41 +1454,47 @@
                     const statusEl = document.getElementById(`team-status-${f.id}`);
                     if (statusEl) {
                         if (f.has_captain) {
-                            statusEl.className = 'badge bg-success-subtle text-success border border-success extra-small';
-                            statusEl.innerHTML = '<i class="fa-solid fa-check me-1"></i>Eligible for Bidding ✓';
+                            statusEl.className = 'badge bg-success-subtle text-success border border-success';
+                            statusEl.style.fontSize = '0.6rem';
+                            statusEl.style.padding = '1px 4px';
+                            statusEl.innerHTML = '<i class="fa-solid fa-check me-0.5"></i>Eligible &check;';
                         } else {
-                            statusEl.className = 'badge bg-danger-subtle text-danger border border-danger extra-small';
-                            statusEl.innerHTML = '<i class="fa-solid fa-ban me-1"></i>Not Eligible (Captain Required)';
+                            statusEl.className = 'badge bg-danger-subtle text-danger border border-danger';
+                            statusEl.style.fontSize = '0.6rem';
+                            statusEl.style.padding = '1px 4px';
+                            statusEl.innerHTML = '<i class="fa-solid fa-ban me-0.5"></i>Captain Req';
                         }
                     }
 
                     const eliteEl = document.getElementById(`team-elite-${f.id}`);
                     if (eliteEl && f.auction_elite_count !== undefined) {
-                        eliteEl.innerHTML = `${f.auction_elite_count}/${f.max_auction_elite_allowed || 3} <span class="extra-small font-normal text-muted">(Req: 1–3)</span>`;
+                        eliteEl.innerHTML = `${f.auction_elite_count}/${f.max_auction_elite_allowed || 3}`;
                         eliteEl.className = (f.auction_elite_count >= (f.max_auction_elite_allowed || 3)) ? 'text-primary' : (f.auction_elite_count >= (f.min_auction_elite_required || 1) ? 'text-success' : 'text-danger');
-                        eliteEl.title = `Auction Slots: ${f.auction_elite_count}/${f.max_auction_elite_allowed || 3} (Req: 1–3) | Captain: 1 Retained (Total: ${f.elite_count || (f.auction_elite_count + 1)}/4)`;
                     }
 
                     if (card && btn) {
                         if (f.is_highest_bidder) {
-                            card.className = 'team-bid-card p-2.5 text-center h-100 position-relative leading-bidder bg-white';
-                            btn.className = 'btn btn-sm btn-danger w-100 fw-bold py-1 disabled shadow-sm';
-                            btn.innerHTML = `<i class="fa-solid fa-crown me-1"></i> LEADING`;
+                            card.className = 'team-bid-card p-2 text-center h-100 position-relative leading-bidder bg-white shadow-xs rounded-3 d-flex flex-column justify-content-between';
+                            btn.className = 'btn btn-sm btn-danger w-100 fw-bold py-1 disabled shadow-xs';
+                            btn.style.fontSize = '0.75rem';
+                            btn.innerHTML = `<i class="fa-solid fa-crown me-1 text-warning"></i> LEADING`;
                             leaderBadge?.classList.remove('d-none');
                         } else if (!f.has_captain) {
-                            card.className = 'team-bid-card p-2.5 text-center h-100 position-relative border border-danger border-opacity-50 bg-white';
+                            card.className = 'team-bid-card p-2 text-center h-100 position-relative border border-danger border-opacity-50 bg-white shadow-xs rounded-3 d-flex flex-column justify-content-between';
                             btn.className = 'btn btn-sm btn-outline-danger w-100 extra-small py-1 disabled';
-                            btn.innerHTML = `<i class="fa-solid fa-ban me-1"></i> Captain Required`;
+                            btn.style.fontSize = '0.7rem';
+                            btn.innerHTML = `<i class="fa-solid fa-ban me-1"></i> Captain`;
                             leaderBadge?.classList.add('d-none');
                         } else if (f.can_bid) {
-                            card.className = 'team-bid-card p-2.5 text-center h-100 position-relative bg-white';
-                            btn.className = 'btn btn-sm btn-danger w-100 fw-bold py-1 shadow-sm';
+                            card.className = 'team-bid-card p-2 text-center h-100 position-relative bg-white shadow-xs rounded-3 d-flex flex-column justify-content-between';
+                            btn.className = 'btn btn-sm btn-danger w-100 fw-bold py-1 shadow-xs team-bid-btn';
+                            btn.style.fontSize = '0.75rem';
                             btn.innerHTML = `<i class="fa-solid fa-gavel me-1"></i> BID ₹${Number(nextValidBidVal).toLocaleString()}`;
                             leaderBadge?.classList.add('d-none');
                         } else {
-                            // Clean card for teams that cannot bid / already spent (NO ash/grey background!)
-                            card.className = 'team-bid-card p-2.5 text-center h-100 position-relative bg-white border border-secondary-subtle';
+                            card.className = 'team-bid-card p-2 text-center h-100 position-relative bg-white border border-secondary-subtle shadow-xs rounded-3 d-flex flex-column justify-content-between';
                             btn.className = 'btn btn-sm btn-outline-secondary w-100 extra-small py-1 disabled';
+                            btn.style.fontSize = '0.7rem';
                             btn.textContent = f.cannot_bid_reason || 'Cannot Bid';
                             leaderBadge?.classList.add('d-none');
                         }
@@ -1356,48 +1506,4 @@
         }
     }
 </script>
-
-<!-- Fresh Auction Reset Modal -->
-<div class="modal fade" id="freshAuctionResetModal" tabindex="-1" aria-labelledby="freshAuctionResetModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-2 border-danger shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header bg-danger text-white py-3">
-                <h5 class="modal-title font-display fw-black" id="freshAuctionResetModalLabel">
-                    <i class="fa-solid fa-triangle-exclamation me-2"></i> FRESH AUCTION RESET
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="POST" action="{{ url_for('admin.fresh_auction_reset') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="modal-body p-4 text-start">
-                    <p class="fw-bold text-dark mb-2 fs-6">Are you sure you want to reset the auction to a fresh starting state?</p>
-                    <div class="p-3 bg-light rounded-3 border border-secondary-subtle small mb-3">
-                        <div class="fw-bold text-success mb-1"><i class="fa-solid fa-shield-halved me-1"></i> PERMANENT DATA PRESERVED:</div>
-                        <ul class="mb-2 ps-3 text-muted">
-                            <li>All <strong>Franchises</strong> (names, owners, emails, logos, settings)</li>
-                            <li>All <strong>Final Squads & Captains</strong> (retained roles, categories)</li>
-                            <li>All <strong>Players in database</strong> (profiles, photos, roles, categories)</li>
-                        </ul>
-                        <div class="fw-bold text-danger mb-1"><i class="fa-solid fa-rotate-left me-1"></i> AUCTION DATA RESET:</div>
-                        <ul class="mb-0 ps-3 text-muted">
-                            <li>All previous bids, auction transactions & audit logs cleared</li>
-                            <li>Franchise spent purse reset to ₹0; remaining purse restored</li>
-                            <li>All players reset to <strong>AVAILABLE</strong> for bidding</li>
-                            <li>Auction console status reset to <strong>WAITING</strong></li>
-                        </ul>
-                    </div>
-                    <div class="text-danger extra-small font-display fw-bold">
-                        <i class="fa-solid fa-circle-info me-1"></i> This action cannot be undone. Bidding will restart from Player #1.
-                    </div>
-                </div>
-                <div class="modal-footer bg-light py-2.5 px-4 d-flex justify-content-between">
-                    <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger btn-sm px-4 fw-bold shadow-sm">
-                        <i class="fa-solid fa-rotate-left me-1"></i> Confirm Fresh Reset
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 {% endblock %}
