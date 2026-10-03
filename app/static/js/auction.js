@@ -352,190 +352,170 @@ function updateProjectorUi(data) {
     if (unsoldCard) unsoldCard.classList.add('d-none');
 
     const status = data.status;
+    const p = data.active_player;
 
-    // Cache last sold data if available from server
-    if (data.last_sold && !lastSoldProjectorData) {
-        lastSoldProjectorData = data.last_sold;
-    }
-
-    // 1. SOLD State: Display celebration screen persistently (Requirements 3, 4, 6)
-    if (status === 'SOLD') {
-        const winningF = data.winning_franchise || data.highest_bidder;
+    // 1. SOLD State: Display celebration screen immediately (Requirements 2, 4, 6)
+    if (status === 'SOLD' || (p && p.status === 'SOLD')) {
+        const winningF = data.winning_franchise || data.highest_bidder || (data.last_sold ? data.last_sold.winning_franchise : null);
         lastSoldProjectorData = {
-            player: data.active_player,
+            player: p || (data.last_sold ? data.last_sold.player : {}),
             winning_franchise: winningF,
-            sold_price: data.sold_price || data.current_bid
+            sold_price: data.sold_price || (p ? p.sold_price : null) || data.current_bid
         };
         renderProjectorSoldCard(lastSoldProjectorData);
         return;
     }
 
-    // 2. WAITING / IDLE State: Continue showing sold player screen until next player is loaded (Requirements 3 & 4)
-    if (status === 'WAITING' || !data.active_player) {
-        if (lastSoldProjectorData) {
-            renderProjectorSoldCard(lastSoldProjectorData);
-            return;
-        }
-        // If no player has ever been sold yet in this session, show initial standby screen
-        statusWaiting.classList.remove('d-none');
-        const waitText = document.getElementById('projector-waiting-text');
-        if (waitText) waitText.innerText = 'WAITING FOR NEXT PLAYER';
+    // 2. Active Player Loaded (PLAYER_PREVIEW, BIDDING, PAUSED, TIME_EXPIRED)
+    // Instantaneous transition: clear previous sold card, hide waiting, immediately show new player
+    if (p && p.status !== 'SOLD' && p.status !== 'UNSOLD' && status !== 'WAITING') {
+        lastSoldProjectorData = null;
         stopSoldConfetti();
-        return;
-    }
+        playerCard.classList.remove('d-none');
 
-    // When next player is actually loaded (PLAYER_PREVIEW or BIDDING), stop sold celebration and transition
-    stopSoldConfetti();
-
-    if (status === 'UNSOLD' && unsoldCard) {
-        const p = data.active_player;
-        unsoldCard.classList.remove('d-none');
-        unsoldCard.className = 'spl-card border-danger p-4 p-md-5 shadow-lg animate-sold my-auto text-center';
-        const unsoldName = document.getElementById('unsold-player-name');
-        if (unsoldName) unsoldName.innerText = p.name;
-        const unsoldPrice = document.getElementById('unsold-base-price');
-        if (unsoldPrice) unsoldPrice.innerText = formatCurrencyJs(p.base_price);
-        const unsoldPhoto = document.getElementById('unsold-player-photo');
-        if (unsoldPhoto) {
-            unsoldPhoto.src = resolvePlayerPhotoSrc(p ? p.photo : null);
+        const imgEl = document.getElementById('projector-player-photo');
+        if (imgEl) {
+            imgEl.src = resolvePlayerPhotoSrc(p.photo);
         }
-        return;
-    }
 
-    if (status === 'UNSOLD' && unsoldCard) {
-        unsoldCard.classList.remove('d-none');
-        unsoldCard.className = 'spl-card border-danger p-4 p-md-5 shadow-lg animate-sold my-auto text-center';
-        const unsoldName = document.getElementById('unsold-player-name');
-        if (unsoldName) unsoldName.innerText = p.name;
-        const unsoldPrice = document.getElementById('unsold-base-price');
-        if (unsoldPrice) unsoldPrice.innerText = formatCurrencyJs(p.base_price);
-        const unsoldPhoto = document.getElementById('unsold-player-photo');
-        if (unsoldPhoto) {
-            unsoldPhoto.src = resolvePlayerPhotoSrc(p ? p.photo : null);
-        }
-        return;
-    }
+        const ruleEl = document.getElementById('projector-player-rule');
+        if (ruleEl) ruleEl.innerText = p.rule_number || p.roll_number || 'R00';
 
-    // Active Player View (PLAYER_PREVIEW, BIDDING, PAUSED, TIME_EXPIRED)
-    playerCard.classList.remove('d-none');
-
-    const imgEl = document.getElementById('projector-player-photo');
-    if (imgEl) {
-        imgEl.src = resolvePlayerPhotoSrc(p ? p.photo : null);
-    }
-
-    const ruleEl = document.getElementById('projector-player-rule');
-    if (ruleEl) ruleEl.innerText = p.rule_number || p.roll_number || 'R00';
-
-    const capBadge = document.getElementById('projector-captain-badge');
-    if (capBadge) {
-        if (p.is_captain || String(p.status).toUpperCase() === 'RETAINED') {
-            capBadge.classList.remove('d-none');
-        } else {
-            capBadge.classList.add('d-none');
-        }
-    }
-
-    const catIconEl = document.getElementById('projector-category-icon');
-    if (catIconEl) {
-        catIconEl.src = p.role_icon || getCategoryIconJs(p.role);
-    }
-
-    const nameEl = document.getElementById('projector-player-name');
-    if (nameEl) nameEl.innerText = p.name;
-    const roleEl = document.getElementById('projector-player-role');
-    if (roleEl) roleEl.innerText = p.role;
-    const catEl = document.getElementById('projector-player-category');
-    if (catEl) {
-        if ((p.category || '').toLowerCase() === 'elite') {
-            catEl.className = 'badge bg-warning text-dark border border-warning-subtle fs-6 px-3 py-1.5 fw-bold shadow-xs';
-            catEl.innerHTML = '<i class="fa-solid fa-star me-1 text-dark"></i>ELITE (Req: 1–3)';
-        } else {
-            catEl.className = 'badge bg-secondary-subtle text-black border border-secondary-subtle fs-6 px-3 py-1.5';
-            catEl.innerText = p.category || 'NORMAL';
-        }
-    }
-    const branchEl = document.getElementById('projector-player-branch');
-    if (branchEl) branchEl.innerText = p.branch || 'CSE';
-    const yearEl = document.getElementById('projector-player-year');
-    if (yearEl) yearEl.innerText = p.year ? (p.year.toString().toLowerCase().includes('year') ? p.year : `${p.year} Year`) : '3rd Year';
-
-    const baseEl = document.getElementById('projector-base-price');
-    if (baseEl) baseEl.innerText = formatCurrencyJs(p.base_price);
-    const curBidEl = document.getElementById('projector-current-bid');
-    if (curBidEl) curBidEl.innerText = formatCurrencyJs(data.current_bid);
-
-    const incBadge = document.getElementById('projector-increment-badge');
-    if (incBadge) incBadge.innerText = `+${formatCurrencyJs(data.increment || 2000)}`;
-
-    // Configurable Digital Countdown Timer
-    const timerEl = document.getElementById('projector-timer');
-    if (timerEl) {
-        if (status === 'BIDDING') {
-            const sec = data.remaining_seconds != null ? data.remaining_seconds : (data.timer_seconds || 30);
-            timerEl.innerText = `${sec}s`;
-            if (sec <= 3) {
-                timerEl.className = 'display-6 font-display fw-black text-danger font-monospace';
-            } else if (sec <= 6) {
-                timerEl.className = 'display-6 font-display fw-black text-warning font-monospace';
+        const capBadge = document.getElementById('projector-captain-badge');
+        if (capBadge) {
+            if (p.is_captain || String(p.status).toUpperCase() === 'RETAINED') {
+                capBadge.classList.remove('d-none');
             } else {
-                timerEl.className = 'display-6 font-display fw-black text-danger font-monospace';
+                capBadge.classList.add('d-none');
             }
-        } else if (status === 'PAUSED') {
-            timerEl.innerText = 'PAUSED';
-            timerEl.className = 'display-6 font-display fw-black text-warning font-monospace fs-4';
-        } else if (status === 'PLAYER_PREVIEW') {
-            timerEl.innerText = 'READY';
-            timerEl.className = 'display-6 font-display fw-black text-primary font-monospace fs-4';
-        } else if (data.remaining_seconds === 0 && status !== 'WAITING') {
-            timerEl.innerText = '0s';
-            timerEl.className = 'display-6 font-display fw-black text-danger font-monospace';
+        }
+
+        const catIconEl = document.getElementById('projector-category-icon');
+        if (catIconEl) {
+            catIconEl.src = p.role_icon || getCategoryIconJs(p.role);
+        }
+
+        const nameEl = document.getElementById('projector-player-name');
+        if (nameEl) nameEl.innerText = p.name;
+        const roleEl = document.getElementById('projector-player-role');
+        if (roleEl) roleEl.innerText = p.role;
+        const catEl = document.getElementById('projector-player-category');
+        if (catEl) {
+            if ((p.category || '').toLowerCase() === 'elite') {
+                catEl.className = 'badge bg-warning text-dark border border-warning-subtle fs-6 px-3 py-1.5 fw-bold shadow-xs';
+                catEl.innerHTML = '<i class="fa-solid fa-star me-1 text-dark"></i>ELITE (Req: 1–3)';
+            } else {
+                catEl.className = 'badge bg-secondary-subtle text-black border border-secondary-subtle fs-6 px-3 py-1.5';
+                catEl.innerText = p.category || 'NORMAL';
+            }
+        }
+        const branchEl = document.getElementById('projector-player-branch');
+        if (branchEl) branchEl.innerText = p.branch || 'CSE';
+        const yearEl = document.getElementById('projector-player-year');
+        if (yearEl) yearEl.innerText = p.year ? (p.year.toString().toLowerCase().includes('year') ? p.year : `${p.year} Year`) : '3rd Year';
+
+        const baseEl = document.getElementById('projector-base-price');
+        if (baseEl) baseEl.innerText = formatCurrencyJs(p.base_price);
+        const curBidEl = document.getElementById('projector-current-bid');
+        if (curBidEl) curBidEl.innerText = formatCurrencyJs(data.current_bid);
+
+        const incBadge = document.getElementById('projector-increment-badge');
+        if (incBadge) incBadge.innerText = `+${formatCurrencyJs(data.increment || 2000)}`;
+
+        // Configurable Digital Countdown Timer
+        const timerEl = document.getElementById('projector-timer');
+        if (timerEl) {
+            if (status === 'BIDDING') {
+                const sec = data.remaining_seconds != null ? data.remaining_seconds : (data.timer_seconds || 30);
+                timerEl.innerText = `${sec}s`;
+                if (sec <= 3) {
+                    timerEl.className = 'display-6 font-display fw-black text-danger font-monospace';
+                } else if (sec <= 6) {
+                    timerEl.className = 'display-6 font-display fw-black text-warning font-monospace';
+                } else {
+                    timerEl.className = 'display-6 font-display fw-black text-danger font-monospace';
+                }
+            } else if (status === 'PAUSED') {
+                timerEl.innerText = 'PAUSED';
+                timerEl.className = 'display-6 font-display fw-black text-warning font-monospace fs-4';
+            } else if (status === 'PLAYER_PREVIEW') {
+                timerEl.innerText = 'READY';
+                timerEl.className = 'display-6 font-display fw-black text-primary font-monospace fs-4';
+            } else if (data.remaining_seconds === 0 && status !== 'WAITING') {
+                timerEl.innerText = '0s';
+                timerEl.className = 'display-6 font-display fw-black text-danger font-monospace';
+            } else {
+                timerEl.innerText = status;
+                timerEl.className = 'display-6 font-display fw-black text-secondary font-monospace fs-5';
+            }
+        }
+
+        // Top Bidding Franchisee (Active Bidder) & Second Challenger
+        const leadName = document.getElementById('projector-lead-name');
+        const leadLogo = document.getElementById('projector-lead-logo');
+        const bidTag = document.getElementById('projector-bidding-tag');
+
+        if (data.highest_bidder) {
+            if (leadName) leadName.innerText = `${data.highest_bidder.name} (${data.highest_bidder.short_name})`;
+            if (leadLogo) {
+                const hLogo = data.highest_bidder.logo ? (data.highest_bidder.logo.startsWith('http') ? data.highest_bidder.logo : `/static/uploads/${data.highest_bidder.logo}`) : '/static/uploads/default_logo.png';
+                leadLogo.src = hLogo;
+            }
+            if (bidTag) {
+                bidTag.innerText = 'LEADING';
+                bidTag.className = 'badge bg-danger-subtle text-danger border border-danger fw-bold px-3 py-1 font-display';
+            }
         } else {
-            timerEl.innerText = status;
-            timerEl.className = 'display-6 font-display fw-black text-secondary font-monospace fs-5';
+            if (leadName) leadName.innerText = 'No Bids Placed Yet';
+            if (leadLogo) leadLogo.src = '/static/uploads/default_logo.png';
+            if (bidTag) {
+                bidTag.innerText = 'WAITING';
+                bidTag.className = 'badge bg-secondary-subtle text-dark border border-secondary-subtle fw-bold px-3 py-1 font-display';
+            }
         }
+
+        const secName = document.getElementById('projector-second-name');
+        const secAmount = document.getElementById('projector-second-amount');
+        const secLogo = document.getElementById('projector-second-logo');
+
+        if (data.second_highest_bidder) {
+            if (secName) secName.innerText = `${data.second_highest_bidder.name} (${data.second_highest_bidder.short_name})`;
+            if (secAmount) secAmount.innerText = formatCurrencyJs(data.second_highest_bidder.amount);
+            if (secLogo) {
+                const sLogo = data.second_highest_bidder.logo ? (data.second_highest_bidder.logo.startsWith('http') ? data.second_highest_bidder.logo : `/static/uploads/${data.second_highest_bidder.logo}`) : '/static/uploads/default_logo.png';
+                secLogo.src = sLogo;
+            }
+        } else {
+            if (secName) secName.innerText = 'No Challenger';
+            if (secAmount) secAmount.innerText = '—';
+            if (secLogo) secLogo.src = '/static/uploads/default_logo.png';
+        }
+        return;
     }
 
-    // Top Bidding Franchisee (Active Bidder) & Second Challenger
-    const leadName = document.getElementById('projector-lead-name');
-    const leadLogo = document.getElementById('projector-lead-logo');
-    const bidTag = document.getElementById('projector-bidding-tag');
-
-    if (data.highest_bidder) {
-        if (leadName) leadName.innerText = `${data.highest_bidder.name} (${data.highest_bidder.short_name})`;
-        if (leadLogo) {
-            const hLogo = data.highest_bidder.logo ? (data.highest_bidder.logo.startsWith('http') ? data.highest_bidder.logo : `/static/uploads/${data.highest_bidder.logo}`) : '/static/uploads/default_logo.png';
-            leadLogo.src = hLogo;
+    // 3. UNSOLD State
+    if ((status === 'UNSOLD' || (p && p.status === 'UNSOLD')) && unsoldCard) {
+        lastSoldProjectorData = null;
+        stopSoldConfetti();
+        unsoldCard.classList.remove('d-none');
+        unsoldCard.className = 'spl-card border-danger p-4 p-md-5 shadow-lg animate-sold my-auto text-center';
+        const unsoldName = document.getElementById('unsold-player-name');
+        if (unsoldName) unsoldName.innerText = p ? p.name : 'Player';
+        const unsoldPrice = document.getElementById('unsold-base-price');
+        if (unsoldPrice) unsoldPrice.innerText = formatCurrencyJs(p ? p.base_price : 10000);
+        const unsoldPhoto = document.getElementById('unsold-player-photo');
+        if (unsoldPhoto) {
+            unsoldPhoto.src = resolvePlayerPhotoSrc(p ? p.photo : null);
         }
-        if (bidTag) {
-            bidTag.innerText = 'LEADING';
-            bidTag.className = 'badge bg-danger-subtle text-danger border border-danger fw-bold px-3 py-1 font-display';
-        }
-    } else {
-        if (leadName) leadName.innerText = 'No Bids Placed Yet';
-        if (leadLogo) leadLogo.src = '/static/uploads/default_logo.png';
-        if (bidTag) {
-            bidTag.innerText = 'WAITING';
-            bidTag.className = 'badge bg-secondary-subtle text-dark border border-secondary-subtle fw-bold px-3 py-1 font-display';
-        }
+        return;
     }
 
-    const secName = document.getElementById('projector-second-name');
-    const secAmount = document.getElementById('projector-second-amount');
-    const secLogo = document.getElementById('projector-second-logo');
-
-    if (data.second_highest_bidder) {
-        if (secName) secName.innerText = `${data.second_highest_bidder.name} (${data.second_highest_bidder.short_name})`;
-        if (secAmount) secAmount.innerText = formatCurrencyJs(data.second_highest_bidder.amount);
-        if (secLogo) {
-            const sLogo = data.second_highest_bidder.logo ? (data.second_highest_bidder.logo.startsWith('http') ? data.second_highest_bidder.logo : `/static/uploads/${data.second_highest_bidder.logo}`) : '/static/uploads/default_logo.png';
-            secLogo.src = sLogo;
-        }
-    } else {
-        if (secName) secName.innerText = 'No Challenger';
-        if (secAmount) secAmount.innerText = '—';
-        if (secLogo) secLogo.src = '/static/uploads/default_logo.png';
-    }
+    // 4. Clean Waiting State: No active player and auction waiting to begin / between auctions (Requirements 1, 4)
+    lastSoldProjectorData = null;
+    stopSoldConfetti();
+    statusWaiting.classList.remove('d-none');
+    const waitText = document.getElementById('projector-waiting-text');
+    if (waitText) waitText.innerText = 'Waiting for the Next Player';
 }
 
 function triggerBidChangeAnimation(newAmount) {
@@ -705,25 +685,55 @@ function updateFranchiseUi(data) {
         }
     }
 
-    const activePlayerCard = document.getElementById('franchise-active-player-section');
+    const soldBanner = document.getElementById('franchise-sold-banner');
+    const statusBanner = document.getElementById('franchise-status-banner');
+    const bidBtn = document.getElementById('btn-franchise-bid');
+
+    // Real-Time Sold State for Franchise View (Requirements 2, 4, 6)
+    if (data.status === 'SOLD' || (data.active_player && data.active_player.status === 'SOLD')) {
+        const soldP = data.active_player || (data.last_sold ? data.last_sold.player : null);
+        const winF = data.winning_franchise || data.highest_bidder || (data.last_sold ? data.last_sold.winning_franchise : null);
+        const soldPrice = data.sold_price || (soldP ? soldP.sold_price : null) || data.current_bid;
+
+        if (soldBanner) {
+            const soldPlayerEl = document.getElementById('franchise-sold-player-name');
+            if (soldPlayerEl) soldPlayerEl.textContent = soldP ? soldP.name : 'Player';
+            const soldTeamEl = document.getElementById('franchise-sold-winner-team');
+            if (soldTeamEl) soldTeamEl.textContent = winF ? winF.name : 'Franchise';
+            const soldPriceEl = document.getElementById('franchise-sold-price');
+            if (soldPriceEl) soldPriceEl.textContent = formatCurrencyJs(soldPrice);
+            soldBanner.classList.remove('d-none');
+        }
+        if (statusBanner) statusBanner.classList.add('d-none');
+        if (bidBtn) {
+            bidBtn.disabled = true;
+            bidBtn.className = 'btn btn-secondary btn-lg w-100 py-3 shadow-sm fw-bold disabled';
+            bidBtn.innerHTML = '<i class="fa-solid fa-circle-check me-2"></i>PLAYER SOLD';
+        }
+        return;
+    } else {
+        if (soldBanner) soldBanner.classList.add('d-none');
+    }
+
     if (!data.active_player) {
-        if (activePlayerCard) {
-            activePlayerCard.innerHTML = `
-                <div class="text-center py-4 text-muted">
-                    <i class="fa-solid fa-hourglass-start fa-2x mb-2"></i>
-                    <div>Waiting for Admin to activate next player...</div>
-                </div>
-            `;
+        const nameEl = document.getElementById('franchise-player-name');
+        if (nameEl) nameEl.innerText = 'Waiting for the Next Player';
+        const rollEl = document.getElementById('franchise-player-roll');
+        if (rollEl) rollEl.innerText = '--';
+        const photoEl = document.getElementById('franchise-player-photo');
+        if (photoEl) photoEl.src = '/static/uploads/default_player.png';
+        if (bidBtn) {
+            bidBtn.disabled = true;
+            bidBtn.className = 'btn btn-secondary btn-lg w-100 py-3 shadow-sm fw-bold disabled';
+            bidBtn.innerHTML = '<i class="fa-solid fa-hourglass-start me-2"></i>Waiting for Player...';
         }
         return;
     }
 
     const p = data.active_player;
-    const bidBtn = document.getElementById('btn-franchise-bid');
     const bidAmount = data.next_valid_bid;
 
     // Status Banner on Franchise Card
-    const statusBanner = document.getElementById('franchise-status-banner');
     if (statusBanner) {
         if (fi.is_highest_bidder) {
             statusBanner.className = 'alert alert-success fw-bold py-2 mb-3 text-center';

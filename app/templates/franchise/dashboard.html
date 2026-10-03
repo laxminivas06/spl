@@ -208,6 +208,15 @@
                 </div>
 
                 <div id="franchise-active-player-section" class="p-3">
+                    <!-- Sold Alert Banner (Real-time synchronization on player sold) -->
+                    <div id="franchise-sold-banner" class="alert alert-success py-3 px-4 rounded-3 border-2 border-success shadow-xs text-center mb-3 d-none bg-white">
+                        <div class="fs-5 fw-black text-danger font-display mb-1">🎉 CONGRATULATIONS!</div>
+                        <div class="fs-6 text-dark mb-1">
+                            <span id="franchise-sold-player-name" class="fw-bold text-dark">Player Name</span> has been <span class="badge bg-success text-white px-2 py-0.5">SOLD</span> to <strong id="franchise-sold-winner-team" class="text-danger fw-black font-display">Franchise</strong>
+                            for <strong id="franchise-sold-price" class="text-success font-monospace">₹ 0</strong>
+                        </div>
+                    </div>
+
                     <!-- Status Alert Banner (Winning / Outbid) -->
                     <div id="franchise-status-banner" class="alert alert-info py-2 mb-3 text-center fw-bold d-none text-dark"></div>
 
