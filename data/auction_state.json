@@ -1,16 +1,16 @@
 [
   {
     "id": 1,
-    "status": "PLAYER_PREVIEW",
-    "active_player_id": 64,
-    "current_bid": 10000.0,
+    "status": "WAITING",
+    "active_player_id": null,
+    "current_bid": 0.0,
     "highest_bidder_id": null,
     "timer_seconds": 20,
     "timer_end": null,
     "sold_display_until": null,
     "paused_seconds_left": null,
-    "last_bid_at": "2026-10-03T03:13:32.220034",
+    "last_bid_at": null,
     "started_at": null,
-    "updated_at": "2026-10-03T03:13:50.314762"
+    "updated_at": "2026-10-03T03:16:38.448156"
   }
 ]
